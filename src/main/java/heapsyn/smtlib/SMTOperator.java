@@ -1,16 +1,29 @@
 package heapsyn.smtlib;
 
-public enum SMTOperator {
-	BINOP_ADD("+"),
-	BINOP_SUB("-"),
-	BINOP_MUL("*"),
-	BINOP_EQUAL("="),
-	BINOP_NOT_EQUAL("distinct"),
-	BINOP_AND("and"),
-	BINOP_OR("or"),
-	BINOP_IMPLY("=>"),
-	UNOP_NOT("not"),
-	UNOP_NEG("-"),
+import java.util.List;
+
+/**
+ * SMT-LIB built-in operators
+ */
+
+public enum SMTOperator implements SMTFunction {
+	// multivariable
+	ADD("+"),
+	SUB("-"),
+	MUL("*"),
+	DISTINCT("distinct"),
+	AND("and"),
+	OR("or"),
+	
+	// unary
+	UN_NOT("not"),
+	UN_MINUS("-"),
+	
+	// binary
+	BIN_EQ("="),
+	BIN_NE("distinct"),
+	BIN_IMPLY("=>"),
+	
 	;
 	
 	private String repr;
@@ -18,9 +31,25 @@ public enum SMTOperator {
 	private SMTOperator(String repr) {
 		this.repr = repr;
 	}
-	
-	public String toSMTString() {
+
+	@Override
+	public String getName() {
 		return this.repr;
+	}
+
+	@Override
+	public List<Variable> getArgs() {
+		return null;
+	}
+
+	@Override
+	public SMTSort getRange() {
+		return null;
+	}
+
+	@Override
+	public SMTExpression getBody() {
+		return null;
 	}
 
 }

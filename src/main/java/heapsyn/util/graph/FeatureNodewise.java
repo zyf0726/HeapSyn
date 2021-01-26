@@ -12,6 +12,8 @@ public class FeatureNodewise {
 		
 		if (this.inDeg != other.inDeg)
 			return false;
+		if (this.sizeSCC != other.sizeSCC)
+			return false;
 		
 		return true;
 	}
@@ -19,5 +21,9 @@ public class FeatureNodewise {
 	/* in-degree */
 	int inDeg = 0;
 	public int getInDegree() { return this.inDeg; }	
-
+	
+	/* size of the SCC located */
+	int sizeSCC = 0;
+	public int getSizeSCC() { return this.sizeSCC; }
+	
 }

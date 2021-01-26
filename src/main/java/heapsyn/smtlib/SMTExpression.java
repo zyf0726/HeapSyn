@@ -3,11 +3,17 @@ package heapsyn.smtlib;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * SMT-LIB quantifier-free expression
+ */
+
 public interface SMTExpression {
 
 	public SMTSort getSMTSort();
 	public String toSMTString();
+	
 	public Set<Variable> getFreeVariables();
-	public SMTExpression getRenaming(Map<Variable, Variable> vMap);
+	public Set<UserFunc> getUserFunctions();
+	public SMTExpression getSubstitution(Map<Variable, ? extends SMTExpression> vMap);
 	
 }

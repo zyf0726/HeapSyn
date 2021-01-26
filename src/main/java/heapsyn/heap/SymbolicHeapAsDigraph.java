@@ -1,0 +1,239 @@
+package heapsyn.heap;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.Set;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
+import heapsyn.smtlib.ExistExpr;
+import heapsyn.smtlib.Variable;
+import heapsyn.util.Bijection;
+import heapsyn.util.graph.Edge;
+import heapsyn.util.graph.FeatureNodewise;
+import heapsyn.util.graph.GraphAnalyzer;
+
+public class SymbolicHeapAsDigraph implements SymbolicHeap {
+	
+	private ImmutableSet<ObjectH> accObjs;
+	private ExistExpr constraint;
+	
+	private ImmutableSet<ObjectH> allObjs;  // must be reachable
+	private ImmutableList<Variable> vars;
+	
+	private GraphAnalyzer<ObjectH, FieldH> GA;
+
+	public SymbolicHeapAsDigraph() {
+		this.accObjs = ImmutableSet.of(ObjectH.NULL);
+		this.setConstraint(null);
+		this.allObjs = ImmutableSet.of(ObjectH.NULL);
+		this.vars = ImmutableList.of();
+		this.GA = new GraphAnalyzer<>(this.allObjs, null);
+	}
+	
+	public SymbolicHeapAsDigraph(Collection<ObjectH> accObjs, ExistExpr constraint) {
+		Preconditions.checkNotNull(accObjs,
+				"a non-null collection of accessible objects expected");
+		Preconditions.checkArgument(accObjs.contains(ObjectH.NULL),
+				"ObjectH.NULL must be accessible");
+		this.accObjs = ImmutableSet.copyOf(accObjs);  // accessible objects cannot be null
+		this.setConstraint(constraint);
+		
+		Set<ObjectH> objVisited = new HashSet<>(accObjs);
+		Deque<ObjectH> objQueue = new ArrayDeque<>(accObjs);
+		List<Edge<ObjectH, FieldH>> edges = new ArrayList<>();
+		while (!objQueue.isEmpty()) {
+			ObjectH o = objQueue.removeFirst();
+			for (Entry<FieldH, ObjectH> entry : o.getEntries()) {
+				edges.add(new Edge<ObjectH, FieldH>(o, entry.getValue(), entry.getKey()));
+				if (objVisited.add(entry.getValue())) {
+					objQueue.addLast(entry.getValue());
+				}
+			}
+		}
+		
+		this.allObjs = ImmutableSet.copyOf(objVisited);
+		this.vars = ImmutableList.copyOf(objVisited.stream()
+				.filter(o -> o.isVariable())
+				.map(o -> o.getVariable())
+				.collect(Collectors.toList()));
+		this.GA = new GraphAnalyzer<>(objVisited, edges);
+	}
+
+	@Override
+	public Set<ObjectH> getAllObjects() {
+		return this.allObjs;
+	}
+
+	@Override
+	public Set<ObjectH> getAccessibleObjects() {
+		return this.accObjs;
+	}
+
+	@Override
+	public List<Variable> getVariables() {
+		return this.vars;
+	}
+
+	@Override
+	public ExistExpr getConstraint() {
+		return this.constraint;
+	}
+
+	@Override
+	public void setConstraint(ExistExpr constraint) {
+		this.constraint = constraint;
+	}
+
+	@Override
+	public long getFeatureCode() {
+		// TODO hash-based isomorphism decision
+		return ImmutableList.of(
+				this.accObjs.size(),
+				this.allObjs.size(),
+				this.vars.size()
+				).hashCode();
+	}
+
+	@Override
+	public boolean maybeIsomorphicWith(SymbolicHeap heap) {
+		if (!(heap instanceof SymbolicHeapAsDigraph))
+			return false;
+		SymbolicHeapAsDigraph other = (SymbolicHeapAsDigraph) heap;
+		
+		if (this.accObjs.size() != other.accObjs.size())
+			return false;
+		if (this.allObjs.size() != other.allObjs.size())
+			return false;
+		if (this.vars.size() != other.vars.size())
+			return false;
+		
+		// TODO hash-based isomorphism decision
+		return this.GA.getFeatureGraphwise().equals(other.GA.getFeatureGraphwise());
+	}
+
+	@Override
+	public boolean surelySubsumedBy(SymbolicHeap heap) {
+		// TODO CEGIS or MSA (or abandoned?)
+		return false;
+	}
+
+	@Override
+	public boolean findIsomorphicMappingTo(SymbolicHeap heap, ActionIfFound action) {
+		if (!(heap instanceof SymbolicHeapAsDigraph))
+			return false;
+		SymbolicHeapAsDigraph other = (SymbolicHeapAsDigraph) heap;
+		
+		Bijection<ObjectH, ObjectH> initMap = new Bijection<>();
+		initMap.putUV(ObjectH.NULL, ObjectH.NULL);
+		boolean isTerminated = searchMapping(0, ImmutableList.copyOf(this.accObjs),
+				other, action, true, initMap);
+		return isTerminated;
+	}
+	
+	@Override
+	public boolean findEmbeddingInto(SymbolicHeap heap, ActionIfFound action) {
+		if (!(heap instanceof SymbolicHeapAsDigraph))
+			return false;
+		SymbolicHeapAsDigraph supHeap = (SymbolicHeapAsDigraph) heap;
+		
+		Bijection<ObjectH, ObjectH> initMap = new Bijection<>();
+		initMap.putUV(ObjectH.NULL, ObjectH.NULL);
+		boolean isTerminated = searchMapping(0, ImmutableList.copyOf(this.accObjs),
+				supHeap, action, false, initMap);
+		return isTerminated;
+	}
+	
+	private boolean searchMapping(int depth, List<ObjectH> accObjList,
+			SymbolicHeapAsDigraph other,
+			ActionIfFound action,
+			boolean wholeGraph,
+			Bijection<ObjectH, ObjectH> curMap) {
+		if (depth == accObjList.size()) {
+			boolean terminate = action.emitMapping(curMap);
+			return terminate;
+		}
+		ObjectH objU = accObjList.get(depth); 
+		if (curMap.containsU(objU))
+			return searchMapping(depth + 1, accObjList, other, action, wholeGraph, curMap);
+		
+		for (ObjectH objV : other.accObjs) {
+			Bijection<ObjectH, ObjectH> newMap = new Bijection<>(curMap);
+			if (updateMappingRecur(objU, objV, newMap, other, wholeGraph)) {
+				boolean terminate = searchMapping(depth + 1, accObjList, other, action, wholeGraph, newMap);
+				if (terminate) return true;
+			}
+		}
+		return false;
+	}
+	
+	private boolean updateMappingRecur(ObjectH objU, ObjectH objV,
+			Bijection<ObjectH, ObjectH> aMap,
+			SymbolicHeapAsDigraph other,
+			boolean wholeGraph) {
+		if (objU.getClassH() != objV.getClassH())
+			return false;
+		if (this.accObjs.contains(objU) != other.accObjs.contains(objV))
+			return false;
+		if (wholeGraph) {
+			FeatureNodewise featU = this.GA.getFeatureNodewise(objU);
+			FeatureNodewise featV = other.GA.getFeatureNodewise(objV);
+			if (!featU.equals(featV))
+				return false;
+		}
+		
+		if (aMap.containsU(objU))
+			return aMap.getV(objU) == objV;
+		if (aMap.containsV(objV))
+			return false;
+		aMap.putUV(objU, objV);
+		
+		for (FieldH field : objU.getFields()) {
+			ObjectH valU = objU.getFieldValue(field);
+			ObjectH valV = objV.getFieldValue(field);
+			if (!updateMappingRecur(valU, valV, aMap, other, wholeGraph))
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public Set<ObjectH> cloneAllObjects(Bijection<ObjectH, ObjectH> cloneMap) {
+		if (cloneMap == null) {
+			cloneMap = new Bijection<>();
+		} else {
+			cloneMap.clear();
+		}
+		for (ObjectH obj : this.allObjs) {
+			ObjectH objClone = 
+				obj.isNonNullObject() ?
+					new ObjectH(obj.getClassH(), null) :
+				obj.isVariable() ?
+					new ObjectH(obj.getVariable().cloneVariable()) :
+				/* obj.isNullObject() ! */
+					ObjectH.NULL;
+			cloneMap.putUV(obj, objClone);
+		}
+		for (ObjectH obj : this.allObjs) {
+			Map<FieldH, ObjectH> fieldValMap = new HashMap<>();
+			for (Entry<FieldH, ObjectH> entry : obj.getEntries()) {
+				FieldH field = entry.getKey();
+				ObjectH value = entry.getValue();
+				fieldValMap.put(field, cloneMap.getV(value));
+			}
+			cloneMap.getV(obj).setFieldValueMap(fieldValMap);
+		}
+		return cloneMap.getMapV2U().keySet();
+	}
+
+}

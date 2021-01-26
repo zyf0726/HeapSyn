@@ -12,6 +12,8 @@ public class FeatureGraphwise {
 		
 		if (this.numNodes != other.numNodes)
 			return false;
+		if (!this.sizeSCCsRepr.equals(other.sizeSCCsRepr))
+			return false;
 		
 		return true;
 	}
@@ -19,4 +21,9 @@ public class FeatureGraphwise {
 	/* number of nodes in the graph */
 	int numNodes = 0;
 	public int getNumberNodes() { return this.numNodes; }
+	
+	/* string representation of all SCCs' size */
+	String sizeSCCsRepr;
+	public String getSizeSCCsRepr() { return this.sizeSCCsRepr; }
+	
 }

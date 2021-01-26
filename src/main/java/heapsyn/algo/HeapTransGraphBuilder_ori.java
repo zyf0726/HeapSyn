@@ -1,19 +1,19 @@
 package heapsyn.algo;
-
+/*
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.Deque;
 import java.util.List;
 
 import heapsyn.heap.ObjectH;
-import heapsyn.smtlib.IntVariable;
+import heapsyn.smtlib.IntVar;
 import heapsyn.util.Bijection;
-import heapsyn.wrapper.symexec.PathDescriptor;
-import heapsyn.wrapper.symexec.SymbolicExecutor;
-
+import heapsyn.wrapper.symbolic.PathDescriptor;
+import heapsyn.wrapper.symbolic.SymbolicExecutor;
 
 public class HeapTransGraphBuilder {
 	
@@ -30,7 +30,7 @@ public class HeapTransGraphBuilder {
 	
 	public void buildGraph() {
 		this.allHeaps.add(SymbolicHeapInGraph.EMPTY_HEAP);
-		LinkedList<SymbolicHeapInGraph> heapQueue = new LinkedList<>(this.allHeaps);
+		Deque<SymbolicHeapInGraph> heapQueue = new ArrayDeque<>(this.allHeaps);
 		while (!heapQueue.isEmpty()) {
 			SymbolicHeapInGraph curHeap = heapQueue.removeFirst();
 			curHeap.recomputeConstraint();
@@ -123,7 +123,7 @@ public class HeapTransGraphBuilder {
 		if (paraType.isPrimitive()) {
 			List<ArrayList<ObjectH>> invokeArgSeqs =
 					fillInvokeArguments(depth - 1, paraTypes, objs);
-			ObjectH arg = new ObjectH(new IntVariable()); // TODO if not IntVariable?
+			ObjectH arg = new ObjectH(new IntVar()); // TODO if not IntVariable?
 			for (ArrayList<ObjectH> invokeArgSeq : invokeArgSeqs)
 				invokeArgSeq.add(arg);
 			return invokeArgSeqs;
@@ -143,3 +143,4 @@ public class HeapTransGraphBuilder {
 	}
 
 }
+*/

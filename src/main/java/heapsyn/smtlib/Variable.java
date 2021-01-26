@@ -5,17 +5,30 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class Variable implements SMTExpression {
+import com.google.common.base.Preconditions;
+
+public abstract class Variable implements SMTExpression, Comparable<Variable> {
 	
 	private String varName;
 	
 	Variable(String varName) {
-		if (varName == null)
-			throw new IllegalArgumentException("a non-null variable name expected");
+		Preconditions.checkNotNull(varName, "a non-null variable name expected");
 		this.varName = varName;
 	}
 	
-	public abstract Variable cloneVariable();
+	public static Variable create(SMTSort smtSort) {
+		switch (smtSort) {
+		case BOOL:
+			return new BoolVar();
+		case INT:
+			return new IntVar();
+		}
+		return null;
+	}
+	
+	public Variable cloneVariable() {
+		return Variable.create(this.getSMTSort());
+	}
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -24,6 +37,11 @@ public abstract class Variable implements SMTExpression {
 		if (!(obj instanceof Variable))
 			return false;
 		return this.varName.equals(((Variable) obj).varName);
+	}
+	
+	@Override
+	public int compareTo(Variable o) {
+		return this.varName.compareTo(o.varName);
 	}
 	
 	@Override
@@ -42,9 +60,21 @@ public abstract class Variable implements SMTExpression {
 	}
 	
 	@Override
-	public SMTExpression getRenaming(Map<Variable, Variable> vMap) {
-		if (vMap.containsKey(this))
-			return vMap.get(this);
-		return this;
+	public Set<UserFunc> getUserFunctions() {
+		return new HashSet<>();
 	}
+	
+	@Override
+	public SMTExpression getSubstitution(Map<Variable, ? extends SMTExpression> vMap) {
+		if (vMap.containsKey(this)) {
+			return vMap.get(this);
+		} else {
+			return this;
+		}
+	}
+	
+	public String getSMTDecl() {
+		return "(declare-const " + this.varName + " " + this.getSMTSort().toSMTString() + ")";
+	}
+
 }

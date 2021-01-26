@@ -13,9 +13,9 @@ public class Node {
 	
 	static {
 		try {
-			classH = ClassH.I(Node.class);
-			fNext = FieldH.I(Node.class.getDeclaredField("next"));
-			fElem = FieldH.I(Node.class.getDeclaredField("elem"));
+			classH = ClassH.of(Node.class);
+			fNext = FieldH.of(Node.class.getDeclaredField("next"));
+			fElem = FieldH.of(Node.class.getDeclaredField("elem"));
 			mNew = Node.class.getDeclaredMethod("__new__", int.class);
 			mGetNext = Node.class.getDeclaredMethod("getNext");
 			mGetElem = Node.class.getDeclaredMethod("getElem");

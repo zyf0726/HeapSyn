@@ -4,22 +4,20 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FieldH implements Comparable<FieldH> {
+import com.google.common.base.Preconditions;
+
+public final class FieldH implements Comparable<FieldH> {
 	
 	private static Map<Field, FieldH> INSTANCE = new HashMap<>();
 	
 	private Field javaField;
 
 	private FieldH(Field javaField) {
-		if (javaField == null)
-			throw new IllegalArgumentException("a non-null class field expected");
+		Preconditions.checkNotNull(javaField, "a non-null java class field expected");
 		this.javaField = javaField;
 	}
 	
-	public static FieldH I(Field javaField) {
-		if (javaField == null)
-			throw new IllegalArgumentException("a non-null class field expected");
-		
+	public static FieldH of(Field javaField) {
 		if (!INSTANCE.containsKey(javaField)) {
 			INSTANCE.put(javaField, new FieldH(javaField));
 		}

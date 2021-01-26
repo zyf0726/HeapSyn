@@ -1,17 +1,18 @@
-package heapsyn.wrapper.symexec;
+package heapsyn.wrapper.symbolic;
 
-import java.util.Collection;
 import java.util.Map;
 
 import heapsyn.heap.ObjectH;
+import heapsyn.heap.SymbolicHeap;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.Variable;
 
 public class PathDescriptor {
 	
 	public SMTExpression pathCond;
-	public ObjectH returnVal;
-	public Collection<ObjectH> allObjs;
+	public ObjectH retVal;
+	public SymbolicHeap finHeap;
+	
 	public Map<ObjectH, ObjectH> objSrcMap;
 	public Map<Variable, SMTExpression> varExprMap;
 	

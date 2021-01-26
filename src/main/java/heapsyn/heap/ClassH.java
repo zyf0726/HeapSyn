@@ -3,9 +3,11 @@ package heapsyn.heap;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
+
 import heapsyn.smtlib.SMTSort;
 
-public class ClassH {
+public final class ClassH {
 	
 	private static Map<Class<?>, ClassH> INSTANCE_JAVA = new HashMap<>();
 	private static Map<SMTSort, ClassH> INSTANCE_SMT = new HashMap<>();
@@ -20,37 +22,29 @@ public class ClassH {
 	}
 	
 	private ClassH(Class<?> javaClass) {
-		if (javaClass == null)
-			throw new IllegalArgumentException("a non-null java class expected");
+		Preconditions.checkNotNull(javaClass, "a non-null java class expected");
 		this.javaClass = javaClass;
 		this.smtSort = null;
 	}
 	
 	private ClassH(SMTSort smtSort) {
-		if (smtSort == null)
-			throw new IllegalArgumentException("a non-null SMT-lib sort expected");
+		Preconditions.checkNotNull(smtSort, "a non-null SMT-LIB sort expected");
 		this.javaClass = null;
 		this.smtSort = smtSort;
 	}
 	
-	public static ClassH I() {
+	public static ClassH of() {
 		return NULL_CLASS;
 	}
 	
-	public static ClassH I(Class<?> javaClass) {
-		if (javaClass == null)
-			throw new IllegalArgumentException("a non-null java class expected");
-		
+	public static ClassH of(Class<?> javaClass) {
 		if (!INSTANCE_JAVA.containsKey(javaClass)) {
 			INSTANCE_JAVA.put(javaClass, new ClassH(javaClass));
 		}
 		return INSTANCE_JAVA.get(javaClass);
 	}
 	
-	public static ClassH I(SMTSort smtSort) {
-		if (smtSort == null)
-			throw new IllegalArgumentException("a non-null SMT-lib sort expected");
-		
+	public static ClassH of(SMTSort smtSort) {
 		if (!INSTANCE_SMT.containsKey(smtSort)) {
 			INSTANCE_SMT.put(smtSort, new ClassH(smtSort));
 		}

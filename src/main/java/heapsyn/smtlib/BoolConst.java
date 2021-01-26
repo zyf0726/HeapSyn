@@ -1,16 +1,18 @@
 package heapsyn.smtlib;
 
-public class BoolConstant extends Constant {
+public class BoolConst extends Constant {
+	
+	public static BoolConst DEFAULT = new BoolConst(false);
 	
 	private boolean aBool; 
 
-	public BoolConstant(boolean aBool) {
+	public BoolConst(boolean aBool) {
 		this.aBool = aBool;
 	}
 	
 	@Override
 	public SMTSort getSMTSort() {
-		return SMTSort.SMT_BOOL;
+		return SMTSort.BOOL;
 	}
 	
 	@Override

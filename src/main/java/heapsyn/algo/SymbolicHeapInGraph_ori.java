@@ -5,25 +5,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
-import heapsyn.heap.SymbolicHeap;
-import heapsyn.smtlib.BinaryExpression;
-import heapsyn.smtlib.BoolVariable;
-import heapsyn.smtlib.ExistentialProposition;
-import heapsyn.smtlib.MultivarExpression;
+import heapsyn.heap.HeapReprAsDigraph_ori;
+import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.SMTExpression;
-import heapsyn.smtlib.SMTOperator;
 import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
 
-public class SymbolicHeapInGraph extends SymbolicHeap {
+public class SymbolicHeapInGraph_ori extends HeapReprAsDigraph_ori {
 	
 	// only for debugging
 	private static int __countHeapGenerated = 0;
@@ -32,7 +26,7 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 	private Map<ObjectH, String> __objectName;
 	
 	private void __generateDebugInformation() {
-		this.__heapID = SymbolicHeapInGraph.__countHeapGenerated;
+		this.__heapID = SymbolicHeapInGraph_ori.__countHeapGenerated;
 		this.__heapName = "[H" + this.__heapID + "]";
 		this.__objectName = new HashMap<>();
 		int countNonNullObjs = 0;
@@ -46,7 +40,7 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 				countNonNullObjs += 1;
 			}
 		}
-		SymbolicHeapInGraph.__countHeapGenerated += 1;
+		SymbolicHeapInGraph_ori.__countHeapGenerated += 1;
 	}
 	
 	public void __debugPrintOut(PrintStream ps) {
@@ -60,7 +54,7 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 			}
 			ps.print(":");
 			for (FieldH field : o.getFields())
-				ps.print(" (." + field.getName() + ", " + __objectName.get(o.getValue(field)) + ")");
+				ps.print(" (." + field.getName() + ", " + __objectName.get(o.getFieldValue(field)) + ")");
 			ps.println();
 		}
 		for (BackwardRecord br : this.rcdBackwards) {
@@ -121,7 +115,7 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 	}
 	
 	// the empty heap
-	public static SymbolicHeapInGraph EMPTY_HEAP = new SymbolicHeapInGraph();
+	public static SymbolicHeapInGraph_ori EMPTY_HEAP = new SymbolicHeapInGraph_ori();
 	
 	// the minimal length of method invoke sequence
 	int minSeqLen;
@@ -131,26 +125,26 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 	
 	// record for backtracking 
 	static class BackwardRecord {
-		SymbolicHeapInGraph oriHeap;
+		SymbolicHeapInGraph_ori oriHeap;
 		MethodInvoke mInvoke;
 		SMTExpression pathCond;
 		ObjectH returnVal;
 		Map<ObjectH, ObjectH> objSrcMap;
 		Map<Variable, SMTExpression> varExprMap;
-		BoolVariable guardVar;
+		BoolVar guardVar;
 	}
 	private List<BackwardRecord> rcdBackwards;
 	
 	// record for forward traversal
 	static class ForwardRecord {
-		SymbolicHeapInGraph genHeap;
+		SymbolicHeapInGraph_ori genHeap;
 		MethodInvoke mInvoke;
 		SMTExpression pathCond;
 	}
 	private List<ForwardRecord> rcdForwards;
 	
 	// constructor for empty heap
-	private SymbolicHeapInGraph() {
+	private SymbolicHeapInGraph_ori() {
 		super();
 		this.minSeqLen = 0;
 		this.status = HeapStatus.HEAP_ACTIVE;
@@ -160,8 +154,8 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 	}
 	
 	// constructor if created by invoking a public method
-	public SymbolicHeapInGraph(Collection<ObjectH> accObjs,
-			SymbolicHeapInGraph oriHeap,
+	public SymbolicHeapInGraph_ori(Collection<ObjectH> accObjs,
+			SymbolicHeapInGraph_ori oriHeap,
 			MethodInvoke mInvoke,
 			SMTExpression pathCond,
 			ObjectH returnVal,
@@ -177,7 +171,7 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 		__generateDebugInformation();
 	}
 	
-	public void involveIsomorphicHeap(SymbolicHeapInGraph otherHeap, Bijection<ObjectH, ObjectH> isoMap) {
+	public void involveIsomorphicHeap(SymbolicHeapInGraph_ori otherHeap, Bijection<ObjectH, ObjectH> isoMap) {
 		Map<Variable, SMTExpression> varExprMap = new HashMap<>();
 		for (ObjectH o : this.getAllObjects()) {
 			if (o.isVariable())
@@ -186,7 +180,7 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 		this.addBackwardRecord(otherHeap, null, null, null, isoMap.getMapV2U(), varExprMap);
 	}
 	
-	private void addBackwardRecord(SymbolicHeapInGraph oriHeap,
+	private void addBackwardRecord(SymbolicHeapInGraph_ori oriHeap,
 			MethodInvoke mInvoke,
 			SMTExpression pathCond,
 			ObjectH returnVal,
@@ -199,11 +193,11 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 		br.returnVal = returnVal;
 		br.objSrcMap = new HashMap<>(objSrcMap);
 		br.varExprMap = new HashMap<>(varExprMap);
-		br.guardVar = new BoolVariable();	
+		br.guardVar = new BoolVar();	
 		this.rcdBackwards.add(br);
 	}
 	
-	private void addForwardRecord(SymbolicHeapInGraph genHeap,
+	private void addForwardRecord(SymbolicHeapInGraph_ori genHeap,
 			MethodInvoke mInvoke,
 			SMTExpression pathCond) {
 		ForwardRecord fr = new ForwardRecord();
@@ -214,7 +208,7 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 	}
 	
 	public void recomputeConstraint() {
-		if (this == EMPTY_HEAP) return;
+/*		if (this == EMPTY_HEAP) return;
 		
 		Set<Variable> boundVars = new HashSet<>();
 		List<SMTExpression> guardConds = new ArrayList<>();
@@ -254,7 +248,7 @@ public class SymbolicHeapInGraph extends SymbolicHeap {
 		this.setConstraint(new ExistentialProposition(
 			boundVars,
 			new MultivarExpression(SMTOperator.BINOP_AND, guardConds)
-		));
+		));*/
 	}
 	
 	public void makeDeprecated() {

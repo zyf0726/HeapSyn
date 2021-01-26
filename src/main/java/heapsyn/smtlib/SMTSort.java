@@ -1,9 +1,13 @@
 package heapsyn.smtlib;
 
+/**
+ * SMT-LIB built-in sorts
+ */
+
 public enum SMTSort {
-	SMT_INT("Int"),
-	SMT_BOOL("Bool"),
-	SMT_UNKNOWN("Unknown")
+	INT("Int"),
+	BOOL("Bool"),
+	// null for unknown or unconcerned
 	;
 	
 	private String repr;

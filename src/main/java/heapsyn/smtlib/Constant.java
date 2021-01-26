@@ -10,9 +10,14 @@ public abstract class Constant implements SMTExpression {
 	public Set<Variable> getFreeVariables() {
 		return new HashSet<>();
 	}
+	
+	@Override
+	public Set<UserFunc> getUserFunctions() {
+		return new HashSet<>();
+	}
 
 	@Override
-	public SMTExpression getRenaming(Map<Variable, Variable> vMap) {
+	public SMTExpression getSubstitution(Map<Variable, ? extends SMTExpression> vMap) {
 		return this;
 	}
 	
