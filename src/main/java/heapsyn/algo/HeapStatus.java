@@ -1,6 +1,7 @@
 package heapsyn.algo;
 
 public enum HeapStatus {
-	HEAP_ACTIVE,
-	HEAP_DEPRECATED,
+	ACTIVE,
+	SUBSUMED,
+	OUT_OF_SCOPE,
 }

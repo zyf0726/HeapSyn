@@ -15,7 +15,7 @@ public class ApplyExpr implements SMTExpression {
 	private SMTFunction operator;
 	private ImmutableList<SMTExpression> operands;
 	
-	public ApplyExpr(SMTFunction operator, List<SMTExpression> operands) {
+	public ApplyExpr(SMTFunction operator, List<? extends SMTExpression> operands) {
 		Preconditions.checkNotNull(operator, "a non-null operator expected");
 		Preconditions.checkNotNull(operands, "a non-null operand list expected");
 		Preconditions.checkArgument(!operands.isEmpty(), "a non-empty operand list expected");

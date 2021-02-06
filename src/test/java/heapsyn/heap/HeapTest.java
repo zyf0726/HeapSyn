@@ -63,7 +63,7 @@ public class HeapTest {
 		fBI = FieldH.of(ClassB.class.getDeclaredField("i"));
 		fBL = FieldH.of(ClassB.class.getDeclaredField("l"));
 		assertNotEquals(fAI, fBI);
-		emp = new SymbolicHeapAsDigraph();
+		emp = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_FALSE);
 		nodes = new ObjectH[N];
 		for (int i = 0; i < N; ++i)
 			nodes[i] = new ObjectH(cNode, null);

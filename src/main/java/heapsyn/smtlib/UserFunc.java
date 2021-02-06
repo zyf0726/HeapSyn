@@ -27,7 +27,7 @@ public class UserFunc implements SMTFunction {
 	private SMTSort funcRange;
 	private SMTExpression funcBody;
 	
-	UserFunc(String name, List<Variable> args, SMTSort range, SMTExpression body) {
+	UserFunc(String name, List<? extends Variable> args, SMTSort range, SMTExpression body) {
 		Preconditions.checkNotNull(name, "a non-null function name expected");
 		Preconditions.checkNotNull(args, "a non-null argument list expected");
 		Preconditions.checkArgument(!args.isEmpty(), "a non-empty argument list expected");
@@ -39,7 +39,7 @@ public class UserFunc implements SMTFunction {
 		UserFunc.countFuncs += 1;
 	}
 	
-	public UserFunc(List<Variable> args, SMTSort Range, SMTExpression body) {
+	public UserFunc(List<? extends Variable> args, SMTSort Range, SMTExpression body) {
 		this(FUNCNAME_PREFIX + UserFunc.countFuncs, args, Range, body);
 	}
 	

@@ -147,7 +147,7 @@ public class SymbolicHeapInGraph_ori extends HeapReprAsDigraph_ori {
 	private SymbolicHeapInGraph_ori() {
 		super();
 		this.minSeqLen = 0;
-		this.status = HeapStatus.HEAP_ACTIVE;
+//		this.status = HeapStatus.HEAP_ACTIVE;
 		this.rcdBackwards = Collections.emptyList();
 		this.rcdForwards = new ArrayList<>();
 		__generateDebugInformation();
@@ -163,7 +163,7 @@ public class SymbolicHeapInGraph_ori extends HeapReprAsDigraph_ori {
 			Map<Variable, SMTExpression> varExprMap) {
 		super(accObjs, null);
 		this.minSeqLen = oriHeap.minSeqLen + 1;
-		this.status = HeapStatus.HEAP_ACTIVE;
+//		this.status = HeapStatus.HEAP_ACTIVE;
 		this.rcdBackwards = new ArrayList<>();
 		this.rcdForwards = new ArrayList<>();
 		this.addBackwardRecord(oriHeap, mInvoke, pathCond, returnVal, objSrcMap, varExprMap);
@@ -252,10 +252,11 @@ public class SymbolicHeapInGraph_ori extends HeapReprAsDigraph_ori {
 	}
 	
 	public void makeDeprecated() {
-		this.status = HeapStatus.HEAP_DEPRECATED;
+//		this.status = HeapStatus.HEAP_DEPRECATED;
 	}
 	
 	public boolean isDeprecated() {
-		return this.status == HeapStatus.HEAP_DEPRECATED;
+		return true;
+//		return this.status == HeapStatus.HEAP_DEPRECATED;
 	}
 }

@@ -33,9 +33,9 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 	
 	private GraphAnalyzer<ObjectH, FieldH> GA;
 
-	public SymbolicHeapAsDigraph() {
+	public SymbolicHeapAsDigraph(ExistExpr constraint) {
 		this.accObjs = ImmutableSet.of(ObjectH.NULL);
-		this.setConstraint(null);
+		this.setConstraint(constraint);
 		this.allObjs = ImmutableSet.of(ObjectH.NULL);
 		this.vars = ImmutableList.of();
 		this.GA = new GraphAnalyzer<>(this.allObjs, null);
