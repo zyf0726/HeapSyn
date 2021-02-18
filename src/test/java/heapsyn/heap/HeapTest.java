@@ -70,12 +70,12 @@ public class HeapTest {
 		ivs = new ObjectH[N];
 		for (int i = 0; i < N; ++i)
 			ivs[i] = new ObjectH(new IntVar());
-		ObjectH.DEBUG_MODE = true;
+		ObjectH.STRICT_MODE = false;
 	}
 	
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		ObjectH.DEBUG_MODE = false;
+		ObjectH.STRICT_MODE = true;
 	}
 
 	@Test
@@ -157,9 +157,11 @@ public class HeapTest {
 		SymbolicHeap h = new SymbolicHeapAsDigraph(
 				Arrays.asList(nodes[0], nodes[1], ObjectH.NULL), null);
 		Bijection<ObjectH, ObjectH> cloneMap = new Bijection<>();
-		Set<ObjectH> cloneObjs = h.cloneAllObjects(cloneMap);
+		Set<ObjectH> accObjsClone = h.cloneAllObjects(cloneMap);
 		
-		assertEquals(h.getAllObjects().size(), cloneObjs.size());
+		assertEquals(h.getAccessibleObjects().size(), accObjsClone.size());
+		assertTrue(accObjsClone.contains(cloneMap.getV(nodes[1])));
+		assertFalse(accObjsClone.contains(cloneMap.getV(nodes[2])));
 		assertEquals(cloneMap.getV(nodes[3]), cloneMap.getV(nodes[2]).getFieldValue(fNext));
 		assertEquals(cloneMap.getV(nodes[2]), cloneMap.getV(nodes[1]).getFieldValue(fNext));
 		assertEquals(cloneMap.getV(nodes[2]), cloneMap.getV(nodes[0]).getFieldValue(fNext));
@@ -170,7 +172,7 @@ public class HeapTest {
 			assertEquals(ivs[i].getClassH(), cloneMap.getV(ivs[i]).getClassH());
 		}
 		
-		SymbolicHeap h1 = new SymbolicHeapAsDigraph(cloneObjs, null);
+		SymbolicHeap h1 = new SymbolicHeapAsDigraph(accObjsClone, null);
 		SymbolicHeap h2 = new SymbolicHeapAsDigraph(h.cloneAllObjects(null), null);
 		MappingChecker chk = new MappingChecker();
 		h1.findIsomorphicMappingTo(h2, chk);

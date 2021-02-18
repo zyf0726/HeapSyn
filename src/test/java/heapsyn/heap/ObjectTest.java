@@ -36,7 +36,7 @@ public class ObjectTest {
 	
 	@After
 	public void tearDown() throws Exception {
-		ObjectH.DEBUG_MODE = false;
+		ObjectH.STRICT_MODE = true;
 	}
 
 	@Test
@@ -139,7 +139,7 @@ public class ObjectTest {
 	
 	@Test
 	public void testObject3() {
-		ObjectH.DEBUG_MODE = true;
+		ObjectH.STRICT_MODE = false;
 		Variable v1 = new IntVar(), v2 = new IntVar();
 		ObjectH ov1 = new ObjectH(v1), ov2 = new ObjectH(v2);
 		ObjectH o1 = new ObjectH(cNode, ImmutableMap.of());

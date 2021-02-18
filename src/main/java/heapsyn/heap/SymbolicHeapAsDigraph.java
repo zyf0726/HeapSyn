@@ -214,6 +214,7 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		} else {
 			cloneMap.clear();
 		}
+		Set<ObjectH> accObjsClone = new HashSet<>();
 		for (ObjectH obj : this.allObjs) {
 			ObjectH objClone = 
 				obj.isNonNullObject() ?
@@ -223,6 +224,9 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 				/* obj.isNullObject() ! */
 					ObjectH.NULL;
 			cloneMap.putUV(obj, objClone);
+			if (this.accObjs.contains(obj)) {
+				accObjsClone.add(objClone);
+			}
 		}
 		for (ObjectH obj : this.allObjs) {
 			Map<FieldH, ObjectH> fieldValMap = new HashMap<>();
@@ -233,7 +237,7 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 			}
 			cloneMap.getV(obj).setFieldValueMap(fieldValMap);
 		}
-		return cloneMap.getMapV2U().keySet();
+		return accObjsClone;
 	}
 
 }

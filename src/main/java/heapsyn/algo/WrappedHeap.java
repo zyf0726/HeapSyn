@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -54,7 +55,12 @@ public class WrappedHeap {
 	}
 	
 	public void __debugPrintOut(PrintStream ps) {
-		ps.println(">> Heap " + __heapName + ": " + status + ", " + heap.getConstraint().toSMTString());
+		ps.print(">> Heap " + __heapName + ": " + status + ", ");
+		if (heap.getConstraint() != null) {
+			ps.println(heap.getConstraint().toSMTString());
+		} else {
+			ps.println("constraint undetermined");
+		}
 		for (UserFunc uf : __funCreated) {
 			ps.println("   " + uf.getSMTDef());
 		}
@@ -155,7 +161,7 @@ public class WrappedHeap {
 	private SymbolicHeap heap;
 	
 	// status while building heap transformation graph
-	HeapStatus status;
+	private HeapStatus status;
 	
 	// record for backtracking
 	static class BackwardRecord {
@@ -287,6 +293,19 @@ public class WrappedHeap {
 		ExistExpr constraint = new ExistExpr(orExpr.getBoundVariables(),
 				new ApplyExpr(func, funcArgs));
 		this.heap.setConstraint(constraint);
+	}
+	
+	
+	public SymbolicHeap getHeap() {
+		return this.heap;
+	}
+	
+	public HeapStatus getStatus() {
+		return this.status;
+	}
+	
+	public List<BackwardRecord> getBackwardRecords() {
+		return ImmutableList.copyOf(this.rcdBackwards);
 	}
 	
 	

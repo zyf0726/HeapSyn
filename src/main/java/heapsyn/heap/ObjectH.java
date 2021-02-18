@@ -12,7 +12,7 @@ import heapsyn.smtlib.Variable;
 
 public class ObjectH {
 	
-	static boolean DEBUG_MODE = false;
+	public static boolean STRICT_MODE = true;
 	
 	public static ObjectH NULL = new ObjectH();
 	
@@ -78,7 +78,7 @@ public class ObjectH {
 	}
 	
 	public void setFieldValueMap(Map<FieldH, ObjectH> fieldValueMap) {
-		Preconditions.checkState(DEBUG_MODE || this.field2val == null, "field-value map already determined");
+		Preconditions.checkState(!STRICT_MODE || this.field2val == null, "field-value map already determined");
 		this.field2val = ImmutableMap.copyOf(fieldValueMap);
 	}
 	 

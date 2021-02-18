@@ -25,4 +25,17 @@ public class Options {
 	// method under test
 	private Method testMethod;
 	
+	
+	public SymbolicExecutor getSymbolicExecutor() {
+		return this.symExec;
+	}
+	
+	public List<Method> getCandidateMethods() {
+		return this.candiMethods;
+	}
+	
+	public Method getMethodUnderTest() {
+		return this.testMethod;
+	}
+	
 }
