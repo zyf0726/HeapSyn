@@ -26,7 +26,7 @@ public final class FieldH implements Comparable<FieldH> {
 	
 	@Override
 	public int compareTo(FieldH other) {
-		return this.toString().compareTo(other.toString());
+		return this.javaField.toString().compareTo(other.javaField.toString());
 	}
 	
 	public String getName() {
