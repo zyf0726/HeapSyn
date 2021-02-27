@@ -40,6 +40,8 @@ public class ManualExecutor implements SymbolicExecutor {
 		return INSTANCE;
 	}
 	
+	public int __countExecution = 0;
+	
 	private Set<ObjectH> tempAccObjs;
 	private Bijection<ObjectH, ObjectH> tempCloneMap;
 	private Map<Variable, SMTExpression> tempVarExprMap;
@@ -52,11 +54,14 @@ public class ManualExecutor implements SymbolicExecutor {
 
 	@Override
 	public Collection<PathDescriptor> executeMethod(SymbolicHeap initHeap, MethodInvoke mInvoke) {
+		this.__countExecution += 1;
 		Method method = mInvoke.getJavaMethod();
 		if (method.equals(ListNode.mNew))
 			return execListNode$new(initHeap, mInvoke);
 		else if (method.equals(ListNode.mGetNext))
 			return execListNode$getNext(initHeap, mInvoke);
+		else if (method.equals(ListNode.mGetElem))
+			return execListNode$getElem(initHeap, mInvoke);
 		else if (method.equals(ListNode.mSetElem))
 			return execListNode$setElem(initHeap, mInvoke);
 		else if (method.equals(ListNode.mAddAfter))
@@ -134,6 +139,19 @@ public class ManualExecutor implements SymbolicExecutor {
 			ObjectH $this = tempCloneMap.getV(arg$this);
 			ObjectH this$next = $this.getFieldValue(ListNode.fNext);
 			pds.add(pathReturn(null, this$next));
+		}
+		
+		return pds;
+	}
+	
+	private Collection<PathDescriptor>
+	execListNode$getElem(SymbolicHeap initHeap, MethodInvoke mInvoke) {
+		List<PathDescriptor> pds = new ArrayList<>();
+		ObjectH arg$this = mInvoke.getInvokeArguments().get(0);
+		
+		if (arg$this.isNonNullObject()) { // Path 0
+			pathInit(initHeap);
+			pds.add(pathReturn(null, null));
 		}
 		
 		return pds;

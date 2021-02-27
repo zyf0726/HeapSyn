@@ -8,7 +8,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-public class UserFunc implements SMTFunction {
+public class UserFunc implements SMTFunction, Comparable<UserFunc> {
 	
 	static final String FUNCNAME_PREFIX = "FUN";
 	
@@ -41,6 +41,10 @@ public class UserFunc implements SMTFunction {
 	
 	public UserFunc(List<? extends Variable> args, SMTSort Range, SMTExpression body) {
 		this(FUNCNAME_PREFIX + UserFunc.countFuncs, args, Range, body);
+	}
+	
+	public int compareTo(UserFunc o) {
+		return this.funcName.compareTo(o.funcName);
 	}
 	
 	public void setBody(SMTExpression body) {

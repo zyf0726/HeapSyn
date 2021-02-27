@@ -70,6 +70,10 @@ public class SMTFunctionTest {
 						uf1.getSMTDef());
 		assertEquals("(assert (forall ((iv1 Int)) (= (FUN2 iv1) (FUN1 iv1 iv1))))",
 						uf2.getSMTAssert());
+		
+		assertTrue(uf1.compareTo(uf2) < 0);
+		assertTrue(uf0.compareTo(uf1) > 0);
+		assertTrue(uf2.compareTo(uf2) == 0);
 	}
 	
 	@Test(expected = NullPointerException.class)

@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 
 import heapsyn.smtlib.Variable;
 
@@ -18,19 +18,19 @@ public class ObjectH {
 	
 	private ClassH clsH;
 	private Variable var;
-	private ImmutableMap<FieldH, ObjectH> field2val;
+	private ImmutableSortedMap<FieldH, ObjectH> field2val;
 	
 	private ObjectH() {
 		this.clsH = ClassH.of(); 
 		this.var = null;
-		this.field2val = ImmutableMap.of();
+		this.field2val = ImmutableSortedMap.of();
 	}
 	
 	public ObjectH(Variable var) {
 		Preconditions.checkNotNull(var, "a non-null variable expected");
 		this.clsH = ClassH.of(var.getSMTSort());
 		this.var = var;
-		this.field2val = ImmutableMap.of();
+		this.field2val = ImmutableSortedMap.of();
 	}
 	
 	public ObjectH(ClassH classH, Map<FieldH, ObjectH> fieldValueMap) {
@@ -79,7 +79,7 @@ public class ObjectH {
 	
 	public void setFieldValueMap(Map<FieldH, ObjectH> fieldValueMap) {
 		Preconditions.checkState(!STRICT_MODE || this.field2val == null, "field-value map already determined");
-		this.field2val = ImmutableMap.copyOf(fieldValueMap);
+		this.field2val = ImmutableSortedMap.copyOf(fieldValueMap);
 	}
 	 
 }

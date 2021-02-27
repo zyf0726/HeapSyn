@@ -92,6 +92,7 @@ public class HeapTransGraphBuilder {
 						heapQueue.addLast(newHeap);
 			}
 		}
+		
 		Collection<Edge<WrappedHeap, Integer>> trans = new ArrayList<>();
 		for (WrappedHeap heap : this.allHeaps) {
 			for (BackwardRecord br : heap.getBackwardRecords())
