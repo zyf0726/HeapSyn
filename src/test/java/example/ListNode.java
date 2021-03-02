@@ -1,11 +1,11 @@
-package heapsyn.algo;
+package example;
 
 import java.lang.reflect.Method;
 
 import heapsyn.heap.ClassH;
 import heapsyn.heap.FieldH;
 
-class ListNode {
+public class ListNode {
 	
 	public static ClassH classH;
 	public static FieldH fNext, fElem;

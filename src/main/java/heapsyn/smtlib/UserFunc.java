@@ -22,6 +22,7 @@ public class UserFunc implements SMTFunction, Comparable<UserFunc> {
 		return UserFunc.countFuncs;
 	}
 	
+	private int timeStamp;
 	private String funcName;
 	private ImmutableList<Variable> funcArgs;
 	private SMTSort funcRange;
@@ -32,6 +33,7 @@ public class UserFunc implements SMTFunction, Comparable<UserFunc> {
 		Preconditions.checkNotNull(args, "a non-null argument list expected");
 		Preconditions.checkArgument(!args.isEmpty(), "a non-empty argument list expected");
 		Preconditions.checkNotNull(range, "a non-null function range expected");
+		this.timeStamp = UserFunc.countFuncs;
 		this.funcName = name;
 		this.funcArgs = ImmutableList.copyOf(args);  // the argument must be a non-null variable
 		this.funcRange = range;
@@ -43,17 +45,18 @@ public class UserFunc implements SMTFunction, Comparable<UserFunc> {
 		this(FUNCNAME_PREFIX + UserFunc.countFuncs, args, Range, body);
 	}
 	
-	public int compareTo(UserFunc o) {
-		return this.funcName.compareTo(o.funcName);
-	}
-	
-	public void setBody(SMTExpression body) {
+	void setBody(SMTExpression body) {
 		Preconditions.checkNotNull(body, "a non-null function body expected");
 		Set<Variable> fvSet = body.getFreeVariables();
 		Set<Variable> argSet = ImmutableSet.copyOf(this.funcArgs);
 		Preconditions.checkArgument(Sets.difference(fvSet, argSet).isEmpty(),
 				"a non-argument free variable found in the body");
 		this.funcBody = body;
+	}
+	
+	@Override
+	public int compareTo(UserFunc o) {
+		return this.timeStamp - o.timeStamp;
 	}
 
 	@Override

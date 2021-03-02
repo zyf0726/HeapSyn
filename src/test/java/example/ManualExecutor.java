@@ -1,6 +1,6 @@
-package heapsyn.algo;
+package example;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -16,6 +16,7 @@ import java.util.Set;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import heapsyn.algo.MethodInvoke;
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;

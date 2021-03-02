@@ -1,11 +1,8 @@
 package heapsyn.algo;
 
-import static org.junit.Assert.*;
-
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.zip.CheckedOutputStream;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -13,6 +10,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import example.ListNode;
+import example.ManualExecutor;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ExistExpr;
@@ -36,8 +35,8 @@ public class GraphBuilderTest {
 	}
 
 	@Test
-	public void testListNode() throws Exception {
-		PrintStream ps = new PrintStream("build/testListNode.log");
+	public void testListNodeManual() throws Exception {
+		PrintStream ps = new PrintStream("build/testListNode-Manual.log");
 		HeapTransGraphBuilder graphBuilder = new HeapTransGraphBuilder(
 				ManualExecutor.I(),
 				Arrays.asList(

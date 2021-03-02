@@ -26,4 +26,7 @@ dependencies {
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
+    
+    // z3 java api
+    implementation files('libs/com.microsoft.z3.jar')
 }
