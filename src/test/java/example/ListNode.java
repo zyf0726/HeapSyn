@@ -17,7 +17,7 @@ public class ListNode {
 			fNext = FieldH.of(ListNode.class.getDeclaredField("next"));
 			fElem = FieldH.of(ListNode.class.getDeclaredField("elem"));
 			mNew = ListNode.class.getMethod("__new__", int.class);
-			mGetNext = ListNode.class.getMethod("getNext");
+			mGetNext = ListNode.class.getMethod("getNext", boolean.class);
 			mGetElem = ListNode.class.getMethod("getElem");
 			mSetElem = ListNode.class.getMethod("setElem", int.class);
 			mAddAfter = ListNode.class.getMethod("addAfter", int.class);
@@ -41,7 +41,7 @@ public class ListNode {
 		return node;
 	}
 	
-	public ListNode getNext() {
+	public ListNode getNext(boolean dummy) {
 		return this.next;
 	}
 	

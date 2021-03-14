@@ -13,6 +13,7 @@ import org.junit.Test;
 import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.BoolVar;
+import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.IntVar;
 import heapsyn.smtlib.SMTExpression;
@@ -27,7 +28,7 @@ public class SMTSolverTest {
 	
 	private static SMTSolver z3;
 	private Variable[] iv, bv;
-	private Map<Variable, SMTExpression> model;
+	private Map<Variable, Constant> model;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -115,6 +116,14 @@ public class SMTSolverTest {
 	 	SMTExpression constr2 = new ApplyExpr(SMTOperator.BIN_EQ,
 	 			new ApplyExpr(f[39], iv[0]), new IntConst(1234567890l));
 	 	assertFalse(z3.checkSat(constr2, null));
+	}
+	
+	@Test
+	public void testZ3JavaAPI4() {
+		UserFunc f = new UserFunc(Arrays.asList(bv[0], iv[0]), SMTSort.BOOL, BoolConst.DEFAULT);
+		SMTExpression e = new ApplyExpr(SMTOperator.OR, bv[0],
+				new ApplyExpr(f, bv[1], iv[0]));
+		assertTrue(z3.checkSat(e, model));
 	}
 
 }

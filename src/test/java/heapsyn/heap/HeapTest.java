@@ -252,14 +252,26 @@ public class HeapTest {
 		ObjectH v2 = new ObjectH(cNode, ImmutableMap.of(fNext, v3));
 		ObjectH v1 = new ObjectH(cNode, ImmutableMap.of(fNext, v2));
 		
-		SymbolicHeap uh = new SymbolicHeapAsDigraph(Arrays.asList(u1, u3, ObjectH.NULL), null);
+		SymbolicHeap uh1 = new SymbolicHeapAsDigraph(Arrays.asList(u1, u3, ObjectH.NULL), null);
 		SymbolicHeap vh = new SymbolicHeapAsDigraph(Arrays.asList(v1, v2, ObjectH.NULL), null);
 		MappingChecker chk = new MappingChecker();
 		// assertFalse(uh.maybeIsomorphicWith(vh));
 		// assertNotEquals(uh.getFeatureCode(), vh.getFeatureCode());
-		uh.findIsomorphicMappingTo(vh, chk);
+		uh1.findIsomorphicMappingTo(vh, chk);
 		assertFalse(chk.mappingFound);
-		uh.findEmbeddingInto(vh, chk);
+		uh1.findEmbeddingInto(vh, chk);
+		assertFalse(chk.mappingFound);
+		
+		SymbolicHeap uh2 = new SymbolicHeapAsDigraph(Arrays.asList(u1, ObjectH.NULL), null);
+		chk = new MappingChecker();
+		uh2.findEmbeddingInto(vh, chk);
+		assertTrue(chk.mappingFound);
+		assertEquals(v1, chk.aMap.getV(u1));
+		assertEquals(u2, chk.aMap.getU(v2));
+		
+		SymbolicHeap uh3 = new SymbolicHeapAsDigraph(Arrays.asList(u1, u2, u3, ObjectH.NULL), null);
+		chk = new MappingChecker();
+		uh3.findEmbeddingInto(vh, chk);
 		assertFalse(chk.mappingFound);
 	}
 	

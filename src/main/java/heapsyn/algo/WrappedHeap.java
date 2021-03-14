@@ -1,7 +1,6 @@
 package heapsyn.algo;
 
 import java.io.PrintStream;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,15 +9,18 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
+import heapsyn.common.settings.Options;
+import heapsyn.heap.ActionIfFound;
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.smtlib.ApplyExpr;
+import heapsyn.smtlib.BoolConst;
+import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.SMTOperator;
@@ -26,7 +28,9 @@ import heapsyn.smtlib.SMTSort;
 import heapsyn.smtlib.UserFunc;
 import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
+import heapsyn.wrapper.smt.SMTSolver;
 import heapsyn.wrapper.symbolic.PathDescriptor;
+import heapsyn.wrapper.symbolic.Specification;
 
 public class WrappedHeap {
 	
@@ -76,9 +80,9 @@ public class WrappedHeap {
 				ps.print(" (." + field.getName() + ", " + __objNameMap.get(o.getFieldValue(field)) + ")");
 			ps.println();
 		}
-		if (!renameMapStack.isEmpty()) {
-			ps.println("variable renaming map stack:");
-			for (Map<Variable, Variable> renameMap : renameMapStack) {
+		if (!renameMapList.isEmpty()) {
+			ps.println("variable renaming map list:");
+			for (Map<Variable, Variable> renameMap : renameMapList) {
 				ps.print("   { ");
 				for (Entry<Variable, Variable> entry : renameMap.entrySet()) {
 					ps.print(entry.getKey().toSMTString() + "=>");
@@ -126,8 +130,8 @@ public class WrappedHeap {
 				}
 				ps.println();
 			}
-			if (!br.guardCondStack.isEmpty()) {
-				for (ExistExpr guardCond : br.guardCondStack) {
+			if (!br.guardCondList.isEmpty()) {
+				for (ExistExpr guardCond : br.guardCondList) {
 					ps.println("   " + guardCond.toSMTString());
 				}
 			} else {
@@ -171,11 +175,11 @@ public class WrappedHeap {
 		ObjectH retVal;
 		Map<ObjectH, ObjectH> objSrcMap;
 		Map<Variable, SMTExpression> varExprMap;
-		ArrayDeque<ExistExpr> guardCondStack;
+		ArrayList<ExistExpr> guardCondList;
 	}
 	
-	private List<BackwardRecord> rcdBackwards;
-	private ArrayDeque<Map<Variable, Variable>> renameMapStack;
+	private ArrayList<BackwardRecord> rcdBackwards;
+	private ArrayList<Map<Variable, Variable>> renameMapList;
 	
 	private void addBackwardRecord(WrappedHeap oriHeap, MethodInvoke mInvoke,
 			SMTExpression pathCond, ObjectH retVal,
@@ -188,7 +192,7 @@ public class WrappedHeap {
 		br.retVal = retVal;
 		br.objSrcMap = ImmutableMap.copyOf(objSrcMap);
 		br.varExprMap = ImmutableMap.copyOf(varExprMap);
-		br.guardCondStack = new ArrayDeque<>();
+		br.guardCondList = new ArrayList<>();
 		this.rcdBackwards.add(br);
 	}
 
@@ -200,7 +204,7 @@ public class WrappedHeap {
 		SMTExpression pathCond;
 	}
 	
-	private List<ForwardRecord> rcdForwards;
+	private ArrayList<ForwardRecord> rcdForwards;
 	
 	private void addForwardRecord(WrappedHeap finHeap,	MethodInvoke mInvoke,
 			SMTExpression pathCond) {
@@ -217,7 +221,7 @@ public class WrappedHeap {
 		this.heap = initHeap;
 		this.status = isOutOfScope(initHeap) ? HeapStatus.OUT_OF_SCOPE : HeapStatus.ACTIVE;
 		this.rcdBackwards = new ArrayList<>();
-		this.renameMapStack = new ArrayDeque<>();
+		this.renameMapList = new ArrayList<>();
 		this.rcdForwards = new ArrayList<>();
 		__generateDebugInformation();
 	}
@@ -273,7 +277,7 @@ public class WrappedHeap {
 			}
 			ExistExpr guardCond = new ExistExpr(boundVars,
 					new ApplyExpr(SMTOperator.AND, andClauses));
-			br.guardCondStack.push(guardCond);
+			br.guardCondList.add(guardCond);
 			assert(Sets.difference(
 					guardCond.getBody().getFreeVariables(),
 					guardCond.getBoundVariables()
@@ -282,9 +286,10 @@ public class WrappedHeap {
 		
 		Map<Variable, Variable> newRenameMap = new HashMap<>();
 		List<ExistExpr> orClauses = this.rcdBackwards.stream()
-				.map(o -> o.guardCondStack.getFirst()).collect(Collectors.toList());
+				.map(o -> o.guardCondList.get(o.guardCondList.size() - 1))
+				.collect(Collectors.toList());
 		ExistExpr orExpr = ExistExpr.makeOr(orClauses, newRenameMap);
-		this.renameMapStack.push(newRenameMap);
+		this.renameMapList.add(newRenameMap);
 		
 		List<Variable> funcArgs = new ArrayList<>(this.heap.getVariables());
 		funcArgs.addAll(orExpr.getBoundVariables());
@@ -295,17 +300,67 @@ public class WrappedHeap {
 		this.heap.setConstraint(constraint);
 	}
 	
+	class MatchResult implements ActionIfFound {
+		private Specification spec;
+		public Map<Variable, Constant> model;
+		public Map<ObjectH, ObjectH> objSrcMap;
+		
+		public MatchResult(Specification spec) {
+			this.spec = spec;
+			this.model = new HashMap<>();
+			this.objSrcMap = new HashMap<>();
+		}
+		
+		@Override
+		public boolean emitMapping(Bijection<ObjectH, ObjectH> isoMap) {
+			Map<Variable, Variable> vRenameMap = new HashMap<>();
+			for (Entry<ObjectH, ObjectH> e : isoMap.getMapU2V().entrySet()) {
+				if (e.getKey().isVariable()) {
+					vRenameMap.put(e.getKey().getVariable(), e.getValue().getVariable());
+				}
+			}
+			SMTExpression constraint = new ApplyExpr(SMTOperator.AND,
+					WrappedHeap.this.heap.getConstraint().getBody(),
+					this.spec.condition.getSubstitution(vRenameMap));
+			SMTSolver solver = Options.I().getSMTSolver();
+			if (solver.checkSat(constraint, this.model)) {
+				for (ObjectH o : this.spec.expcHeap.getAccessibleObjects()) {
+					this.objSrcMap.put(o, isoMap.getV(o));
+				}
+				return true;
+			}
+			return false;
+		}
+		
+	}
 	
-	public SymbolicHeap getHeap() {
+	// try to match a test specification
+	public MatchResult matchSpecification(Specification spec) {
+		if (spec.condition == null) {
+			spec.condition = new BoolConst(true);
+		}
+	 	MatchResult action = new MatchResult(spec);
+	 	if (spec.expcHeap.findEmbeddingInto(this.heap, action)) {
+	 		return action;
+	 	}
+		return null;
+	}
+	
+	
+	SymbolicHeap getHeap() {
 		return this.heap;
 	}
 	
-	public HeapStatus getStatus() {
+	HeapStatus getStatus() {
 		return this.status;
 	}
 	
-	public List<BackwardRecord> getBackwardRecords() {
-		return ImmutableList.copyOf(this.rcdBackwards);
+	ArrayList<BackwardRecord> getBackwardRecords() {
+		return this.rcdBackwards;
+	}
+	
+	ArrayList<Map<Variable, Variable>> getRenameMapList() {
+		return this.renameMapList;
 	}
 	
 	

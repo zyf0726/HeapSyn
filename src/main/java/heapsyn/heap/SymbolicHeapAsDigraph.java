@@ -137,7 +137,7 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		Bijection<ObjectH, ObjectH> initMap = new Bijection<>();
 		initMap.putUV(ObjectH.NULL, ObjectH.NULL);
 		boolean isTerminated = searchMapping(0, ImmutableList.copyOf(this.accObjs),
-				other, action, true, initMap);
+				other, action, false, initMap);
 		return isTerminated;
 	}
 	
@@ -150,14 +150,14 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		Bijection<ObjectH, ObjectH> initMap = new Bijection<>();
 		initMap.putUV(ObjectH.NULL, ObjectH.NULL);
 		boolean isTerminated = searchMapping(0, ImmutableList.copyOf(this.accObjs),
-				supHeap, action, false, initMap);
+				supHeap, action, true, initMap);
 		return isTerminated;
 	}
 	
 	private boolean searchMapping(int depth, List<ObjectH> accObjList,
 			SymbolicHeapAsDigraph other,
 			ActionIfFound action,
-			boolean wholeGraph,
+			boolean embedding,
 			Bijection<ObjectH, ObjectH> curMap) {
 		if (depth == accObjList.size()) {
 			boolean terminate = action.emitMapping(curMap);
@@ -165,12 +165,12 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		}
 		ObjectH objU = accObjList.get(depth); 
 		if (curMap.containsU(objU))
-			return searchMapping(depth + 1, accObjList, other, action, wholeGraph, curMap);
+			return searchMapping(depth + 1, accObjList, other, action, embedding, curMap);
 		
 		for (ObjectH objV : other.accObjs) {
 			Bijection<ObjectH, ObjectH> newMap = new Bijection<>(curMap);
-			if (updateMappingRecur(objU, objV, newMap, other, wholeGraph)) {
-				boolean terminate = searchMapping(depth + 1, accObjList, other, action, wholeGraph, newMap);
+			if (updateMappingRecur(objU, objV, newMap, other, embedding)) {
+				boolean terminate = searchMapping(depth + 1, accObjList, other, action, embedding, newMap);
 				if (terminate) return true;
 			}
 		}
@@ -180,15 +180,18 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 	private boolean updateMappingRecur(ObjectH objU, ObjectH objV,
 			Bijection<ObjectH, ObjectH> aMap,
 			SymbolicHeapAsDigraph other,
-			boolean wholeGraph) {
+			boolean embedding) {
 		if (objU.getClassH() != objV.getClassH())
 			return false;
-		if (this.accObjs.contains(objU) != other.accObjs.contains(objV))
-			return false;
-		if (wholeGraph) {
+		if (!embedding) {
+			if (this.accObjs.contains(objU) != other.accObjs.contains(objV))
+				return false;
 			FeatureNodewise featU = this.GA.getFeatureNodewise(objU);
 			FeatureNodewise featV = other.GA.getFeatureNodewise(objV);
 			if (!featU.equals(featV))
+				return false;
+		} else {
+			if (this.accObjs.contains(objU) && !other.accObjs.contains(objV))
 				return false;
 		}
 		
@@ -201,7 +204,7 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		for (FieldH field : objU.getFields()) {
 			ObjectH valU = objU.getFieldValue(field);
 			ObjectH valV = objV.getFieldValue(field);
-			if (!updateMappingRecur(valU, valV, aMap, other, wholeGraph))
+			if (!updateMappingRecur(valU, valV, aMap, other, embedding))
 				return false;
 		}
 		return true;

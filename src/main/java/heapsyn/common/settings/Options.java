@@ -1,41 +1,28 @@
 package heapsyn.common.settings;
 
-import java.lang.reflect.Method;
-import java.util.List;
-
-import heapsyn.wrapper.symbolic.SymbolicExecutor;
+import heapsyn.wrapper.smt.SMTSolver;
+import heapsyn.wrapper.smt.Z3JavaAPI;
 
 public class Options {
 	
 	private static Options INSTANCE = null;
 	
-	public Options I() {
+	private Options() {
+		this.smtSolver = new Z3JavaAPI();
+	}
+	
+	public static Options I() {
 		if (INSTANCE == null) {
 			INSTANCE = new Options();
 		}
 		return INSTANCE;
 	}
+	
+	// smt solver - z3
+	private SMTSolver smtSolver;
 
-	// symbolic executor - JBSE
-	private SymbolicExecutor symExec;
-	
-	// candidate (public) methods
-	private List<Method> candiMethods;
-	
-	// method under test
-	private Method testMethod;
-	
-	
-	public SymbolicExecutor getSymbolicExecutor() {
-		return this.symExec;
-	}
-	
-	public List<Method> getCandidateMethods() {
-		return this.candiMethods;
-	}
-	
-	public Method getMethodUnderTest() {
-		return this.testMethod;
+	public SMTSolver getSMTSolver() {
+		return this.smtSolver;
 	}
 	
 }

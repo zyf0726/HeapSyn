@@ -22,6 +22,7 @@ import com.microsoft.z3.Symbol;
 
 import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.BoolConst;
+import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.SMTOperator;
@@ -59,7 +60,7 @@ public class Z3JavaAPI implements SMTSolver {
 	}
 	
 	@Override
-	public boolean checkSat(SMTExpression constraint, Map<Variable, SMTExpression> model) {
+	public boolean checkSat(SMTExpression constraint, Map<Variable, Constant> model) {
 		Context ctx = new Context();
 		StringBuilder sb = new StringBuilder();
 		List<Symbol> declNames = new ArrayList<>();
@@ -101,16 +102,28 @@ public class Z3JavaAPI implements SMTSolver {
 		if (model != null) {
 			Model z3Model = z3Solver.getModel();
 			for (Variable var : constraint.getFreeVariables()) {
+				if (model.containsKey(var)) continue;
 				Symbol varSymb = ctx.mkSymbol(var.toSMTString());
 				FuncDecl varDecl = ctx.mkConstDecl(varSymb, convertSort(ctx, var.getSMTSort()));
-				Expr val = z3Model.getConstInterp(varDecl).simplify();
-				switch (var.getSMTSort()) {
-				case BOOL:
-					model.put(var, new BoolConst(((BoolExpr) val).isTrue()));
-					break;
-				case INT:
-					model.put(var, new IntConst(((IntNum) val).getInt64()));
-					break;
+				if (z3Model.getConstInterp(varDecl) == null) {
+					switch (var.getSMTSort()) {
+					case BOOL:
+						model.put(var, BoolConst.DEFAULT);
+						break;
+					case INT:
+						model.put(var, IntConst.DEFAULT);
+						break;
+					}
+				} else {
+					Expr val = z3Model.getConstInterp(varDecl).simplify();
+					switch (var.getSMTSort()) {
+					case BOOL:
+						model.put(var, new BoolConst(((BoolExpr) val).isTrue()));
+						break;
+					case INT:
+						model.put(var, new IntConst(((IntNum) val).getInt64()));
+						break;
+					}
 				}
 			}
 		}
