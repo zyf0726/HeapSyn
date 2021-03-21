@@ -13,7 +13,7 @@ import jbse.apps.run.RunParameters.StepShowMode;
 public class TestJBSE {
 	
     //Customize them
-    private static final String Z3_PATH           = "C:\\Program Files\\z3-4.8.9-x64-win\\bin\\z3.exe";
+    private static final String Z3_PATH           = "libs/z3.exe";
     private static final String JBSE_HOME         = "jbse/";
 
     //Leave them alone
