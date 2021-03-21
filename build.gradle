@@ -11,10 +11,17 @@ plugins {
     id 'java-library'
 }
 
+def javaVersion = JavaLanguageVersion.of(8)
+def javaHome = javaToolchains.compilerFor { languageVersion = javaVersion }.get().metadata.installationPath.asFile.toString()
+
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+    
+    flatDir {
+   		dirs "${javaHome}/lib", "${project(':jbse').projectDir}/libs"
+    }
 }
 
 dependencies {
@@ -29,4 +36,8 @@ dependencies {
     
     // z3 java api
     implementation files('libs/com.microsoft.z3.jar')
+    
+    // jbse
+    implementation project(':jbse')
+  
 }
