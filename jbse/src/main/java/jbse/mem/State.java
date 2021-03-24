@@ -87,6 +87,46 @@ import jbse.val.exc.InvalidTypeException;
  * Class that represents the state of the execution.
  */
 public final class State implements Cloneable {
+	
+/* ================== modified, start ================== */
+	private Heap initHeap;
+	private PathCondition initPathCond;
+	private Long startPos;
+	private HeapObjekt[] args;
+	
+	public Heap getInitHeap() {
+		return this.initHeap;
+	}
+	
+	public void setInitHeap(Heap heap) {
+		this.initHeap = heap;
+	}
+	
+	public PathCondition getInitPathCond() {
+		return this.initPathCond;
+	}
+	
+	public void setInitPathCond(PathCondition pathCond) {
+		this.initPathCond = pathCond;
+	}
+	
+	public Long getStartPosition() {
+		return this.startPos;
+	}
+	
+	public void setStartPosition(Long pos) {
+		this.startPos = pos;
+	}
+	
+	public HeapObjekt[] getArguments() {
+		return this.args;
+	}
+	
+	public void setArguments(HeapObjekt[] args) {
+		this.args = args;
+	}
+/* ================== modified, end ==================== */ 
+	
     /**
      * The phase types of the symbolic execution.
      * 
@@ -2585,7 +2625,8 @@ public final class State implements Cloneable {
      */
     public ReferenceSymbolic pushFrameSymbolic(ClassFile classMethodImpl, Signature methodSignatureImpl) 
     throws MethodNotFoundException, MethodCodeNotFoundException, 
-    HeapMemoryExhaustedException, CannotAssumeSymbolicObjectException, FrozenStateException {
+    HeapMemoryExhaustedException, CannotAssumeSymbolicObjectException, FrozenStateException,
+    InvalidInputException, ContradictionException {
     	if (this.frozen) {
     		throw new FrozenStateException();
     	}
@@ -2598,9 +2639,43 @@ public final class State implements Cloneable {
             //this should never happen
             throw new UnexpectedInternalException(e);
         }
+        
+        /* ======================== modified, start ======================== */
+        if (this.initHeap != null) {
+        	this.heap = this.initHeap;
+        }
+        if (this.initPathCond != null) {
+        	this.pathCondition = this.initPathCond;
+        }
+        if (this.args != null) {
+        	for (int i = 0; i < this.args.length; ++i) {
+        		InstanceImpl_DEFAULT id = (InstanceImpl_DEFAULT) this.args[i];
+        		Simplex s = (Simplex) id.getIdentityHashCode();
+        		try {
+        			this.pathCondition.addClauseAssumeExpands(
+        					(ReferenceSymbolic) args[i],
+        					(Integer) s.getActualValue(),
+        					id);
+        		} catch (InvalidInputException e) {
+        			throw new InvalidInputException(
+        					"(caused by modified code!!) " + e.getMessage());
+        		} catch (ContradictionException e) {
+        			throw new ContradictionException(
+        					"(caused by modified code!!) " + e.getMessage());
+        		}
+        	}
+        }
+        /* ======================= modified, end ========================== */
+        
         this.stack.push(f);
         return (isStatic ? null : ((ReferenceSymbolic) args[0]));
     }
+    
+    /* ========== modified, start ======= */
+    public Heap __getHeap() {
+    	return this.heap;
+    }
+    /* ========== modified, end ========= */
 
     /**
      * Parses the signature of a method, and returns the
@@ -3173,6 +3248,12 @@ public final class State implements Cloneable {
     public List<Clause> getPathCondition() {
         return this.pathCondition.getClauses();
     }
+    
+    /* ============= modified, start ============ */
+    public PathCondition __getPathCondition() {
+    	return this.pathCondition;
+    }
+    /* ============== modified, end ============= */
 
     /**
      * Returns the path condition clauses that have been pushed since

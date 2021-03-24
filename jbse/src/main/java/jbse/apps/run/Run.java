@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import jbse.JBSE;
@@ -56,6 +57,8 @@ import jbse.jvm.exc.EngineStuckException;
 import jbse.jvm.exc.FailureException;
 import jbse.jvm.exc.InitializationException;
 import jbse.jvm.exc.NonexistingObservedVariablesException;
+import jbse.mem.Heap;
+import jbse.mem.PathCondition;
 import jbse.mem.State;
 import jbse.mem.exc.CannotRefineException;
 import jbse.mem.exc.ContradictionException;
@@ -95,6 +98,19 @@ import jbse.val.Simplex;
  * @author Pietro Braione
  */
 public final class Run {
+	
+	/* ======================= modified, start ===================== */
+	private HashMap<Heap, PathCondition> executed = new HashMap<>();
+	
+	public HashMap<Heap, PathCondition> getExecuted() {
+		return this.executed;
+	}
+	
+	public void setExecuted(HashMap<Heap, PathCondition> executed) {
+		this.executed = executed;
+	}
+	/* ======================== modified, end ====================== */	
+	
     /** The {@link RunParameters} of the symbolic execution. */
     private final RunParameters parameters;
 
@@ -421,6 +437,11 @@ public final class Run {
         public boolean atPathEnd() {
             try {
                 final State currentState = Run.this.engine.getCurrentState();
+                /* ======================== modified, start =================== */
+                currentState.__getHeap().setReturnValue(currentState.getStuckReturn());
+                executed.put(currentState.__getHeap(), currentState.__getPathCondition());
+                /* ========================= modified, end ==================== */
+                
                 //prints the leaf state if the case
                 if (Run.this.parameters.getStepShowMode() == StepShowMode.ALL ||       //already shown
                     Run.this.parameters.getStepShowMode() == StepShowMode.SOURCE ||    //already shown
@@ -710,6 +731,11 @@ public final class Run {
             if (this.engine == null) {
                 return 1;
             }
+            /* ======================= modified, start ====================== */
+            this.engine.setInitHeap(this.parameters.getInitHeap());
+            this.engine.setInitPathCond(this.parameters.getInitPathCond());
+            this.engine.setArguments(this.parameters.getArguments());
+            /* ======================== modified, end ======================= */
             createHeapChecker(this.decisionProcedureConcretization);
             createFormatter();
         } catch (NonexistingObservedVariablesException e) {

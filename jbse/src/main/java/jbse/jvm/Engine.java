@@ -33,6 +33,9 @@ import jbse.jvm.exc.FailureException;
 import jbse.jvm.exc.InitializationException;
 import jbse.jvm.exc.NonexistingObservedVariablesException;
 import jbse.mem.Clause;
+import jbse.mem.Heap;
+import jbse.mem.HeapObjekt;
+import jbse.mem.PathCondition;
 import jbse.mem.State;
 import jbse.mem.State.Phase;
 import jbse.mem.exc.ContradictionException;
@@ -64,6 +67,36 @@ import jbse.val.ReferenceSymbolic;
  */
 public final class Engine implements AutoCloseable {
     //Architecture of the engine
+	
+	/* ====================== modified, start ======================= */
+	private Heap initHeap;
+	private PathCondition initPathCond;
+	private HeapObjekt[] args;
+	
+	public Heap getInitHeap() {
+		return this.initHeap;
+	}
+	
+	public void setInitHeap(Heap heap) {
+		this.initHeap = heap;
+	}
+	
+	public PathCondition getInitPathCond() {
+		return this.initPathCond;
+	}
+	
+	public void setInitPathCond(PathCondition pathCond) {
+		this.initPathCond = pathCond;
+	}
+	
+	public HeapObjekt[] getArguments() {
+		return this.args;
+	}
+	
+	public void setArguments(HeapObjekt[] args) {
+		this.args = args;
+	}
+	/* ======================== modified, end ======================== */	
 
     /** The {@link ExecutionContext}. */
     private final ExecutionContext ctx; 
@@ -303,9 +336,19 @@ public final class Engine implements AutoCloseable {
         	this.preStepSourceRow = (this.preStepStackSize == 0 ? -1 : this.currentState.getSourceRow());
 
         	//steps
-        	Action action = (atLastPreInitialState ? 
-  				             this.ctx.dispatcher.selectInit() :
-  				             this.ctx.dispatcher.select(this.currentState.getInstruction()));
+        	/* ============================= modified, start =============================== */
+        	Action action;
+        	if (atLastPreInitialState) {
+        		action = this.ctx.dispatcher.selectInit();
+        		this.currentState.setInitHeap(this.initHeap);
+        		this.currentState.setInitPathCond(this.initPathCond);
+        		this.currentState.setArguments(this.args);
+        		this.currentState.__getHeap().setStartPosition(
+        				this.currentState.__getHeap().getNextIndex());
+        	} else {
+        		action = this.ctx.dispatcher.select(this.currentState.getInstruction());
+        	}
+        	/* ============================== modified, end ================================ */
         	boolean hasContinuation;
         	do {
         		try {

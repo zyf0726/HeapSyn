@@ -20,7 +20,9 @@ import jbse.val.Simplex;
  * different branch points traversed during execution as a 
  * suitable {@link Collection}{@code <}{@link Clause}{@code >}. 
  */
-final class PathCondition implements Cloneable {
+/* ===================== modified, start ===================== */
+public final class PathCondition implements Cloneable {
+/* ====================== modified, end ====================== */
     /** {@link ArrayList} of all the {@link Clause}s forming the path condition. */
     private ArrayList<Clause> clauses;
 
@@ -191,7 +193,7 @@ final class PathCondition implements Cloneable {
      * @return {@code true} iff {@code reference} is resolved.
      * @throws NullPointerException if {@code reference == null}.
      */
-    boolean resolved(ReferenceSymbolic reference) {
+    public boolean resolved(ReferenceSymbolic reference) {
         return this.referenceResolutionMap.containsKey(reference);
     }
 
@@ -205,7 +207,7 @@ final class PathCondition implements Cloneable {
      * {@code reference} has been resolved.
      * @throws NullPointerException if {@code reference == null}.
      */
-    long getResolution(ReferenceSymbolic reference) {
+    public long getResolution(ReferenceSymbolic reference) {
         return this.referenceResolutionMap.get(reference);
     }
 

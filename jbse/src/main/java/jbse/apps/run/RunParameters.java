@@ -30,6 +30,9 @@ import jbse.jvm.ExecutionObserver;
 import jbse.jvm.RunnerParameters;
 import jbse.jvm.EngineParameters.BreadthMode;
 import jbse.jvm.EngineParameters.StateIdentificationMode;
+import jbse.mem.Heap;
+import jbse.mem.HeapObjekt;
+import jbse.mem.PathCondition;
 import jbse.mem.State;
 import jbse.rewr.CalculatorRewriting;
 import jbse.rewr.RewriterCalculatorRewriting;
@@ -81,6 +84,37 @@ import jbse.val.ReferenceSymbolic;
  * @author Pietro Braione
  */
 public final class RunParameters implements Cloneable {
+	
+	/* ====================== modified, start ====================== */
+	private Heap initHeap;
+	private PathCondition initPathCond;
+	private HeapObjekt[] args;
+	
+	public Heap getInitHeap() {
+		return this.initHeap;
+	}
+	
+	public void setInitHeap(Heap prevHeap) {
+		this.initHeap = prevHeap;
+	}
+	
+	public PathCondition getInitPathCond() {
+		return this.initPathCond;
+	}
+	
+	public void setInitPathCond(PathCondition pathCond) {
+		this.initPathCond = pathCond;
+	}
+	
+	public HeapObjekt[] getArguments() {
+		return this.args;
+	}
+	
+	public void setArguments(HeapObjekt[] args) {
+		this.args = args;
+	}
+	/* ======================== modified, end ====================== */
+	
     /**
      * Enumeration of the possible decision procedures.
      * 
