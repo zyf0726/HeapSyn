@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import jbse.JBSE;
@@ -100,13 +101,13 @@ import jbse.val.Simplex;
 public final class Run {
 	
 	/* ======================= modified, start ===================== */
-	private HashMap<Heap, PathCondition> executed = new HashMap<>();
+	private HashSet<State> executed = new HashSet<>();
 	
-	public HashMap<Heap, PathCondition> getExecuted() {
+	public HashSet<State> getExecuted() {
 		return this.executed;
 	}
 	
-	public void setExecuted(HashMap<Heap, PathCondition> executed) {
+	public void setExecuted(HashSet<State> executed) {
 		this.executed = executed;
 	}
 	/* ======================== modified, end ====================== */	
@@ -439,7 +440,7 @@ public final class Run {
                 final State currentState = Run.this.engine.getCurrentState();
                 /* ======================== modified, start =================== */
                 currentState.__getHeap().setReturnValue(currentState.getStuckReturn());
-                executed.put(currentState.__getHeap(), currentState.__getPathCondition());
+                executed.add(currentState);
                 /* ========================= modified, end ==================== */
                 
                 //prints the leaf state if the case
@@ -732,8 +733,9 @@ public final class Run {
                 return 1;
             }
             /* ======================= modified, start ====================== */
-            this.engine.setInitHeap(this.parameters.getInitHeap());
-            this.engine.setInitPathCond(this.parameters.getInitPathCond());
+            this.engine.setInitState(this.parameters.getInitState());
+            //this.engine.setInitHeap(this.parameters.getInitHeap());
+            //this.engine.setInitPathCond(this.parameters.getInitPathCond());
             this.engine.setArguments(this.parameters.getArguments());
             /* ======================== modified, end ======================= */
             createHeapChecker(this.decisionProcedureConcretization);

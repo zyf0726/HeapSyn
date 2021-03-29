@@ -86,24 +86,17 @@ import jbse.val.ReferenceSymbolic;
 public final class RunParameters implements Cloneable {
 	
 	/* ====================== modified, start ====================== */
-	private Heap initHeap;
-	private PathCondition initPathCond;
+	private State initState;
+//	private Heap initHeap;
+//	private PathCondition initPathCond;
 	private HeapObjekt[] args;
 	
-	public Heap getInitHeap() {
-		return this.initHeap;
+	public State getInitState() {
+		return this.initState;
 	}
 	
-	public void setInitHeap(Heap prevHeap) {
-		this.initHeap = prevHeap;
-	}
-	
-	public PathCondition getInitPathCond() {
-		return this.initPathCond;
-	}
-	
-	public void setInitPathCond(PathCondition pathCond) {
-		this.initPathCond = pathCond;
+	public void setInitState(State state) {
+		this.initState = state;
 	}
 	
 	public HeapObjekt[] getArguments() {

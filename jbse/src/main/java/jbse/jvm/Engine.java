@@ -69,24 +69,15 @@ public final class Engine implements AutoCloseable {
     //Architecture of the engine
 	
 	/* ====================== modified, start ======================= */
-	private Heap initHeap;
-	private PathCondition initPathCond;
+	private State initState;
 	private HeapObjekt[] args;
 	
-	public Heap getInitHeap() {
-		return this.initHeap;
+	public State getInitState() {
+		return this.initState;
 	}
 	
-	public void setInitHeap(Heap heap) {
-		this.initHeap = heap;
-	}
-	
-	public PathCondition getInitPathCond() {
-		return this.initPathCond;
-	}
-	
-	public void setInitPathCond(PathCondition pathCond) {
-		this.initPathCond = pathCond;
+	public void setInitState(State state) {
+		this.initState = state;
 	}
 	
 	public HeapObjekt[] getArguments() {
@@ -340,8 +331,7 @@ public final class Engine implements AutoCloseable {
         	Action action;
         	if (atLastPreInitialState) {
         		action = this.ctx.dispatcher.selectInit();
-        		this.currentState.setInitHeap(this.initHeap);
-        		this.currentState.setInitPathCond(this.initPathCond);
+        		this.currentState.setInitState(this.initState);
         		this.currentState.setArguments(this.args);
         		this.currentState.__getHeap().setStartPosition(
         				this.currentState.__getHeap().getNextIndex());
@@ -377,7 +367,7 @@ public final class Engine implements AutoCloseable {
         	
         	//cleans, stores and creates a branch for the initial state
     	    if (atInitialState()) {
-    			this.currentState.gc();
+    			//this.currentState.gc();
     			this.ctx.switchInitial(this.currentState);
         		this.vom.init(this);
     	    	this.ctx.stateTree.addStateInitial(this.currentState);

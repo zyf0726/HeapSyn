@@ -261,6 +261,10 @@ public final class PathCondition implements Cloneable {
         return Collections.unmodifiableList(this.clauses);
     }
     
+    public List<Clause> __getClauses() {
+    	return this.clauses;
+    }
+    
     @Override
     public String toString() {
         final StringBuilder buf = new StringBuilder();

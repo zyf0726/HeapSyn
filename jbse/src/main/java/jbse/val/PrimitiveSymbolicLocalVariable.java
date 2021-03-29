@@ -32,7 +32,7 @@ public final class PrimitiveSymbolicLocalVariable extends PrimitiveSymbolicAtomi
     PrimitiveSymbolicLocalVariable(String variableName, int id, char type, HistoryPoint historyPoint) 
     throws InvalidTypeException, InvalidInputException {
     	super(id, type, historyPoint);
-    	this.variableName = variableName;
+    	this.variableName = variableName+id;
     	this.originString = "{ROOT}:" + this.variableName;
     	
     	//calculates hashCode

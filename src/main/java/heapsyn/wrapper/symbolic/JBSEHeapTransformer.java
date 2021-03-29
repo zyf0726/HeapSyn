@@ -14,21 +14,42 @@ import heapsyn.common.exceptions.UnhandledJBSEValue;
 import heapsyn.heap.ClassH;
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
+import heapsyn.smtlib.BoolVar;
+import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.IntVar;
 import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
 import jbse.mem.ObjektImpl;
 import jbse.mem.PathCondition;
+import jbse.mem.State;
 import jbse.mem.Variable;
+import jbse.val.Primitive;
+import jbse.val.PrimitiveSymbolic;
 import jbse.val.PrimitiveSymbolicLocalVariable;
 import jbse.val.PrimitiveSymbolicMemberField;
 import jbse.val.ReferenceConcrete;
 import jbse.val.ReferenceSymbolic;
+import jbse.val.Simplex;
 import jbse.val.Value;
 
 public class JBSEHeapTransformer {
 	
 	private static int MAX_HEAP_SIZE_JBSE = 1_000_000; 
+	private Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
+	private Map<Primitive, ObjectH> finjbseVarMap = new HashMap<>();
+	private Map<ObjectH,Primitive> finVarjbseMap = new HashMap<>(); // a Primitive may correspond to more than one ObjectH
+	
+	public Map<HeapObjekt, ObjectH> getfinjbseObjMap() {
+		return this.finjbseObjMap;
+	}
+	
+	public Map<Primitive, ObjectH> getfinjbseVarMap() {
+		return this.finjbseVarMap;
+	}
+	
+	public Map<ObjectH,Primitive> getfinVarjbseMap() {
+		return this.finVarjbseMap;
+	}
 
 	// keep only the useful HeapObjekts in Heap
 	private static Heap filterPreObjekt(Heap heap) { 
@@ -53,19 +74,20 @@ public class JBSEHeapTransformer {
 		}
 	}
 	
-	public static Map<HeapObjekt, ObjectH> updateJBSEObjMap(
-			Heap heap, PathCondition pathCond, Map<HeapObjekt, ObjectH> jbseObjMap) {
-		Map<HeapObjekt, ObjectH> ret = new HashMap<>(jbseObjMap);
+	public void transform(State state) {		
+		Heap heap=state.__getHeap();
+		PathCondition pathCond=state.__getPathCondition();
+		
 		Heap delHeap = filterPreObjekt(heap);
 		Map<Long, HeapObjekt> objekts = delHeap.__getObjects();
 		
+		//Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
+		
 		for (HeapObjekt o : objekts.values()) {
-			if (!ret.containsKey(o)) {
-				ret.put(o, transHeapObjektToObjectH((ObjektImpl) o));
-			}
+			this.finjbseObjMap.put(o, transHeapObjektToObjectH((ObjektImpl) o));
 		}
 		
-		for (Entry<HeapObjekt, ObjectH> entry : ret.entrySet()) {
+		for (Entry<HeapObjekt, ObjectH> entry : this.finjbseObjMap.entrySet()) {
 			// determine fieldValMap for each ObjectH
 			HeapObjekt ok = entry.getKey();
 			ObjectH oh = entry.getValue();
@@ -85,7 +107,7 @@ public class JBSEHeapTransformer {
 				if (varValue instanceof ReferenceConcrete) {
 					ReferenceConcrete rc = (ReferenceConcrete) varValue;
 					HeapObjekt objekt = objekts.get(rc.getHeapPosition());
-					ObjectH value = ret.get(objekt);
+					ObjectH value = this.finjbseObjMap.get(objekt);
 					if (value == null) {
 						fieldValMap.put(field, ObjectH.NULL);
 					} else {
@@ -99,23 +121,27 @@ public class JBSEHeapTransformer {
 				 		if (pos == jbse.mem.Util.POS_NULL) {
 				 			value = ObjectH.NULL;
 				 		} else {
-				 			value = ret.get(objekts.get(pos));
+				 			value = this.finjbseObjMap.get(objekts.get(pos));
 				 		}
 				 	} else {
 				 		value = ObjectH.NULL;
 				 	}
 				 	fieldValMap.put(field, value);
-				} else if (varValue instanceof PrimitiveSymbolicLocalVariable || 
-						varValue instanceof PrimitiveSymbolicMemberField) {
-					ObjectH value = new ObjectH(new IntVar()); // TODO BoolVar?
+				} else if (varValue instanceof Primitive) {
+					ObjectH value=null; 
+					if(varValue.getType()=='I') value = new ObjectH(new IntVar());
+					else if(varValue.getType()=='Z') value=new ObjectH(new BoolVar());
 					fieldValMap.put(field, value);
-				} else {
+					this.finjbseVarMap.put((Primitive) varValue, value);
+					this.finVarjbseMap.put(value,(Primitive) varValue);
+				} 
+				else {
 					throw new UnhandledJBSEValue(varValue.getClass().getName()); 
 				}
 			}
 			oh.setFieldValueMap(fieldValMap);
 		}
-		return ret;
+						
 	}
-
 }
+	

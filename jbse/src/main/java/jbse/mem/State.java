@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import jbse.bc.ClassFile;
 import jbse.bc.ClassFileFactory;
@@ -89,25 +91,19 @@ import jbse.val.exc.InvalidTypeException;
 public final class State implements Cloneable {
 	
 /* ================== modified, start ================== */
-	private Heap initHeap;
-	private PathCondition initPathCond;
+	private State initState;
 	private Long startPos;
 	private HeapObjekt[] args;
+	private Value[] vargs;
+	public int argpos; //记录pathcondition中参数指定开始的位置
+	public int refarglen; //记录ref参数的个数
 	
-	public Heap getInitHeap() {
-		return this.initHeap;
+	public State getInitState() {
+		return this.initState;
 	}
 	
-	public void setInitHeap(Heap heap) {
-		this.initHeap = heap;
-	}
-	
-	public PathCondition getInitPathCond() {
-		return this.initPathCond;
-	}
-	
-	public void setInitPathCond(PathCondition pathCond) {
-		this.initPathCond = pathCond;
+	public void setInitState(State state) {
+		this.initState = state;
 	}
 	
 	public Long getStartPosition() {
@@ -124,6 +120,10 @@ public final class State implements Cloneable {
 	
 	public void setArguments(HeapObjekt[] args) {
 		this.args = args;
+	}
+	
+	public Value[] getVargs() {
+		return this.vargs;
 	}
 /* ================== modified, end ==================== */ 
 	
@@ -2630,9 +2630,17 @@ public final class State implements Cloneable {
     	if (this.frozen) {
     		throw new FrozenStateException();
     	}
+    	
+    	if (this.initState != null) {
+    		this.heap = this.initState.__getHeap();
+    		this.pathCondition=this.initState.__getPathCondition();
+    		this.symbolFactory=this.initState.symbolFactory;
+    	}
+    	
         final boolean isStatic = classMethodImpl.isMethodStatic(methodSignatureImpl);
         final MethodFrame f = new MethodFrame(methodSignatureImpl, classMethodImpl);
         final Value[] args = makeArgsSymbolic(f, isStatic);
+        this.vargs=args;
         try {
             f.setArgs(args);
         } catch (InvalidSlotException e) {
@@ -2641,14 +2649,12 @@ public final class State implements Cloneable {
         }
         
         /* ======================== modified, start ======================== */
-        if (this.initHeap != null) {
-        	this.heap = this.initHeap;
-        }
-        if (this.initPathCond != null) {
-        	this.pathCondition = this.initPathCond;
-        }
+        this.argpos=this.pathCondition.getClauses().size();
+        this.refarglen=0;
         if (this.args != null) {
-        	for (int i = 0; i < this.args.length; ++i) {
+        	possiblyReset();
+        	for (int i = 0; i < this.args.length; ++i) { // how to get position from a heapobjekt?
+        		if(this.args[i]==null) continue;
         		InstanceImpl_DEFAULT id = (InstanceImpl_DEFAULT) this.args[i];
         		Simplex s = (Simplex) id.getIdentityHashCode();
         		try {
@@ -2656,6 +2662,9 @@ public final class State implements Cloneable {
         					(ReferenceSymbolic) args[i],
         					(Integer) s.getActualValue(),
         					id);
+        			id.setOrigin((ReferenceSymbolic) args[i]);
+        			++this.nPushedClauses;
+        			this.refarglen++;
         		} catch (InvalidInputException e) {
         			throw new InvalidInputException(
         					"(caused by modified code!!) " + e.getMessage());
@@ -2665,6 +2674,22 @@ public final class State implements Cloneable {
         		}
         	}
         }
+        
+        for (Entry<Long, HeapObjekt> entry : this.heap.__getObjects().entrySet()) {
+			if (entry.getKey() >= heap.getStartPosition()) {
+				InstanceImpl_DEFAULT id = (InstanceImpl_DEFAULT) entry.getValue();
+				if(id.getOrigin()!=null) continue;
+				String type="L"+id.getType().getClassName()+";";
+				ReferenceSymbolic rs;
+				try {
+					rs = (ReferenceSymbolic) this.createSymbolLocalVariable(type, type, "Object");
+					id.setOrigin(rs);
+				} catch (InvalidTypeException | InvalidInputException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
         /* ======================= modified, end ========================== */
         
         this.stack.push(f);

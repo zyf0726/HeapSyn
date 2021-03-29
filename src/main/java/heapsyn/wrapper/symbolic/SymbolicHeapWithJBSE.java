@@ -13,31 +13,45 @@ import heapsyn.smtlib.ExistExpr;
 import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
 import jbse.mem.PathCondition;
+import jbse.mem.State;
+import jbse.val.Primitive;
 
 public class SymbolicHeapWithJBSE extends SymbolicHeapAsDigraph {
-	
-	private Heap jbseHeap;
-	private PathCondition jbsePathCond;
+
+//	private Heap jbseHeap;
+//	private PathCondition jbsePathCond;
+	private State jbseState;
 	private Map<HeapObjekt, ObjectH> jbseObjMap;
+	private Map<Primitive,ObjectH> jbseVarMap;
+
+//	public Heap getJBSEHeap() {
+//		return this.jbseHeap;
+//	}
+//
+//	public PathCondition getJBSEPathCond() {
+//		return this.jbsePathCond;
+//	}
 	
-	public Heap getJBSEHeap() {
-		return this.jbseHeap;
+	public State getJBSEState() {
+		return this.jbseState;
 	}
-	
-	public PathCondition getJBSEPathCond() {
-		return this.jbsePathCond;
-	}
-	
+
 	public Map<HeapObjekt, ObjectH> getJBSEObjMap() {
 		return this.jbseObjMap;
 	}
 	
-	public SymbolicHeapWithJBSE(Collection<ObjectH> accObjs, ExistExpr constraint,
-			Heap heap, PathCondition pathCond, Map<HeapObjekt, ObjectH> objMap) {
+	public Map<Primitive,ObjectH> getJBSEVarMap() {
+		return this.jbseVarMap;
+	}
+
+	public SymbolicHeapWithJBSE(Collection<ObjectH> accObjs, ExistExpr constraint, State state,
+			Map<HeapObjekt, ObjectH> objMap,Map<Primitive,ObjectH> varMap) {
 		super(accObjs, constraint);
-		this.jbseHeap = heap;
-		this.jbsePathCond = pathCond;
+//		this.jbseHeap = heap;
+//		this.jbsePathCond = pathCond;
+		this.jbseState = state;
 		this.jbseObjMap = objMap;
+		this.jbseVarMap = varMap;
 	}
 
 }
