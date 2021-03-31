@@ -10,7 +10,7 @@ import jbse.apps.run.RunParameters.DecisionProcedureType;
 import jbse.apps.run.RunParameters.StateFormatMode;
 import jbse.apps.run.RunParameters.StepShowMode;
 
-public class TestJBSE {
+public class JBSETest {
 	
     //Customize them
     private static final String Z3_PATH           = "libs/z3.exe";

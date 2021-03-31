@@ -10,9 +10,7 @@ import java.util.Map;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ExistExpr;
-import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
-import jbse.mem.PathCondition;
 import jbse.mem.State;
 import jbse.val.Primitive;
 

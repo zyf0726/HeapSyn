@@ -15,7 +15,6 @@ import heapsyn.heap.ClassH;
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
 import heapsyn.smtlib.BoolVar;
-import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.IntVar;
 import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
@@ -24,12 +23,8 @@ import jbse.mem.PathCondition;
 import jbse.mem.State;
 import jbse.mem.Variable;
 import jbse.val.Primitive;
-import jbse.val.PrimitiveSymbolic;
-import jbse.val.PrimitiveSymbolicLocalVariable;
-import jbse.val.PrimitiveSymbolicMemberField;
 import jbse.val.ReferenceConcrete;
 import jbse.val.ReferenceSymbolic;
-import jbse.val.Simplex;
 import jbse.val.Value;
 
 public class JBSEHeapTransformer {

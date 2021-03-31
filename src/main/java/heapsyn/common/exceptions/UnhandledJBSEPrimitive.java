@@ -1,17 +1,17 @@
 package heapsyn.common.exceptions;
 
-public class NotFindvarMap extends RuntimeException{
+public class UnhandledJBSEPrimitive extends RuntimeException{
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 8728277652808961054L;
 
-	public NotFindvarMap() {
+	public UnhandledJBSEPrimitive() {
 		super();
 	}
 
-	public NotFindvarMap(String message) {
+	public UnhandledJBSEPrimitive(String message) {
 		super(message);
 	}
 

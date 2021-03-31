@@ -6,7 +6,6 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -58,8 +57,6 @@ import jbse.jvm.exc.EngineStuckException;
 import jbse.jvm.exc.FailureException;
 import jbse.jvm.exc.InitializationException;
 import jbse.jvm.exc.NonexistingObservedVariablesException;
-import jbse.mem.Heap;
-import jbse.mem.PathCondition;
 import jbse.mem.State;
 import jbse.mem.exc.CannotRefineException;
 import jbse.mem.exc.ContradictionException;

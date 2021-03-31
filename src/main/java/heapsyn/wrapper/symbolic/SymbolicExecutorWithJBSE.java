@@ -18,7 +18,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import heapsyn.algo.MethodInvoke;
-import heapsyn.common.exceptions.NotFindvarMap;
+import heapsyn.common.exceptions.UnhandledJBSEPrimitive;
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
 import heapsyn.common.exceptions.UnsupportedSMTOperator;
@@ -39,8 +39,6 @@ import jbse.mem.State;
 import jbse.val.Expression;
 import jbse.val.Operator;
 import jbse.val.Primitive;
-import jbse.val.PrimitiveSymbolicLocalVariable;
-import jbse.val.Reference;
 import jbse.val.ReferenceConcrete;
 import jbse.val.ReferenceSymbolic;
 import jbse.val.Simplex;
@@ -53,7 +51,7 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 	private static final String TARGET_SOURCEPATH = "src/main/java/";
 
 	// Leave them alone
-	private static final String Z3_PATH = "C:/junior(1)/labs/z3/build/z3.exe";
+	private static final String Z3_PATH = "libs/z3.exe";
 	private static final String JBSE_HOME = "jbse/";
 	private static final String JBSE_CLASSPATH = JBSE_HOME + "build/classes/java/main";
 	private static final String JBSE_SOURCEPATH = JBSE_HOME + "src/main/java/";
@@ -197,8 +195,9 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 			else {
 				return new ApplyExpr(smtop,JBSEexpr2SMTexpr(init,fst),JBSEexpr2SMTexpr(init,snd));
 			}
+		} else {
+			throw new UnhandledJBSEPrimitive(p.getClass().getName());
 		}
-		throw new NotFindvarMap();
 	}
 	
 	/* get varExprMap from maps between Primitive and ObjectH */
@@ -237,17 +236,17 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 
 		SymbolicHeapWithJBSE symHeapJBSE = (SymbolicHeapWithJBSE) initHeap;
 		State initState=symHeapJBSE.getJBSEState();
-		Heap heap=null;
-		PathCondition pathCond=null;
+//		Heap heap=null;
+//		PathCondition pathCond=null;
 		
-		if(initState!=null) {
-			heap = initState.__getHeap();
-			pathCond = initState.__getPathCondition(); // previous arg pathcond need to be deleted?
+//		if(initState!=null) {
+//			heap = initState.__getHeap();
+//			pathCond = initState.__getPathCondition(); // previous arg pathcond need to be deleted?
 //			int ofset=initState.argpos;
 //			for(int i=0;i<initState.refarglen;++i) {
 //				pathCond.__getClauses().remove(i+ofset);
 //			}
-		}
+//		}
 		Map<HeapObjekt, ObjectH> jbseObjMap = symHeapJBSE.getJBSEObjMap();
 		RunParameters p = new RunParameters();
 		ArrayList<ObjectH> invokeArgs = mInvoke.getInvokeArguments();
@@ -278,7 +277,7 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 		for (State state:executed) {
 			Set<ObjectH> initaccObjs = new HashSet<>(symHeapJBSE.getAccessibleObjects());
 			Heap finHeapJBSE = state.__getHeap();
-			PathCondition pathCondJBSE = state.__getPathCondition();
+//			PathCondition pathCondJBSE = state.__getPathCondition();
 			JBSEHeapTransformer jhs=new JBSEHeapTransformer();
 			jhs.transform(state);
 			Map<HeapObjekt, ObjectH> finjbseObjMap = jhs.getfinjbseObjMap();
