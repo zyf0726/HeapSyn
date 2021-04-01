@@ -32,6 +32,8 @@ import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.Specification;
+import heapsyn.wrapper.symbolic.SymbolicExecutor;
+import heapsyn.wrapper.symbolic.SymbolicExecutorWithJBSE;
 
 public class TestGeneratorTest {
 	
@@ -193,10 +195,9 @@ public class TestGeneratorTest {
 		System.out.flush();
 	}
 	
-	@Test
-	public void test2() throws Exception {
+	private void makeTest(SymbolicExecutor executor) throws Exception {
 		HeapTransGraphBuilder graphBuilder = new HeapTransGraphBuilder(
-				ManualExecutor.I(),
+				executor,
 				Arrays.asList(
 						ListNode.mNew, ListNode.mGetNext,
 						ListNode.mSetElem, ListNode.mGetElem,
@@ -235,6 +236,16 @@ public class TestGeneratorTest {
 		Statement.printStatements(stmts, System.out);
 		System.out.println();
 		System.out.flush();
+	}
+	
+	@Test
+	public void test2() throws Exception {
+		makeTest(ManualExecutor.I());
+	}
+	
+	// @Test
+	public void test3() throws Exception {
+		makeTest(new SymbolicExecutorWithJBSE());
 	}
 
 }

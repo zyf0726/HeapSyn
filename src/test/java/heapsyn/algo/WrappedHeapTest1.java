@@ -42,9 +42,17 @@ public class WrappedHeapTest1 {
 		}
 	}
 	
-	private static ClassH cInt;
-	private static FieldH fValue;
-	private static Method mAdd, mInc, mZero, mOne;
+	@SuppressWarnings("unused")
+	static class MyNode {
+		private MyNode next;
+		public static MyNode __new__() {
+			return new MyNode();
+		}
+	}
+	
+	private static ClassH cInt, cNode;
+	private static FieldH fValue, fNext;
+	private static Method mAdd, mInc, mZero, mOne, mNew;
 	private static SymbolicHeap emp;
 	private static ObjectH oNull;
 	
@@ -56,6 +64,9 @@ public class WrappedHeapTest1 {
 	 	mInc = MyInteger.class.getDeclaredMethod("incValue", int.class);
 	 	mZero = MyInteger.class.getDeclaredMethod("zero");
 	 	mOne = MyInteger.class.getDeclaredMethod("one", boolean.class);
+	 	cNode = ClassH.of(MyNode.class);
+	 	fNext = FieldH.of(MyNode.class.getDeclaredField("next"));
+	 	mNew = MyNode.class.getDeclaredMethod("__new__");
 	 	emp = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 	 	oNull = ObjectH.NULL;
 	}
@@ -188,6 +199,30 @@ public class WrappedHeapTest1 {
 	 	H3.recomputeConstraint();
 	 	H1.__debugPrintOut(System.out);
 	 	H3.__debugPrintOut(System.out);
+	}
+	
+	@Test
+	public void test3() {
+		System.err.println(":: Test 3");
+		ObjectH o1 = new ObjectH(cNode, ImmutableMap.of(fNext, oNull));
+		SymbolicHeap heap1 = new SymbolicHeapAsDigraph(
+				Arrays.asList(o1, oNull), ExistExpr.ALWAYS_FALSE);
+		MethodInvoke mInvoke = new MethodInvoke(mNew, null);
+		PathDescriptor pd = new PathDescriptor();
+		pd.pathCond = null; 
+		pd.retVal = o1;
+		pd.finHeap = heap1;
+		pd.objSrcMap = ImmutableMap.of();
+		pd.varExprMap = ImmutableMap.of();
+		
+		WrappedHeap H0 = new WrappedHeap(emp);
+		WrappedHeap H1 = new WrappedHeap(H0, mInvoke, pd);
+		
+		H0.__debugPrintOut(System.out);
+		H1.__debugPrintOut(System.out);
+		
+		H1.recomputeConstraint();
+		H1.__debugPrintOut(System.out);		
 	}
 
 }

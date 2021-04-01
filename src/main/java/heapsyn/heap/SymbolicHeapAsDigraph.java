@@ -16,6 +16,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
@@ -37,7 +38,7 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		this.accObjs = ImmutableSet.of(ObjectH.NULL);
 		this.setConstraint(constraint);
 		this.allObjs = ImmutableSet.of(ObjectH.NULL);
-		this.vars = ImmutableList.of();
+		this.vars = ImmutableList.of(new BoolVar());  // a dummy variable, to avoid zero-argument user function
 		this.GA = new GraphAnalyzer<>(this.allObjs, null);
 	}
 	

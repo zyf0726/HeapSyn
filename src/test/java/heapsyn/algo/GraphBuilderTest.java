@@ -15,6 +15,8 @@ import example.ManualExecutor;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ExistExpr;
+import heapsyn.wrapper.symbolic.SymbolicExecutor;
+import heapsyn.wrapper.symbolic.SymbolicExecutorWithJBSE;
 
 public class GraphBuilderTest {
 
@@ -34,11 +36,9 @@ public class GraphBuilderTest {
 	public void tearDown() throws Exception {
 	}
 
-	@Test
-	public void testListNodeManual() throws Exception {
-		PrintStream ps = new PrintStream("build/testListNode-Manual.log");
+	private void makeTestListNode(SymbolicExecutor executor, PrintStream ps) throws Exception {
 		HeapTransGraphBuilder graphBuilder = new HeapTransGraphBuilder(
-				ManualExecutor.I(),
+				executor,
 				Arrays.asList(
 						ListNode.mNew, ListNode.mGetNext,
 						ListNode.mSetElem, ListNode.mGetElem,
@@ -57,6 +57,18 @@ public class GraphBuilderTest {
 		ps.println();
 		for (WrappedHeap heap : genHeaps)
 			heap.__debugPrintOut(ps);
+	}
+	
+	@Test
+	public void testListNodeManual() throws Exception {
+		PrintStream ps = new PrintStream("build/testListNode-Manual.log");
+		makeTestListNode(ManualExecutor.I(), ps);
+	}
+	
+	// @Test
+	public void testListNodeJBSE() throws Exception {
+		PrintStream ps = new PrintStream("build/testListNode-JBSE.log");
+		makeTestListNode(new SymbolicExecutorWithJBSE(), ps);
 	}
 
 }
