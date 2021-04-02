@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import jbse.bc.ClassFile;
@@ -90,20 +91,58 @@ import jbse.val.exc.InvalidTypeException;
 public final class State implements Cloneable {
 	
 /* ================== modified, start ================== */
-	private State initState;
+	//private State initState;
 	private Long startPos;
 	private HeapObjekt[] args;
 	private Value[] vargs;
 	public int argpos; //记录pathcondition中参数指定开始的位置
 	public int refarglen; //记录ref参数的个数
+	public int pdpos;
 	
-	public State getInitState() {
-		return this.initState;
+	private TreeMap<Long,HeapObjekt> objects;
+	private ArrayList<Clause> clauses;
+	private int refid;
+	private int primid;
+	
+	public TreeMap<Long,HeapObjekt> getObjects() {
+		return this.objects;
+	}
+
+	public ArrayList<Clause> getClauses() {
+		return this.clauses;
 	}
 	
-	public void setInitState(State state) {
-		this.initState = state;
+	public int getPrimid() {
+		return this.primid;
 	}
+	
+	public int getRefid() {
+		return this.refid;
+	}
+	
+	public void setObjects(TreeMap<Long,HeapObjekt> objects) {
+		this.objects=objects;
+	}
+
+	public void setClauses(ArrayList<Clause> clauses) {
+		this.clauses=clauses;
+	}
+	
+	public void setPrimid(int prim) {
+		this.primid=prim;
+	}
+	
+	public void setRefid(int ref) {
+		this.refid=ref;
+	}
+	
+//	public State getInitState() {
+//		return this.initState;
+//	}
+//	
+//	public void setInitState(State state) {
+//		this.initState = state;
+//	}
 	
 	public Long getStartPosition() {
 		return this.startPos;
@@ -123,6 +162,10 @@ public final class State implements Cloneable {
 	
 	public Value[] getVargs() {
 		return this.vargs;
+	}
+	
+	public SymbolFactory getsf() {
+		return this.symbolFactory;
 	}
 /* ================== modified, end ==================== */ 
 	
@@ -2630,11 +2673,35 @@ public final class State implements Cloneable {
     		throw new FrozenStateException();
     	}
     	
-    	if (this.initState != null) {
-    		this.heap = this.initState.__getHeap();
-    		this.pathCondition=this.initState.__getPathCondition();
-    		this.symbolFactory=this.initState.symbolFactory;
+//    	if (this.initState != null) {
+//    		this.heap = this.initState.__getHeap().clone();
+//    		this.pathCondition=this.initState.__getPathCondition().clone();
+//    		this.symbolFactory.setnextPrim(this.initState.symbolFactory.getnextPrim());
+//    		this.symbolFactory.setnextRef(this.initState.symbolFactory.getnextRef());
+//    	}
+    	
+    	Long ind=this.heap.getNextIndex();
+    	for(Entry<Long,HeapObjekt> entry:this.objects.entrySet()) {
+    		if(ind<entry.getKey()+1) ind=entry.getKey()+1;
+    		this.heap.__getObjects().put(entry.getKey(), entry.getValue().clone());
     	}
+    	this.heap.setNextIndex(ind);
+    	
+    	//this.pathCondition.__getClauses().addAll(this.clauses);
+    	this.pdpos=this.pathCondition.__getClauses().size();
+    	for(int i=0;i<this.clauses.size();++i) {
+    		Clause cs=this.clauses.get(i);
+    		if(cs instanceof ClauseAssumeExpands) {
+    			ClauseAssumeExpands sae=(ClauseAssumeExpands) cs;
+    			this.pathCondition.addClauseAssumeExpands(sae.getReference(), sae.getHeapPosition(), this.heap.getObject(sae.getHeapPosition()));
+    		}
+    		else {
+    			ClauseAssume ca=(ClauseAssume) cs;
+    			this.pathCondition.addClauseAssume(ca.getCondition());
+    		}
+    	}
+    	this.symbolFactory.setnextPrim(this.primid);
+    	this.symbolFactory.setnextRef(this.refid);
     	
         final boolean isStatic = classMethodImpl.isMethodStatic(methodSignatureImpl);
         final MethodFrame f = new MethodFrame(methodSignatureImpl, classMethodImpl);
@@ -2656,6 +2723,7 @@ public final class State implements Cloneable {
         		if(this.args[i]==null) continue;
         		InstanceImpl_DEFAULT id = (InstanceImpl_DEFAULT) this.args[i];
         		Simplex s = (Simplex) id.getIdentityHashCode();
+        		id=(InstanceImpl_DEFAULT) this.heap.getObject((Integer)s.getActualValue());
         		try {
         			this.pathCondition.addClauseAssumeExpands(
         					(ReferenceSymbolic) args[i],
@@ -2674,21 +2742,21 @@ public final class State implements Cloneable {
         	}
         }
         
-        for (Entry<Long, HeapObjekt> entry : this.heap.__getObjects().entrySet()) {
-			if (entry.getKey() >= heap.getStartPosition()) {
-				InstanceImpl_DEFAULT id = (InstanceImpl_DEFAULT) entry.getValue();
-				if(id.getOrigin()!=null) continue;
-				String type="L"+id.getType().getClassName()+";";
-				ReferenceSymbolic rs;
-				try {
-					rs = (ReferenceSymbolic) this.createSymbolLocalVariable(type, type, "Object");
-					id.setOrigin(rs);
-				} catch (InvalidTypeException | InvalidInputException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
+//        for (Entry<Long, HeapObjekt> entry : this.heap.__getObjects().entrySet()) {
+//			if (entry.getKey() >= heap.getStartPosition()) {
+//				InstanceImpl_DEFAULT id = (InstanceImpl_DEFAULT) entry.getValue();
+//				if(id.getOrigin()!=null) continue;
+//				String type="L"+id.getType().getClassName()+";";
+//				ReferenceSymbolic rs;
+//				try {
+//					rs = (ReferenceSymbolic) this.createSymbolLocalVariable(type, type, "Object");
+//					id.setOrigin(rs);
+//				} catch (InvalidTypeException | InvalidInputException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+//		}
         /* ======================= modified, end ========================== */
         
         this.stack.push(f);

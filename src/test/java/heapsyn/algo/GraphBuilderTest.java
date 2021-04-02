@@ -17,6 +17,7 @@ import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithJBSE;
+import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
 public class GraphBuilderTest {
 
@@ -45,7 +46,7 @@ public class GraphBuilderTest {
 						ListNode.mAddBefore, ListNode.mAddAfter
 				)
 		);
-		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
+		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> genHeaps = graphBuilder.buildGraph(initHeap);
 		ps.println("number of all heaps = " + genHeaps.size());
 		int countNotSub = 0;
@@ -65,7 +66,7 @@ public class GraphBuilderTest {
 		makeTestListNode(ManualExecutor.I(), ps);
 	}
 	
-	// @Test
+	@Test
 	public void testListNodeJBSE() throws Exception {
 		PrintStream ps = new PrintStream("build/testListNode-JBSE.log");
 		makeTestListNode(new SymbolicExecutorWithJBSE(), ps);

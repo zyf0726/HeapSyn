@@ -32,7 +32,7 @@ public class JBSEWrapperTest {
 	public void test() {
 		SymbolicExecutor executor = new SymbolicExecutorWithJBSE();
 		
-		SymbolicHeap emp = new SymbolicHeapAsDigraph(null);
+		SymbolicHeap emp = new SymbolicHeapWithJBSE(null);
 		ObjectH elem$1 = new ObjectH(new IntVar());
 		MethodInvoke invoke$new = new MethodInvoke(ListNode.mNew, Arrays.asList(elem$1));
 		Collection<PathDescriptor> pds = executor.executeMethod(emp, invoke$new);

@@ -730,9 +730,13 @@ public final class Run {
                 return 1;
             }
             /* ======================= modified, start ====================== */
-            this.engine.setInitState(this.parameters.getInitState());
+            //this.engine.setInitState(this.parameters.getInitState());
             //this.engine.setInitHeap(this.parameters.getInitHeap());
             //this.engine.setInitPathCond(this.parameters.getInitPathCond());
+            this.engine.setObjects(this.parameters.getObjects());
+            this.engine.setClauses(this.parameters.getClauses());
+            this.engine.setPrimid(this.parameters.getPrimid());
+            this.engine.setRefid(this.parameters.getRefid());
             this.engine.setArguments(this.parameters.getArguments());
             /* ======================== modified, end ======================= */
             createHeapChecker(this.decisionProcedureConcretization);

@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.common.exceptions.UnhandledJBSEValue;
@@ -18,6 +19,7 @@ import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.IntVar;
 import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
+import jbse.mem.InstanceWrapper_DEFAULT;
 import jbse.mem.ObjektImpl;
 import jbse.mem.PathCondition;
 import jbse.mem.State;
@@ -33,6 +35,7 @@ public class JBSEHeapTransformer {
 	private Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
 	private Map<Primitive, ObjectH> finjbseVarMap = new HashMap<>();
 	private Map<ObjectH,Primitive> finVarjbseMap = new HashMap<>(); // a Primitive may correspond to more than one ObjectH
+	private TreeMap<Long,HeapObjekt> objects;
 	
 	public Map<HeapObjekt, ObjectH> getfinjbseObjMap() {
 		return this.finjbseObjMap;
@@ -45,12 +48,20 @@ public class JBSEHeapTransformer {
 	public Map<ObjectH,Primitive> getfinVarjbseMap() {
 		return this.finVarjbseMap;
 	}
+	
+	public TreeMap<Long,HeapObjekt> getobjects() {
+		return this.objects;
+	}
 
 	// keep only the useful HeapObjekts in Heap
 	private static Heap filterPreObjekt(Heap heap) { 
 		Heap ret = new Heap(MAX_HEAP_SIZE_JBSE);
 		for (Entry<Long, HeapObjekt> entry : heap.__getObjects().entrySet()) {
 			if (entry.getKey() >= heap.getStartPosition()) {
+				HeapObjekt o=entry.getValue();
+				if(o instanceof InstanceWrapper_DEFAULT) {
+					((InstanceWrapper_DEFAULT) o).possiblyCloneDelegate();
+				}
 				ret.__getObjects().put(entry.getKey(), entry.getValue());
 			}
 		}
@@ -75,10 +86,14 @@ public class JBSEHeapTransformer {
 		
 		Heap delHeap = filterPreObjekt(heap);
 		Map<Long, HeapObjekt> objekts = delHeap.__getObjects();
+		this.objects=new TreeMap<>(objekts);
 		
 		//Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
 		
 		for (HeapObjekt o : objekts.values()) {
+//			if(o instanceof InstanceWrapper_DEFAULT) {
+//				o=o.ge
+//			}
 			this.finjbseObjMap.put(o, transHeapObjektToObjectH((ObjektImpl) o));
 		}
 		

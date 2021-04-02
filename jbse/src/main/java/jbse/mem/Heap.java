@@ -97,6 +97,10 @@ public final class Heap implements Cloneable {
     public long getNextIndex() {
     	return this.nextIndex;
     }
+    
+    public void setNextIndex(long ind) {
+    	this.nextIndex=ind;
+    }
     /* ========================== modified, end ========================= */
 
     /**

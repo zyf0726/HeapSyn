@@ -8,6 +8,7 @@ import java.lang.reflect.Array;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import jbse.apps.run.RunParameters;
 import jbse.apps.run.RunParameters.DecisionProcedureType;
 import jbse.apps.run.RunParameters.StateFormatMode;
 import jbse.apps.run.RunParameters.StepShowMode;
+import jbse.mem.Clause;
 import jbse.mem.ClauseAssume;
 import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
@@ -47,11 +49,11 @@ import jbse.val.Value;
 public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 
 	// Customize them
-	private static final String TARGET_CLASSPATH = "bin/main";
-	private static final String TARGET_SOURCEPATH = "src/main/java/";
+	private static final String TARGET_CLASSPATH = "bin/test/";
+	private static final String TARGET_SOURCEPATH = "src/test/java/";
 
 	// Leave them alone
-	private static final String Z3_PATH = "libs/z3.exe";
+	private static final String Z3_PATH = "C:/junior(1)/labs/z3/build/z3.exe";
 	private static final String JBSE_HOME = "jbse/";
 	private static final String JBSE_CLASSPATH = JBSE_HOME + "build/classes/java/main";
 	private static final String JBSE_SOURCEPATH = JBSE_HOME + "src/main/java/";
@@ -74,6 +76,8 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 	}
 	
 	private Map<ObjectH, ObjectH> rvsobjSrcMap;
+	
+	static public int __countExecution=0;
 
 	// https://stackoverflow.com/questions/45072268/how-can-i-get-the-signature-field-of-java-reflection-method-object
 	private static String getSignature(Method m) {
@@ -118,16 +122,17 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 		p.setStateFormatMode(StateFormatMode.TEXT);
 		p.setStepShowMode(StepShowMode.ALL);
 		p.setOutputFileNone();
-		p.setShowOnConsole(true);
+		p.setShowOnConsole(false);
 	}
 	
-	private Map<ReferenceSymbolic,ObjectH> obj2ref(Map<HeapObjekt,ObjectH> m) {
-		Map<ReferenceSymbolic,ObjectH> ret=new HashMap<>();
+	private Map<Primitive,ObjectH> obj2ref(Map<HeapObjekt,ObjectH> m) {
+		Map<Primitive,ObjectH> ret=new HashMap<>();
 		for(Entry<HeapObjekt,ObjectH> entry:m.entrySet()) {
 			HeapObjekt ho=entry.getKey();
 			ObjectH oh=entry.getValue();
-			ReferenceSymbolic rs=ho.getOrigin();
-			ret.put(rs, oh);
+			Primitive prim=ho.getIdentityHashCode();
+			//Integer Int=(Integer) s.getActualValue();
+			ret.put(prim, oh);
 		}
 		return ret;
 	}
@@ -136,13 +141,13 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 	private Map<ObjectH, ObjectH> getobjSrcMap(Map<HeapObjekt, ObjectH> init,
 			Map<HeapObjekt, ObjectH> fin) {
 		Map<ObjectH, ObjectH> ret=new HashMap<>();
-		Map<ReferenceSymbolic,ObjectH> rinit=this.obj2ref(init);
-		Map<ReferenceSymbolic,ObjectH> rfin=this.obj2ref(fin);
+		Map<Primitive,ObjectH> rinit=this.obj2ref(init);
+		Map<Primitive,ObjectH> rfin=this.obj2ref(fin);
 		
 		this.rvsobjSrcMap=new HashMap<>();
 		
-		for(Entry<ReferenceSymbolic,ObjectH> entry:rinit.entrySet()) {
-			ReferenceSymbolic ho=entry.getKey();
+		for(Entry<Primitive,ObjectH> entry:rinit.entrySet()) {
+			Primitive ho=entry.getKey();
 			ObjectH oh=entry.getValue();
 			if(rfin.containsKey(ho)) {
 				ret.put(rfin.get(ho),oh);
@@ -233,9 +238,12 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 	public Collection<PathDescriptor> executeMethod(SymbolicHeap initHeap, MethodInvoke mInvoke) {
 		if (!(initHeap instanceof SymbolicHeapWithJBSE))
 			return null;
-
+		
+		this.__countExecution++;
+		List<PathDescriptor> pds = new ArrayList<>();
+		if(!Modifier.isStatic(mInvoke.getJavaMethod().getModifiers())&&mInvoke.getInvokeArguments().get(0).isNullObject()) return pds;
 		SymbolicHeapWithJBSE symHeapJBSE = (SymbolicHeapWithJBSE) initHeap;
-		State initState=symHeapJBSE.getJBSEState();
+		//State initState=symHeapJBSE.getJBSEState();
 //		Heap heap=null;
 //		PathCondition pathCond=null;
 		
@@ -268,12 +276,15 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 		set(p, mInvoke);
 //		p.setInitHeap(heap);
 //		p.setInitPathCond(pathCond);
-		p.setInitState(initState);
+//		p.setInitState(initState);
+		p.setObjects(symHeapJBSE.getObjects());
+		p.setClauses(symHeapJBSE.getClauses());
+		p.setPrimid(symHeapJBSE.getPrimid());
+		p.setRefid(symHeapJBSE.getRefid());
 		Run r = new Run(p);
 		r.run();
 
 		HashSet<State> executed = r.getExecuted();
-		List<PathDescriptor> pds = new ArrayList<>();
 		for (State state:executed) {
 			Set<ObjectH> initaccObjs = new HashSet<>(symHeapJBSE.getAccessibleObjects());
 			Heap finHeapJBSE = state.__getHeap();
@@ -297,7 +308,8 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 			pd.varExprMap=this.getvarExprMap(initjbseVarMap, finVarjbseMap);
 			
 			Value retVal = finHeapJBSE.getReturnValue();
-			if (retVal instanceof ReferenceConcrete) {
+			if(retVal==null||retVal.getType()=='0') pd.retVal=null;
+			else if (retVal instanceof ReferenceConcrete) {
 				ReferenceConcrete refRetVal = (ReferenceConcrete) retVal;
 				Long pos = refRetVal.getHeapPosition();
 				HeapObjekt ho = finHeapJBSE.__getObjects().get(pos);
@@ -312,10 +324,16 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 			else if(retVal instanceof Primitive) {
 				pd.retVal=finjbseVarMap.get(retVal);
 			}
-			else pd.retVal=null;
+			//else pd.retVal=null;
+			
+			ArrayList<Clause> clauses=new ArrayList<>();
+			PathCondition jbsepd=state.__getPathCondition();
+			for(int i=state.pdpos;i<jbsepd.__getClauses().size();++i) {
+				clauses.add(jbsepd.__getClauses().get(i));
+			}
 			
 			
-			SymbolicHeap symHeap = new SymbolicHeapWithJBSE(accObjs, null, state, finjbseObjMap,finjbseVarMap);
+			SymbolicHeap symHeap = new SymbolicHeapWithJBSE(accObjs, ExistExpr.ALWAYS_FALSE, jhs.getobjects(),clauses,state.getsf().getnextPrim(),state.getsf().getnextRef(), finjbseObjMap,finjbseVarMap);
 			pd.finHeap = symHeap;
 			pd.objSrcMap=objSrcMap;
 			pd.pathCond=this.getPathcond(state, initjbseVarMap);

@@ -11,8 +11,10 @@ import static jbse.bc.Opcodes.OP_INVOKEVIRTUAL;
 import static jbse.bc.Opcodes.OP_IRETURN;
 import static jbse.bc.Opcodes.OP_RETURN;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.TreeMap;
 
 import jbse.algo.Algorithm;
 import jbse.algo.ExecutionContext;
@@ -67,15 +69,52 @@ public final class Engine implements AutoCloseable {
     //Architecture of the engine
 	
 	/* ====================== modified, start ======================= */
-	private State initState;
+//	private State initState;
 	private HeapObjekt[] args;
 	
-	public State getInitState() {
-		return this.initState;
+//	public State getInitState() {
+//		return this.initState;
+//	}
+//	
+//	public void setInitState(State state) {
+//		this.initState = state;
+//	}
+	
+	private TreeMap<Long,HeapObjekt> objects;
+	private ArrayList<Clause> clauses;
+	private int refid;
+	private int primid;
+	
+	public TreeMap<Long,HeapObjekt> getObjects() {
+		return this.objects;
+	}
+
+	public ArrayList<Clause> getClauses() {
+		return this.clauses;
 	}
 	
-	public void setInitState(State state) {
-		this.initState = state;
+	public int getPrimid() {
+		return this.primid;
+	}
+	
+	public int getRefid() {
+		return this.refid;
+	}
+	
+	public void setObjects(TreeMap<Long,HeapObjekt> objects) {
+		this.objects=objects;
+	}
+
+	public void setClauses(ArrayList<Clause> clauses) {
+		this.clauses=clauses;
+	}
+	
+	public void setPrimid(int prim) {
+		this.primid=prim;
+	}
+	
+	public void setRefid(int ref) {
+		this.refid=ref;
 	}
 	
 	public HeapObjekt[] getArguments() {
@@ -329,10 +368,16 @@ public final class Engine implements AutoCloseable {
         	Action action;
         	if (atLastPreInitialState) {
         		action = this.ctx.dispatcher.selectInit();
-        		this.currentState.setInitState(this.initState);
+        		//this.currentState.setInitState(this.initState);
+        		this.currentState.setObjects(this.objects);
+        		this.currentState.setClauses(this.clauses);
+        		this.currentState.setPrimid(this.primid);
+        		this.currentState.setRefid(this.refid);
         		this.currentState.setArguments(this.args);
         		this.currentState.__getHeap().setStartPosition(
         				this.currentState.__getHeap().getNextIndex());
+        		//this.ctx.decisionProcedure.clearAssumptions();
+        		if(this.clauses!=null) this.ctx.decisionProcedure.addAssumptions(this.clauses);
         	} else {
         		action = this.ctx.dispatcher.select(this.currentState.getInstruction());
         	}

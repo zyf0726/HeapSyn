@@ -59,10 +59,11 @@ public final class Action_INIT implements Action {
             final ReferenceSymbolic rootThis = state.pushFrameSymbolic(rootClass, ctx.rootMethodSignature);
             if (rootThis != null) {
             	/* ======================= modified, start ===================== */
-            	if (state.getInitState() == null) {
+            	if (state.getObjects() == null) {
             		//must assume {ROOT}:this expands to nonnull object (were it null the root frame would not exist!)
             		state.assumeExpands(ctx.getCalculator(), rootThis, rootClass);
             	}
+            	//state.setInitState(null);
             	/* ======================== modified, end ====================== */
                 final ClassFile rootThisClass = state.getObject(rootThis).getType();
                 final DecisionAlternative_XLOAD_GETX_Expands rootExpansion = ctx.decisionProcedure.getRootDecisionAlternative(rootThis, rootThisClass);
