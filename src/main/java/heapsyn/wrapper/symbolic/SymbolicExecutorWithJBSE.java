@@ -42,7 +42,6 @@ import jbse.val.Expression;
 import jbse.val.Operator;
 import jbse.val.Primitive;
 import jbse.val.ReferenceConcrete;
-import jbse.val.ReferenceSymbolic;
 import jbse.val.Simplex;
 import jbse.val.Value;
 
@@ -53,7 +52,7 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 	private static final String TARGET_SOURCEPATH = "src/test/java/";
 
 	// Leave them alone
-	private static final String Z3_PATH = "C:/junior(1)/labs/z3/build/z3.exe";
+	private static final String Z3_PATH = "libs/z3.exe";
 	private static final String JBSE_HOME = "jbse/";
 	private static final String JBSE_CLASSPATH = JBSE_HOME + "build/classes/java/main";
 	private static final String JBSE_SOURCEPATH = JBSE_HOME + "src/main/java/";
@@ -239,7 +238,7 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 		if (!(initHeap instanceof SymbolicHeapWithJBSE))
 			return null;
 		
-		this.__countExecution++;
+		SymbolicExecutorWithJBSE.__countExecution++;
 		List<PathDescriptor> pds = new ArrayList<>();
 		if(!Modifier.isStatic(mInvoke.getJavaMethod().getModifiers())&&mInvoke.getInvokeArguments().get(0).isNullObject()) return pds;
 		SymbolicHeapWithJBSE symHeapJBSE = (SymbolicHeapWithJBSE) initHeap;

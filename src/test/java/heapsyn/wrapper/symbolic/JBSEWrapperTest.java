@@ -15,7 +15,6 @@ import example.ListNode;
 import heapsyn.algo.MethodInvoke;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
-import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.IntVar;
 
 public class JBSEWrapperTest {

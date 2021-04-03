@@ -13,7 +13,6 @@ import org.junit.Test;
 import example.ListNode;
 import example.ManualExecutor;
 import heapsyn.heap.SymbolicHeap;
-import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithJBSE;
@@ -66,7 +65,7 @@ public class GraphBuilderTest {
 		makeTestListNode(ManualExecutor.I(), ps);
 	}
 	
-	@Test
+	// @Test
 	public void testListNodeJBSE() throws Exception {
 		PrintStream ps = new PrintStream("build/testListNode-JBSE.log");
 		makeTestListNode(new SymbolicExecutorWithJBSE(), ps);
