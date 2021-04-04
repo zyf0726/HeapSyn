@@ -53,7 +53,12 @@ public class GraphBuilderTest {
 			if (!heap.getStatus().equals(HeapStatus.SUBSUMED))
 				++countNotSub;
 		ps.println("number of heaps not subsumed = " + countNotSub);
-		ps.println("number of symbolic execution = " + ManualExecutor.I().__countExecution);
+		ps.print("number of symbolic execution = ");
+		if (executor instanceof ManualExecutor) {
+			ps.println(ManualExecutor.I().__countExecution);
+		} else {
+			ps.println(SymbolicExecutorWithJBSE.__countExecution);
+		}
 		ps.println();
 		for (WrappedHeap heap : genHeaps)
 			heap.__debugPrintOut(ps);

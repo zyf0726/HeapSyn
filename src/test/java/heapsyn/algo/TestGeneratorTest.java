@@ -2,6 +2,7 @@ package heapsyn.algo;
 
 import static org.junit.Assert.*;
 
+import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -196,7 +197,7 @@ public class TestGeneratorTest {
 		System.out.flush();
 	}
 	
-	private void makeTest(SymbolicExecutor executor) throws Exception {
+	private void makeTest(SymbolicExecutor executor, PrintStream ps) throws Exception {
 		HeapTransGraphBuilder graphBuilder = new HeapTransGraphBuilder(
 				executor,
 				Arrays.asList(
@@ -234,19 +235,18 @@ public class TestGeneratorTest {
 		stmts.add(new Statement(
 				Arrays.asList(objSrc.get(o3), objSrc.get(o4), objSrc.get(o1), new ObjectH(y)),
 				ImmutableMap.of(y, vModel.get(y))));
-		Statement.printStatements(stmts, System.out);
-		System.out.println();
-		System.out.flush();
+		Statement.printStatements(stmts, ps);
+		ps.flush();
 	}
 	
 	@Test
 	public void test2() throws Exception {
-		makeTest(ManualExecutor.I());
+		makeTest(ManualExecutor.I(), new PrintStream("build/ManualTestgen.txt"));
 	}
 	
 	// @Test
 	public void test3() throws Exception {
-		makeTest(new SymbolicExecutorWithJBSE());
+		makeTest(new SymbolicExecutorWithJBSE(), new PrintStream("build/JBSETestgen.txt"));
 	}
 
 }

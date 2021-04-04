@@ -2680,25 +2680,29 @@ public final class State implements Cloneable {
 //    		this.symbolFactory.setnextRef(this.initState.symbolFactory.getnextRef());
 //    	}
     	
-    	Long ind=this.heap.getNextIndex();
-    	for(Entry<Long,HeapObjekt> entry:this.objects.entrySet()) {
-    		if(ind<entry.getKey()+1) ind=entry.getKey()+1;
-    		this.heap.__getObjects().put(entry.getKey(), entry.getValue().clone());
+    	if (this.objects != null) {
+			Long ind=this.heap.getNextIndex();
+			for(Entry<Long,HeapObjekt> entry:this.objects.entrySet()) {
+				if(ind<entry.getKey()+1) ind=entry.getKey()+1;
+				this.heap.__getObjects().put(entry.getKey(), entry.getValue().clone());
+			}
+			this.heap.setNextIndex(ind);
     	}
-    	this.heap.setNextIndex(ind);
     	
     	//this.pathCondition.__getClauses().addAll(this.clauses);
     	this.pdpos=this.pathCondition.__getClauses().size();
-    	for(int i=0;i<this.clauses.size();++i) {
-    		Clause cs=this.clauses.get(i);
-    		if(cs instanceof ClauseAssumeExpands) {
-    			ClauseAssumeExpands sae=(ClauseAssumeExpands) cs;
-    			this.pathCondition.addClauseAssumeExpands(sae.getReference(), sae.getHeapPosition(), this.heap.getObject(sae.getHeapPosition()));
-    		}
-    		else {
-    			ClauseAssume ca=(ClauseAssume) cs;
-    			this.pathCondition.addClauseAssume(ca.getCondition());
-    		}
+    	if (this.clauses != null) {
+			for(int i=0;i<this.clauses.size();++i) {
+				Clause cs=this.clauses.get(i);
+				if(cs instanceof ClauseAssumeExpands) {
+					ClauseAssumeExpands sae=(ClauseAssumeExpands) cs;
+					this.pathCondition.addClauseAssumeExpands(sae.getReference(), sae.getHeapPosition(), this.heap.getObject(sae.getHeapPosition()));
+				}
+				else {
+					ClauseAssume ca=(ClauseAssume) cs;
+					this.pathCondition.addClauseAssume(ca.getCondition());
+				}
+			}
     	}
     	this.symbolFactory.setnextPrim(this.primid);
     	this.symbolFactory.setnextRef(this.refid);
