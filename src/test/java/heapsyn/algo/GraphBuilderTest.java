@@ -42,7 +42,7 @@ public class GraphBuilderTest {
 				executor,
 				Arrays.asList(
 						ListNode.mNew, ListNode.mGetNext,
-						ListNode.mSetElem, ListNode.mGetElem,
+						// ListNode.mSetElem, ListNode.mGetElem,
 						ListNode.mAddBefore, ListNode.mAddAfter
 				)
 		);
@@ -54,10 +54,15 @@ public class GraphBuilderTest {
 			if (!heap.getStatus().equals(HeapStatus.SUBSUMED))
 				++countNotSub;
 		ps.println("number of heaps not subsumed = " + countNotSub);
+		int countTrans = 0;
+		for (WrappedHeap heap : genHeaps) {
+			countTrans += heap.getBackwardRecords().size();
+		}
+		ps.println("number of transitions = " + countTrans);
 		ps.print("number of symbolic execution = ");
 		if (executor instanceof ManualExecutor) {
 			ps.println(ManualExecutor.I().__countExecution);
-		} else if(executor instanceof SymbolicExecutorWithJBSE){
+		} else if (executor instanceof SymbolicExecutorWithJBSE) {
 			ps.println(SymbolicExecutorWithJBSE.__countExecution);
 		}
 		else {

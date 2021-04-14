@@ -52,7 +52,6 @@ import jbse.val.PrimitiveSymbolicLocalVariable;
 import jbse.val.PrimitiveSymbolicMemberField;
 import jbse.val.ReferenceConcrete;
 import jbse.val.ReferenceSymbolic;
-import jbse.val.ReferenceSymbolicLocalVariable;
 import jbse.val.ReferenceSymbolicMemberField;
 import jbse.val.Simplex;
 import jbse.val.Value;
@@ -395,7 +394,6 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					if(val==ObjectH.BLANK) {
 						ObjectH initObj=changedObjSrcMap.get(obj);
 						if(initObj==null) {
-							int a=1;
 						}
 						for(FieldH initField:initObj.getFields()) {
 							if(initField.getName().equals(field.getName())) {

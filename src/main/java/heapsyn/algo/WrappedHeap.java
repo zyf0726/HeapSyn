@@ -365,7 +365,7 @@ public class WrappedHeap {
 	
 	
 	private static boolean isOutOfScope(SymbolicHeap heap) {
-		return heap.getAllObjects().size() - heap.getVariables().size() > 5;
+		return heap.getAllObjects().size() - heap.getVariables().size() > 3;
 	}
 	
 }
