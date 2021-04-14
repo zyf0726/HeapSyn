@@ -1,6 +1,7 @@
 package heapsyn.heap;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -15,6 +16,7 @@ public class ObjectH {
 	public static boolean STRICT_MODE = true;
 	
 	public static ObjectH NULL = new ObjectH();
+	public static ObjectH BLANK=new ObjectH();
 	
 	private ClassH clsH;
 	private Variable var;
@@ -80,6 +82,12 @@ public class ObjectH {
 	public void setFieldValueMap(Map<FieldH, ObjectH> fieldValueMap) {
 		Preconditions.checkState(!STRICT_MODE || this.field2val == null, "field-value map already determined");
 		this.field2val = ImmutableSortedMap.copyOf(fieldValueMap);
+	}
+	
+	public void setFieldValue(FieldH field,ObjectH obj) {
+		Map<FieldH, ObjectH> fieldvalMap=new HashMap<>(this.field2val);
+		fieldvalMap.put(field, obj);
+		this.field2val=ImmutableSortedMap.copyOf(fieldvalMap);
 	}
 	 
 }

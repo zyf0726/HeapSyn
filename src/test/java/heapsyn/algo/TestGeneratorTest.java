@@ -34,6 +34,7 @@ import heapsyn.util.Bijection;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
+import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithJBSE;
 import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
@@ -247,6 +248,11 @@ public class TestGeneratorTest {
 	// @Test
 	public void test3() throws Exception {
 		makeTest(new SymbolicExecutorWithJBSE(), new PrintStream("build/JBSETestgen.txt"));
+	}
+	
+	@Test
+	public void test4() throws Exception {
+		makeTest(new SymbolicExecutorWithCachedJBSE(), new PrintStream("build/CachedJBSETestgen.txt"));
 	}
 
 }

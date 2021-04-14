@@ -134,7 +134,7 @@ public class JBSEHeapTransformer {
 				 			value = this.finjbseObjMap.get(objekts.get(pos));
 				 		}
 				 	} else {
-				 		value = ObjectH.NULL;
+				 		value = ObjectH.BLANK;
 				 	}
 				 	fieldValMap.put(field, value);
 				} else if (varValue instanceof Primitive) {

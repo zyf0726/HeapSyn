@@ -15,6 +15,7 @@ import example.ManualExecutor;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
+import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithJBSE;
 import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
@@ -56,8 +57,11 @@ public class GraphBuilderTest {
 		ps.print("number of symbolic execution = ");
 		if (executor instanceof ManualExecutor) {
 			ps.println(ManualExecutor.I().__countExecution);
-		} else {
+		} else if(executor instanceof SymbolicExecutorWithJBSE){
 			ps.println(SymbolicExecutorWithJBSE.__countExecution);
+		}
+		else {
+			ps.println(SymbolicExecutorWithCachedJBSE.__countExecution);
 		}
 		ps.println();
 		for (WrappedHeap heap : genHeaps)
@@ -74,6 +78,12 @@ public class GraphBuilderTest {
 	public void testListNodeJBSE() throws Exception {
 		PrintStream ps = new PrintStream("build/testListNode-JBSE.log");
 		makeTestListNode(new SymbolicExecutorWithJBSE(), ps);
+	}
+	
+	@Test
+	public void testListNodeCachedJBSE() throws Exception {
+		PrintStream ps = new PrintStream("build/testListNode-CachedJBSE.log");
+		makeTestListNode(new SymbolicExecutorWithCachedJBSE(), ps);
 	}
 
 }
