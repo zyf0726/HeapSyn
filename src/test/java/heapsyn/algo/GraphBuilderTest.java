@@ -42,7 +42,7 @@ public class GraphBuilderTest {
 				executor,
 				Arrays.asList(
 						ListNode.mNew, ListNode.mGetNext,
-						// ListNode.mSetElem, ListNode.mGetElem,
+						ListNode.mSetElem, ListNode.mGetElem,
 						ListNode.mAddBefore, ListNode.mAddAfter
 				)
 		);
