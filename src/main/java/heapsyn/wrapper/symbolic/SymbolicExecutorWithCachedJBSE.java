@@ -421,7 +421,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				if(obj.isNonNullObject()) accObjs.add(rvsobjSrcMap.get(obj));
 			}
 			
-			Map<Primitive,ObjectH> finjbseVarMap=jhs.getfinjbseVarMap();
+			//Map<Primitive,ObjectH> finjbseVarMap=jhs.getfinjbseVarMap();
 			Map<ObjectH,Primitive> finVarjbseMap=jhs.getfinVarjbseMap();
 			
 			for(Entry<ObjectH,Primitive> entry:finVarjbseMap.entrySet()) {
@@ -447,10 +447,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				}
 			}
 			else if(retVal instanceof ReferenceSymbolic) {
-				pd.retVal=ref2Obj.get(retVal);
+				pd.retVal=rvsobjSrcMap.get(ref2Obj.get(retVal));
 			}
 			else if(retVal instanceof Primitive) {
-				pd.retVal=finjbseVarMap.get(retVal);
+				pd.retVal=null;
 			}
 			
 			SymbolicHeap symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
