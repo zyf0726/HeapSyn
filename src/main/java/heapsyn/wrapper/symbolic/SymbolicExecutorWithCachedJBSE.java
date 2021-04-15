@@ -393,8 +393,6 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					ObjectH val=obj.getFieldValue(field);
 					if(val==ObjectH.BLANK) {
 						ObjectH initObj=changedObjSrcMap.get(obj);
-						if(initObj==null) {
-						}
 						for(FieldH initField:initObj.getFields()) {
 							if(initField.getName().equals(field.getName())) {
 								ObjectH initval=initObj.getFieldValue(initField);
@@ -447,7 +445,12 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				}
 			}
 			else if(retVal instanceof ReferenceSymbolic) {
-				pd.retVal=rvsobjSrcMap.get(ref2Obj.get(retVal));
+				ObjectH ret=rvsobjSrcMap.get(ref2Obj.get(retVal));
+				if(ret!=null) {
+					pd.retVal=ret;
+					accObjs.add(ret);
+				}
+				else pd.retVal=ObjectH.NULL;
 			}
 			else if(retVal instanceof Primitive) {
 				pd.retVal=null;
