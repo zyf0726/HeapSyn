@@ -2,14 +2,10 @@ package example;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.google.common.collect.ImmutableMap;
 
 import heapsyn.algo.HeapTransGraphBuilder;
 import heapsyn.algo.Statement;
@@ -17,18 +13,14 @@ import heapsyn.algo.TestGenerator;
 import heapsyn.algo.WrappedHeap;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
-import heapsyn.heap.SymbolicHeapAsDigraph;
-import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
-import heapsyn.smtlib.IntConst;
-import heapsyn.smtlib.IntVar;
+import heapsyn.smtlib.SMTSort;
 import heapsyn.smtlib.Variable;
+import heapsyn.wrapper.symbolic.SpecFactory;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
-
-import static heapsyn.smtlib.SMTOperator.*;
 
 public class ListNodeLauncher {
 	
@@ -40,7 +32,7 @@ public class ListNodeLauncher {
 				new SymbolicExecutorWithCachedJBSE(), methods);
 		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
-		testGenerator = new TestGenerator(heaps);		
+		testGenerator = new TestGenerator(heaps);
 		System.out.println("number of all heaps = " + heaps.size());
 		System.out.print("number of symbolic execution = ");
 		System.out.println(SymbolicExecutorWithCachedJBSE.__countExecution);
@@ -50,27 +42,23 @@ public class ListNodeLauncher {
 	
 	private static void genTest1() {
 		long start = System.currentTimeMillis();
-		IntVar pv = new IntVar(), qv = new IntVar(), rv = new IntVar(), sv = new IntVar();
-		ObjectH s = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(sv), ListNode.fNext, ObjectH.NULL));
-		ObjectH r = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(rv), ListNode.fNext, s));
-		ObjectH q = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(qv), ListNode.fNext, r));
-		ObjectH p = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(pv), ListNode.fNext, q));
-		Specification spec = new Specification();
-		spec.expcHeap = new SymbolicHeapAsDigraph(Arrays.asList(p, ObjectH.NULL), null);
-		spec.condition = new ApplyExpr(AND,
-				new ApplyExpr(BIN_NE, pv, new IntConst(0)),
-				new ApplyExpr(BIN_NE, qv, new IntConst(0)),
-				new ApplyExpr(BIN_EQ, rv, new ApplyExpr(ADD, pv, qv)),
-				new ApplyExpr(BIN_EQ, sv, new ApplyExpr(ADD, qv, rv)));
+		SpecFactory specFty = new SpecFactory();
+		ObjectH p = specFty.mkRefDecl(ListNode.class, "p");
+		specFty.addRefSpec("p", "next", "q", "elem", "pv");
+		specFty.addRefSpec("q", "next", "r", "elem", "qv");
+		specFty.addRefSpec("r", "next", "s", "elem", "rv");
+		specFty.addRefSpec("s", "next", "null", "elem", "sv");
+		specFty.setAccessible("p");
+		specFty.addVarSpec("(not (= pv 0))");
+		specFty.addVarSpec("(distinct qv 0)");
+		specFty.addVarSpec("(= rv (+ pv qv))");
+		specFty.addVarSpec("(= sv (+ qv rv))");
+		Specification spec = specFty.genSpec();
 		
 		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
 		Map<Variable, Constant> vModel = new HashMap<>();
 		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(Arrays.asList(objSrc.get(p)), Collections.emptyMap()));
+		stmts.add(new Statement(objSrc, vModel, p));
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTest1: " + (end - start) + "ms\n");
@@ -78,29 +66,23 @@ public class ListNodeLauncher {
 	
 	private static void genTest2() {
 		long start = System.currentTimeMillis();
-		IntVar[] vs = new IntVar[5];
-		for (int i = 0; i < 5; ++i) {
-			vs[i] = new IntVar();
-		}
-		ObjectH q = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(vs[0]), ListNode.fNext, ObjectH.NULL));
-		ObjectH p = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(vs[0]), ListNode.fNext, q));
-		ObjectH r = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(vs[0]), ListNode.fNext, p));
-		ObjectH s = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(vs[0]), ListNode.fNext, p));
-		ObjectH t = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(vs[0]), ListNode.fNext, q));
-		Specification spec = new Specification();
-		spec.expcHeap = new SymbolicHeapAsDigraph(Arrays.asList(r, s, t, ObjectH.NULL), null);
-		spec.condition = null;
+		SpecFactory specFty = new SpecFactory();
+		ObjectH r = specFty.mkRefDecl(ListNode.class, "r");
+		ObjectH s = specFty.mkRefDecl(ListNode.class, "s");
+		ObjectH t = specFty.mkRefDecl(ListNode.class, "t");
+		ObjectH boolArg = specFty.mkVarDecl(SMTSort.BOOL, "boolArg");
+		specFty.addRefSpec("r", "next", "p", "elem", "r.elem");
+		specFty.addRefSpec("s", "next", "p", "elem", "s.elem");
+		specFty.addRefSpec("t", "next", "q", "elem", "t.elem");
+		specFty.addRefSpec("p", "next", "q", "elem", "p.elem");
+		specFty.addRefSpec("q", "next", "null", "elem", "q.elem");
+		specFty.setAccessible("r", "s", "t");
+		Specification spec = specFty.genSpec();
+		
 		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
 		Map<Variable, Constant> vModel = new HashMap<>();
 		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(
-				Arrays.asList(objSrc.get(r), objSrc.get(s), objSrc.get(t)),
-				Collections.emptyMap()));
+		stmts.add(new Statement(objSrc, vModel, r, s, t, boolArg));
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTest2: " + (end - start) + "ms\n");

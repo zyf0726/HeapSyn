@@ -191,8 +191,7 @@ public class TestGeneratorTest {
 		Map<Variable, Constant> vModel = new HashMap<>();
 		List<Statement> stmts = testgen.generateTestWithSpec(spec, objSrc, vModel);
 		assertEquals("10", vModel.get(arg).toSMTString());
-		stmts.add(new Statement(Arrays.asList(objSrc.get(o), new ObjectH(arg)),
-				ImmutableMap.of(arg, vModel.get(arg))));
+		stmts.add(new Statement(objSrc, vModel, o, new ObjectH(arg)));
 		Statement.printStatements(stmts, System.out);
 		System.out.println();
 		System.out.flush();
@@ -233,9 +232,7 @@ public class TestGeneratorTest {
 		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
 		Map<Variable, Constant> vModel = new HashMap<>();
 		List<Statement> stmts = testgen.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(
-				Arrays.asList(objSrc.get(o3), objSrc.get(o4), objSrc.get(o1), new ObjectH(y)),
-				ImmutableMap.of(y, vModel.get(y))));
+		stmts.add(new Statement(objSrc, vModel, o3, o4, o1, new ObjectH(y)));
 		Statement.printStatements(stmts, ps);
 		ps.flush();
 	}

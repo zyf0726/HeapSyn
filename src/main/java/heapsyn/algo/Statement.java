@@ -2,15 +2,15 @@ package heapsyn.algo;
 
 import java.io.PrintStream;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
 import heapsyn.heap.ObjectH;
+import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.Constant;
+import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.Variable;
 
 public class Statement {
@@ -20,9 +20,31 @@ public class Statement {
 	public Map<Variable, Constant> constValues;
 	public ObjectH returnValue;
 	
-	public Statement(List<ObjectH> objArgs, Map<Variable, Constant> constValues) {
-		this.objArgs = ImmutableList.copyOf(objArgs);
-		this.constValues = ImmutableMap.copyOf(constValues);
+	public Statement(Map<ObjectH, ObjectH> objSrc,
+			Map<Variable, Constant> vModel,	ObjectH... arguments) {
+		this.javaMethod = null;
+		this.objArgs = new ArrayList<>();
+		this.constValues = new HashMap<>();
+		this.returnValue = null;
+		for (ObjectH arg : arguments) {
+			if (arg.isHeapObject()) {
+				this.objArgs.add(objSrc.get(arg));
+			} else {
+				this.objArgs.add(arg);
+				Variable var = arg.getVariable();
+				Constant constVal = vModel.get(var);
+				if (constVal != null) {
+					this.constValues.put(var, constVal);
+				} else {
+					switch (var.getSMTSort()) {
+					case INT:
+						this.constValues.put(var, IntConst.DEFAULT); break;
+					case BOOL:
+						this.constValues.put(var, BoolConst.DEFAULT); break;
+					}
+				}
+			}
+		}
 	}
 	
 	public Statement(MethodInvoke mInvoke, ObjectH retVal) {
@@ -54,7 +76,9 @@ public class Statement {
 				} else if (arg.isNullObject()) {
 					sb.append("#NULL, ");
 				} else {
-					sb.append(stmt.constValues.get(arg.getVariable()).toSMTString() + ", ");
+					Variable var = arg.getVariable();
+					Constant constVal = stmt.constValues.get(var);
+					sb.append(constVal.toSMTString() + ", ");
 				}
 			}
 			sb.delete(Math.max(0, sb.length() - 2), sb.length());

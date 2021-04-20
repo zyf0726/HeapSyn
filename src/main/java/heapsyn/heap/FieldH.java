@@ -33,7 +33,7 @@ public final class FieldH implements Comparable<FieldH> {
 		return this.javaField.getName();
 	}
 	
-	public Field getField() {
+	public Field getJavaField() {
 		return this.javaField;
 	}
 }

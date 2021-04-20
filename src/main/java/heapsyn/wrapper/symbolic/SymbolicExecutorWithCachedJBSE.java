@@ -359,7 +359,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				ObjectH value=entry.getValue();
 				Map<FieldH,ObjectH> field2val=new HashMap<>();
 				for(FieldH field:value.getFields()) {
-					FieldH finField=FieldH.of(field.getField());
+					FieldH finField=FieldH.of(field.getJavaField());
 					ObjectH val=value.getFieldValue(field);
 					if(val.isVariable()) {
 						ObjectH var=null;
