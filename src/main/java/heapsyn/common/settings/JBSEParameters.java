@@ -1,14 +1,21 @@
 package heapsyn.common.settings;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.NoSuchFileException;
+import java.util.HashMap;
+import java.util.Map.Entry;
 
+import heapsyn.common.exceptions.LoadSettingsException;
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import jbse.apps.run.RunParameters;
 import jbse.apps.run.RunParameters.DecisionProcedureType;
 import jbse.apps.run.RunParameters.StateFormatMode;
 import jbse.apps.run.RunParameters.StepShowMode;
+import jbse.apps.settings.ParseException;
+import jbse.apps.settings.SettingsReader;
 
 public class JBSEParameters {
 	
@@ -23,13 +30,16 @@ public class JBSEParameters {
 	private StateFormatMode stateFormatMode	=	StateFormatMode.TEXT;
 	private StepShowMode stepShowMode		=	StepShowMode.LEAVES;
 	
-	
 	private boolean showOnConsole	=	true;
 	private String outFilePath		=	null;
+	private String settingsPath		=	null;
+	
+	private HashMap<String, Integer> heapScope = new HashMap<>();
 	
 	private Method targetMethod;
 	private String targetClassPath;
 	private String targetSourcePath;
+	
 	
 	public void setShowOnConsole(boolean onConsole) {
 		this.showOnConsole = onConsole;
@@ -37,6 +47,18 @@ public class JBSEParameters {
 	
 	public void setOutFilePath(String outFilePath) {
 		this.outFilePath = outFilePath;
+	}
+	
+	public void setSettingsPath(String settingsPath) {
+		this.settingsPath = settingsPath;
+	}
+	
+	public void setHeapScope(String className, int heapScope) {
+		this.heapScope.put(className, heapScope);
+	}
+	
+	public void setHeapScope(Class<?> javaClass, int heapScope) {
+		this.heapScope.put(javaClass.getName().replace('.', '/'), heapScope);
 	}
 	
 	public void setTargetMethod(Method targetMethod) {
@@ -52,7 +74,16 @@ public class JBSEParameters {
 	}
 	
 	
-	public JBSEParameters() { }
+	private static JBSEParameters INSTANCE = null;
+	
+	private JBSEParameters() { }
+	
+	public static JBSEParameters I() {
+		if (INSTANCE == null) {
+			INSTANCE = new JBSEParameters();
+		}
+		return INSTANCE;
+	}
 	
 	public RunParameters getRunParameters() {
 		RunParameters rp = new RunParameters();
@@ -75,6 +106,21 @@ public class JBSEParameters {
 			rp.setOutputFilePath(this.outFilePath);
 		} else {
 			rp.setOutputFileNone();
+		}
+		if (this.settingsPath != null) {
+			try {
+				SettingsReader sr = new SettingsReader(this.settingsPath);
+				sr.fillRunParameters(rp);
+			} catch (NoSuchFileException e) {
+				throw new LoadSettingsException("settings file not found");
+			} catch (ParseException e) {
+				throw new LoadSettingsException("settings file syntactically ill-formed");
+			} catch (IOException e) {
+				throw new LoadSettingsException("error while closing settings file");
+			}
+		}
+		for (Entry<String, Integer> entry : this.heapScope.entrySet()) {
+			rp.setHeapScope(entry.getKey(), entry.getValue());
 		}
 		return rp;
 	}

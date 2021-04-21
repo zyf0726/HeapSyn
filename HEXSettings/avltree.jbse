@@ -1,0 +1,17 @@
+resolve begin
+
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)* instanceof example/avl/AvlNode aliases nothing;
+{R_ANY}.example/avl/AvlTree:root instanceof example/avl/AvlNode expands to instanceof example/avl/AvlNode triggers example/avl/AvlNode:(Lexample/avl/AvlNode;)V:_got_AvlNode_onRoot:{$REF};
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)*.example/avl/AvlNode:left instanceof example/avl/AvlNode expands to instanceof example/avl/AvlNode triggers example/avl/AvlNode:(Lexample/avl/AvlNode;)V:_got_AvlNode_onTheLeft:{$REF};
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)*.example/avl/AvlNode:right instanceof example/avl/AvlNode expands to instanceof example/avl/AvlNode triggers example/avl/AvlNode:(Lexample/avl/AvlNode;)V:_got_AvlNode_onTheRight:{$REF};
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)*.example/avl/AvlNode:left instanceof example/avl/AvlNode null triggers example/avl/AvlNode:(Lexample/avl/AvlNode;)V:_got_null_onTheLeft:{$REF}.{UP};
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)*.example/avl/AvlNode:right instanceof example/avl/AvlNode null triggers example/avl/AvlNode:(Lexample/avl/AvlNode;)V:_got_null_onTheRight:{$REF}.{UP};
+
+-- wellConnected
+{R_ANY}.example/avl/AvlTree:root.example/avl/AvlNode:parent instanceof example/avl/AvlNode expands to nothing;
+{R_ANY}.example/avl/AvlTree:root.example/avl/AvlNode:parent instanceof example/avl/AvlNode aliases nothing;
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)+.example/avl/AvlNode:parent instanceof example/avl/AvlNode not null;
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)+.example/avl/AvlNode:parent instanceof example/avl/AvlNode expands to nothing;
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)+.example/avl/AvlNode:parent instanceof example/avl/AvlNode aliases target {$REF}.{UP}.{UP};
+
+resolve end

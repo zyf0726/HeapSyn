@@ -72,9 +72,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	static public int __countExecution=0;
 	
 	private static RunParameters getRunParameters(MethodInvoke mInvoke) {
-		JBSEParameters parms = new JBSEParameters();
+		JBSEParameters parms = JBSEParameters.I(); 
 		Options options = Options.I();
-		parms.setOutFilePath(null);
 		parms.setShowOnConsole(true);
 		parms.setTargetClassPath(options.getTargetClassPath());
 		parms.setTargetSourcePath(options.getTargetSourcePath());
