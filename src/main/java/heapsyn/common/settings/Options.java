@@ -25,4 +25,18 @@ public class Options {
 		return this.smtSolver;
 	}
 	
+	// target class path
+	private String targetClassPath = "bin/test";
+	
+	public String getTargetClassPath() {
+		return this.targetClassPath;
+	}
+	
+	// target source path
+	private String targetSrcPath = "src/test/java";
+	
+	public String getTargetSourcePath() {
+		return this.targetSrcPath;
+	}
+	
 }

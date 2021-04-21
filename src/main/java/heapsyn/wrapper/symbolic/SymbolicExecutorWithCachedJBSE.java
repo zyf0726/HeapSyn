@@ -1,7 +1,5 @@
 package heapsyn.wrapper.symbolic;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -19,6 +17,8 @@ import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.common.exceptions.UnhandledJBSEPrimitive;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
 import heapsyn.common.exceptions.UnsupportedSMTOperator;
+import heapsyn.common.settings.JBSEParameters;
+import heapsyn.common.settings.Options;
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
@@ -33,9 +33,6 @@ import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.SMTOperator;
 import jbse.apps.run.Run;
 import jbse.apps.run.RunParameters;
-import jbse.apps.run.RunParameters.DecisionProcedureType;
-import jbse.apps.run.RunParameters.StateFormatMode;
-import jbse.apps.run.RunParameters.StepShowMode;
 import jbse.mem.Clause;
 import jbse.mem.ClauseAssume;
 import jbse.mem.ClauseAssumeAliases;
@@ -58,19 +55,6 @@ import jbse.val.Value;
 
 public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	
-	// Customize them
-	private static final String TARGET_CLASSPATH = "bin/test/";
-	private static final String TARGET_SOURCEPATH = "src/test/java/";
-
-	// Leave them alone
-	private static final String Z3_PATH = "libs/z3.exe";
-	private static final String JBSE_HOME = "jbse/";
-	private static final String JBSE_CLASSPATH = JBSE_HOME + "build/classes/java/main";
-	private static final String JBSE_SOURCEPATH = JBSE_HOME + "src/main/java/";
-	private static final String JRE_SOURCEPATH = System.getProperty("java.home", "") + "src.zip";
-	private static final String[] CLASSPATH = { TARGET_CLASSPATH };
-	private static final String[] SOURCEPATH = { JBSE_SOURCEPATH, TARGET_SOURCEPATH, JRE_SOURCEPATH };
-	
 	private static Map<Operator,SMTOperator> opMap=new HashMap<>();
 	
 	static {
@@ -86,54 +70,18 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	}
 		
 	static public int __countExecution=0;
-
-	// https://stackoverflow.com/questions/45072268/how-can-i-get-the-signature-field-of-java-reflection-method-object
-	private static String getSignature(Method m) {
-		String sig;
-		try {
-			Field gSig = Method.class.getDeclaredField("signature");
-			gSig.setAccessible(true);
-			sig = (String) gSig.get(m);
-			if (sig != null)
-				return sig;
-		} catch (IllegalAccessException | NoSuchFieldException e) {
-			// this should never happen
-			throw new UnexpectedInternalException(e);
-		}
-
-		StringBuilder sb = new StringBuilder("(");
-		for (Class<?> c : m.getParameterTypes()) {
-			sig = Array.newInstance(c, 0).toString();
-			sb.append(sig.substring(1, sig.indexOf('@')));
-		}
-		sb.append(")");
-		if (m.getReturnType() == void.class) {
-			sb.append("V");
-		} else {
-			sig = Array.newInstance(m.getReturnType(), 0).toString();
-			sb.append(sig.substring(1, sig.indexOf('@')));
-		}
-		return sb.toString();
+	
+	private static RunParameters getRunParameters(MethodInvoke mInvoke) {
+		JBSEParameters parms = new JBSEParameters();
+		Options options = Options.I();
+		parms.setOutFilePath(null);
+		parms.setShowOnConsole(true);
+		parms.setTargetClassPath(options.getTargetClassPath());
+		parms.setTargetSourcePath(options.getTargetSourcePath());
+		parms.setTargetMethod(mInvoke.getJavaMethod());
+		return parms.getRunParameters();
 	}
 
-	private static void set(RunParameters p, MethodInvoke mInvoke) {
-		Method method = mInvoke.getJavaMethod();
-		p.setJBSELibPath(JBSE_CLASSPATH);
-		p.addUserClasspath(CLASSPATH);
-		p.addSourcePath(SOURCEPATH);
-		p.setMethodSignature(method.getDeclaringClass().getName().replace('.', '/'), getSignature(method).replace('.', '/'),
-				method.getName());
-		p.setDecisionProcedureType(DecisionProcedureType.Z3);
-		p.setExternalDecisionProcedurePath(Z3_PATH);
-		p.setDoSignAnalysis(true);
-		p.setDoEqualityAnalysis(true);
-		p.setStateFormatMode(StateFormatMode.TEXT);
-		p.setStepShowMode(StepShowMode.LEAVES);
-		p.setOutputFileNone();
-		p.setShowOnConsole(true);
-	}
-	
-	
 	private Map<Method,Set<State>> cachedJBSE;
 	
 	public SymbolicExecutorWithCachedJBSE() {
@@ -290,8 +238,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		
 		Method method=mInvoke.getJavaMethod();
 		if(!this.cachedJBSE.containsKey(method)) {
-			RunParameters p = new RunParameters();
-			set(p, mInvoke);
+			RunParameters p = getRunParameters(mInvoke);
 			Run r=new Run(p);
 			r.run();
 			HashSet<State> executed = r.getExecuted();
