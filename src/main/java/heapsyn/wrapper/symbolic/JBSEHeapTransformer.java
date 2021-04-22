@@ -8,6 +8,9 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
+import java.util.Set;
 import java.util.TreeMap;
 
 import heapsyn.common.exceptions.UnexpectedInternalException;
@@ -20,10 +23,13 @@ import heapsyn.smtlib.IntVar;
 import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
 import jbse.mem.InstanceWrapper_DEFAULT;
+import jbse.mem.Objekt;
 import jbse.mem.ObjektImpl;
 import jbse.mem.PathCondition;
+import jbse.mem.ReachableObjectsCollector;
 import jbse.mem.State;
 import jbse.mem.Variable;
+import jbse.mem.exc.FrozenStateException;
 import jbse.val.Primitive;
 import jbse.val.ReferenceConcrete;
 import jbse.val.ReferenceSymbolic;
@@ -54,19 +60,19 @@ public class JBSEHeapTransformer {
 	}
 
 	// keep only the useful HeapObjekts in Heap
-	private static Heap filterPreObjekt(Heap heap) { 
-		Heap ret = new Heap(MAX_HEAP_SIZE_JBSE);
-		for (Entry<Long, HeapObjekt> entry : heap.__getObjects().entrySet()) {
-			if (entry.getKey() >= heap.getStartPosition()) {
-				HeapObjekt o=entry.getValue();
-				if(o instanceof InstanceWrapper_DEFAULT) {
-					((InstanceWrapper_DEFAULT) o).possiblyCloneDelegate();
-				}
-				ret.__getObjects().put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
+//	private static Heap filterPreObjekt(Heap heap) { 
+//		Heap ret = new Heap(MAX_HEAP_SIZE_JBSE);
+//		for (Entry<Long, HeapObjekt> entry : heap.__getObjects().entrySet()) {
+//			if (entry.getKey() >= heap.getStartPosition()) {
+//				HeapObjekt o=entry.getValue();
+//				if(o instanceof InstanceWrapper_DEFAULT) {
+//					((InstanceWrapper_DEFAULT) o).possiblyCloneDelegate();
+//				}
+//				ret.__getObjects().put(entry.getKey(), entry.getValue());
+//			}
+//		}
+//		return ret;
+//	}
 	
 	// transform a HeapObjekt to an ObjectH (with fieldValueMap undetermined)
 	private static ObjectH transHeapObjektToObjectH(ObjektImpl o) {
@@ -80,12 +86,29 @@ public class JBSEHeapTransformer {
 		}
 	}
 	
-	public void transform(State state) {		
-		Heap heap=state.__getHeap();
+    //copied from java.util.stream.Collectors
+    private static <T> BinaryOperator<T> throwingMerger() {
+        return (u,v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); };
+    }
+	
+	public void transform(State state) throws FrozenStateException {		
+		//Heap heap=state.__getHeap();
 		PathCondition pathCond=state.__getPathCondition();
 		
-		Heap delHeap = filterPreObjekt(heap);
-		Map<Long, HeapObjekt> objekts = delHeap.__getObjects();
+		//Heap delHeap = filterPreObjekt(heap);
+		final Set<Long> reachable;
+		reachable= new ReachableObjectsCollector().reachable(state, false);
+
+
+		Set<Map.Entry<Long, Objekt>> entries = state.getHeap().entrySet().stream()
+		        .filter(e -> reachable.contains(e.getKey()))
+		        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), throwingMerger(), TreeMap::new)).entrySet();
+
+		//Map<Long, HeapObjekt> objekts = delHeap.__getObjects();
+		Map<Long,HeapObjekt> objekts=new HashMap<>();
+		for(Entry<Long,Objekt> entry: entries) {
+			objekts.put(entry.getKey(), (HeapObjekt) entry.getValue());
+		}
 		this.objects=new TreeMap<>(objekts);
 		
 		//Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();

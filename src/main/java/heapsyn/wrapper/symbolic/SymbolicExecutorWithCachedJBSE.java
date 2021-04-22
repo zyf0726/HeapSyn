@@ -42,6 +42,7 @@ import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
 import jbse.mem.PathCondition;
 import jbse.mem.State;
+import jbse.mem.exc.FrozenStateException;
 import jbse.val.Expression;
 import jbse.val.Operator;
 import jbse.val.Primitive;
@@ -66,6 +67,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		opMap.put(Operator.NE, SMTOperator.BIN_NE);
 		opMap.put(Operator.MUL, SMTOperator.MUL);
 		opMap.put(Operator.NOT, SMTOperator.UN_NOT);
+		opMap.put(Operator.LE, SMTOperator.BIN_LE);
+		opMap.put(Operator.LT, SMTOperator.BIN_LT);
+		opMap.put(Operator.GE, SMTOperator.BIN_GE);
+		opMap.put(Operator.GT, SMTOperator.BIN_GT);
 		
 	}
 		
@@ -123,6 +128,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	}
 	
 	private boolean isSat(ArrayList<Clause> refclause,Map<ReferenceSymbolic,ObjectH> ref2Obj) {
+		if(ref2Obj==null) return false;
 		for(int i=0;i<refclause.size();++i) {
 			ClauseAssumeReferenceSymbolic clause=(ClauseAssumeReferenceSymbolic) refclause.get(i);
 			ReferenceSymbolic ref=clause.getReference();
@@ -267,7 +273,9 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				if(clause instanceof ClauseAssume) {
 					primclause.add(clause);
 				}
-				else refclause.add(clause);
+				else if(clause instanceof ClauseAssumeReferenceSymbolic) {
+					refclause.add(clause);
+				}
 			}
 			
 			Map<ReferenceSymbolic,ObjectH> ref2Obj=this.ref2ObjMap(refclause, val2Obj); //map between Reference and ObjectH 
@@ -275,7 +283,12 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			if(!this.isSat(refclause, ref2Obj)) continue;
 			
 			JBSEHeapTransformer jhs=new JBSEHeapTransformer();
-			jhs.transform(state);
+			try {
+				jhs.transform(state);
+			} catch (FrozenStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
 			Map<HeapObjekt, ObjectH> finjbseObjMap = jhs.getfinjbseObjMap();
 			

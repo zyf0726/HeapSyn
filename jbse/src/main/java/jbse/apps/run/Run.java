@@ -434,11 +434,13 @@ public final class Run {
         @Override
         public boolean atPathEnd() {
             try {
-                final State currentState = Run.this.engine.getCurrentState();
-                /* ======================== modified, start =================== */
-                currentState.__getHeap().setReturnValue(currentState.getStuckReturn());
-                executed.add(currentState);
-                /* ========================= modified, end ==================== */
+            	final State currentState = Run.this.engine.getCurrentState();
+            	/* ======================== modified, start =================== */
+            	if(this.pathKind.equals(PathTypes.SAFE)) {
+	                currentState.__getHeap().setReturnValue(currentState.getStuckReturn());
+	                executed.add(currentState);
+	                /* ========================= modified, end ==================== */
+            	}
                 
                 //prints the leaf state if the case
                 if (Run.this.parameters.getStepShowMode() == StepShowMode.ALL ||       //already shown

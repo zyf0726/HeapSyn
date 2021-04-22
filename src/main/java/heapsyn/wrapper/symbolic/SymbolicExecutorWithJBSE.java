@@ -23,7 +23,6 @@ import heapsyn.common.settings.JBSEParameters;
 import heapsyn.common.settings.Options;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
-import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.*;
 import jbse.apps.run.Run;
 import jbse.apps.run.RunParameters;
@@ -33,6 +32,7 @@ import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
 import jbse.mem.PathCondition;
 import jbse.mem.State;
+import jbse.mem.exc.FrozenStateException;
 import jbse.val.Expression;
 import jbse.val.Operator;
 import jbse.val.Primitive;
@@ -53,6 +53,10 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 		opMap.put(Operator.NE, SMTOperator.BIN_NE);
 		opMap.put(Operator.MUL, SMTOperator.MUL);
 		opMap.put(Operator.NOT, SMTOperator.UN_NOT);
+		opMap.put(Operator.LE, SMTOperator.BIN_LE);
+		opMap.put(Operator.LT, SMTOperator.BIN_LT);
+		opMap.put(Operator.GE, SMTOperator.BIN_GE);
+		opMap.put(Operator.GT, SMTOperator.BIN_GT);
 		
 	}
 	
@@ -235,7 +239,12 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 			Heap finHeapJBSE = state.__getHeap();
 //			PathCondition pathCondJBSE = state.__getPathCondition();
 			JBSEHeapTransformer jhs=new JBSEHeapTransformer();
-			jhs.transform(state);
+			try {
+				jhs.transform(state);
+			} catch (FrozenStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			Map<HeapObjekt, ObjectH> finjbseObjMap = jhs.getfinjbseObjMap();
 			
 			Map<HeapObjekt,ObjectH> initjbseObjMap=symHeapJBSE.getJBSEObjMap();

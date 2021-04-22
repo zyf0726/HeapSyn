@@ -24,6 +24,12 @@ public enum SMTOperator implements SMTFunction {
 	BIN_NE("distinct"),
 	BIN_IMPLY("=>"),
 	
+	BIN_LT("<"),
+	BIN_LE("<="),
+	BIN_GT(">"),
+	BIN_GE(">=")
+	
+	
 	;
 	
 	private String repr;

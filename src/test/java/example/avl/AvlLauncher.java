@@ -39,12 +39,12 @@ public class AvlLauncher {
 		List<Method> methods = new ArrayList<>();
 		try {
 			methods.add(AvlTree.class.getMethod("__new__"));
-			// methods.add(AvlTree.class.getMethod("find", int.class));
+			 methods.add(AvlTree.class.getMethod("find", int.class));
 			methods.add(AvlTree.class.getMethod("findMax"));
-			// methods.add(AvlTree.class.getMethod("findMin"));
-			// methods.add(AvlTree.class.getMethod("insertElem", int.class));
-			// methods.add(AvlTree.class.getMethod("isEmpty"));
-			// methods.add(AvlTree.class.getMethod("makeEmpty"));
+			 methods.add(AvlTree.class.getMethod("findMin"));
+			 methods.add(AvlTree.class.getMethod("insertElem", int.class));
+			 methods.add(AvlTree.class.getMethod("isEmpty"));
+			 methods.add(AvlTree.class.getMethod("makeEmpty"));
 		} catch (NoSuchMethodException e) {
 			System.err.println("NoSuchMethodException: " + e.getMessage());
 			System.exit(-1);
