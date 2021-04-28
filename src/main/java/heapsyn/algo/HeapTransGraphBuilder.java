@@ -1,5 +1,6 @@
 package heapsyn.algo;
 
+import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayDeque;
@@ -18,6 +19,7 @@ import com.google.common.collect.Lists;
 import heapsyn.algo.WrappedHeap.BackwardRecord;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
 import heapsyn.heap.ActionIfFound;
+import heapsyn.heap.ClassH;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.smtlib.BoolVar;
@@ -32,6 +34,7 @@ public class HeapTransGraphBuilder {
 	
 	private SymbolicExecutor executor;
 	private List<Method> methods;
+	private Map<ClassH, Integer> heapScope;
 	
 	private ArrayList<WrappedHeap> allHeaps;
 	private Map<Long, List<WrappedHeap>> activeHeapsByCode;
@@ -41,8 +44,13 @@ public class HeapTransGraphBuilder {
 	public HeapTransGraphBuilder(SymbolicExecutor executor, Collection<Method> methods) {
 		this.executor = executor;
 		this.methods = ImmutableList.copyOf(methods);
+		this.heapScope = new HashMap<>();
 		this.allHeaps = new ArrayList<>();
 		this.activeHeapsByCode = new HashMap<>();
+	}
+	
+	public void setHeapScope(Class<?> javaClass, int scope) {
+		this.heapScope.put(ClassH.of(javaClass), scope);
 	}
 	
 	class FindOneMapping implements ActionIfFound {
@@ -55,6 +63,9 @@ public class HeapTransGraphBuilder {
 	}
 	
 	private boolean addNewHeap(WrappedHeap newHeap) {
+		if (this.isOutOfScope(newHeap.getHeap())) {
+			return false;
+		}
 		this.allHeaps.add(newHeap);
 		SymbolicHeap newSymHeap = newHeap.getHeap();
 		long code = newSymHeap.getFeatureCode();
@@ -76,7 +87,7 @@ public class HeapTransGraphBuilder {
 			}
 			activeHeaps.add(newHeap);
 		}
-		return newHeap.getStatus().equals(HeapStatus.ACTIVE);
+		return newHeap.isActive();
 	}
 	
 	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap) {
@@ -174,5 +185,33 @@ public class HeapTransGraphBuilder {
 			return extArgSeqs;
 		}
 	}
+	
+	private boolean isOutOfScope(SymbolicHeap heap) {
+		Map<ClassH, Integer> countObjs = new HashMap<>();
+		for (ObjectH o : heap.getAllObjects()) {
+			if (o.isNonNullObject()) {
+				ClassH cls = o.getClassH();
+				int cnt = countObjs.getOrDefault(cls, 0) + 1;
+				int limit = this.heapScope.getOrDefault(cls, 4);
+				if (cnt > limit) return true;
+				countObjs.put(o.getClassH(), cnt);
+			}
+		}
+		return false;
+	}
 
+	public static void __debugPrintOut(List<WrappedHeap> heaps,
+			SymbolicExecutor executor, PrintStream ps) {
+		long countActive = heaps.stream().filter(o -> o.isActive()).count();
+		ps.println("number of active/all heaps = " + countActive + "/" + heaps.size());
+		long countTrans = heaps.stream()
+				.map(o -> o.getBackwardRecords().size())
+				.reduce(0, (a, b) -> a + b);
+		ps.println("number of transitions = " + countTrans);
+		ps.println("number of symbolic executions = " + executor.getExecutionCount());
+		ps.println();
+		for (WrappedHeap heap : heaps)
+			heap.__debugPrintOut(ps);
+	}
+	
 }

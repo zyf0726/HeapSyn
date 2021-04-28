@@ -62,7 +62,12 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 	
 	private Map<ObjectH, ObjectH> rvsobjSrcMap;
 	
-	static public int __countExecution=0;
+	private int __countExecution=0;
+	
+	@Override
+	public int getExecutionCount() {
+		return this.__countExecution;
+	}
 
 	private static RunParameters getRunParameters(MethodInvoke mInvoke) {
 		JBSEParameters parms = JBSEParameters.I();
@@ -189,7 +194,7 @@ public class SymbolicExecutorWithJBSE implements SymbolicExecutor {
 		if (!(initHeap instanceof SymbolicHeapWithJBSE))
 			return null;
 		
-		SymbolicExecutorWithJBSE.__countExecution++;
+		this.__countExecution++;
 		List<PathDescriptor> pds = new ArrayList<>();
 		if(!Modifier.isStatic(mInvoke.getJavaMethod().getModifiers())&&mInvoke.getInvokeArguments().get(0).isNullObject()) return pds;
 		SymbolicHeapWithJBSE symHeapJBSE = (SymbolicHeapWithJBSE) initHeap;

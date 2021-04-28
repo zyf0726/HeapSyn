@@ -27,10 +27,10 @@ public class JBSEParameters {
 	
 	private boolean doSignAnalysis			=	true;
 	private boolean doEqualityAnalysis		=	true;
-	private StateFormatMode stateFormatMode	=	StateFormatMode.TEXT;
+	private StateFormatMode stateFormatMode	=	StateFormatMode.PATH;
 	private StepShowMode stepShowMode		=	StepShowMode.LEAVES;
 	
-	private boolean showOnConsole	=	true;
+	private boolean showOnConsole	=	false;
 	private String outFilePath		=	null;
 	private String settingsPath		=	null;
 	

@@ -20,9 +20,7 @@ import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
 import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.IntVar;
-import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
-import jbse.mem.InstanceWrapper_DEFAULT;
 import jbse.mem.Objekt;
 import jbse.mem.ObjektImpl;
 import jbse.mem.PathCondition;
@@ -37,7 +35,7 @@ import jbse.val.Value;
 
 public class JBSEHeapTransformer {
 	
-	private static int MAX_HEAP_SIZE_JBSE = 1_000_000; 
+	// private static int MAX_HEAP_SIZE_JBSE = 1_000_000; 
 	private Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
 	private Map<Primitive, ObjectH> finjbseVarMap = new HashMap<>();
 	private Map<ObjectH,Primitive> finVarjbseMap = new HashMap<>(); // a Primitive may correspond to more than one ObjectH

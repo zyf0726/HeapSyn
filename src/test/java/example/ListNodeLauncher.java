@@ -19,6 +19,7 @@ import heapsyn.smtlib.SMTSort;
 import heapsyn.smtlib.Variable;
 import heapsyn.wrapper.symbolic.SpecFactory;
 import heapsyn.wrapper.symbolic.Specification;
+import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
@@ -28,14 +29,14 @@ public class ListNodeLauncher {
 	
 	private static void buildGraph(Collection<Method> methods) {
 		long start = System.currentTimeMillis();
-		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(
-				new SymbolicExecutorWithCachedJBSE(), methods);
+		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
+		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
+		gb.setHeapScope(ListNode.class, 5);
 		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		testGenerator = new TestGenerator(heaps);
 		System.out.println("number of all heaps = " + heaps.size());
-		System.out.print("number of symbolic execution = ");
-		System.out.println(SymbolicExecutorWithCachedJBSE.__countExecution);
+		System.out.println("number of symbolic execution = " + executor.getExecutionCount());
 		long end = System.currentTimeMillis();
 		System.out.println(">> buildGraph: " + (end - start) + "ms\n");
 	}

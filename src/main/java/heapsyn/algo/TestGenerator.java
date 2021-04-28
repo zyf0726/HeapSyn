@@ -42,10 +42,21 @@ public class TestGenerator {
 		MatchResult matchRet = null;
 		WrappedHeap finHeap = null;
 		for (WrappedHeap heap : this.heaps) {
+			if (!heap.isActive()) continue;
 			matchRet = heap.matchSpecification(spec);
 			if (matchRet != null) {
 				finHeap = heap;
 				break;
+			}
+		}
+		if (matchRet == null) {
+			for (WrappedHeap heap : this.heaps) {
+				if (heap.isActive()) continue;
+				matchRet = heap.matchSpecification(spec);
+				if (matchRet != null) {
+					finHeap = heap;
+					break;
+				}
 			}
 		}
 		if (matchRet == null) return null;

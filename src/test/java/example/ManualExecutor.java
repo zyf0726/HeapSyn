@@ -41,7 +41,7 @@ public class ManualExecutor implements SymbolicExecutor {
 		return INSTANCE;
 	}
 	
-	public int __countExecution = 0;
+	private int __countExecution = 0;
 	
 	private Set<ObjectH> tempAccObjs;
 	private Bijection<ObjectH, ObjectH> tempCloneMap;
@@ -51,6 +51,11 @@ public class ManualExecutor implements SymbolicExecutor {
 		ObjectH.STRICT_MODE = false;
 		this.tempCloneMap = new Bijection<>();
 		this.tempVarExprMap = new HashMap<>();
+	}
+	
+	@Override
+	public int getExecutionCount() {
+		return this.__countExecution;
 	}
 
 	@Override
@@ -108,7 +113,9 @@ public class ManualExecutor implements SymbolicExecutor {
 			tempAccObjs.add(retVal);
 		}
 		pd.finHeap = new SymbolicHeapAsDigraph(tempAccObjs, ExistExpr.ALWAYS_FALSE);
-		pd.objSrcMap = ImmutableMap.copyOf(tempCloneMap.getMapV2U());
+		Map<ObjectH, ObjectH> objSrcMap = new HashMap<>(tempCloneMap.getMapV2U());
+		objSrcMap.remove(ObjectH.NULL);
+		pd.objSrcMap = ImmutableMap.copyOf(objSrcMap);
 		pd.varExprMap = ImmutableMap.copyOf(tempVarExprMap);
 		return pd;
 	}

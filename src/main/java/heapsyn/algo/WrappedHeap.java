@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -219,7 +220,7 @@ public class WrappedHeap {
 	// constructor for initial heap
 	public WrappedHeap(SymbolicHeap initHeap) {
 		this.heap = initHeap;
-		this.status = isOutOfScope(initHeap) ? HeapStatus.OUT_OF_SCOPE : HeapStatus.ACTIVE;
+		this.status = HeapStatus.ACTIVE;
 		this.rcdBackwards = new ArrayList<>();
 		this.renameMapList = new ArrayList<>();
 		this.rcdForwards = new ArrayList<>();
@@ -346,26 +347,24 @@ public class WrappedHeap {
 		return null;
 	}
 	
+	public boolean isActive() {
+		return this.status.equals(HeapStatus.ACTIVE);
+	}
+	
+	public boolean isSubsumed() {
+		return this.status.equals(HeapStatus.SUBSUMED);
+	}
+	
+	public List<BackwardRecord> getBackwardRecords() {
+		return ImmutableList.copyOf(this.rcdBackwards);
+	}
 	
 	SymbolicHeap getHeap() {
 		return this.heap;
 	}
 	
-	HeapStatus getStatus() {
-		return this.status;
-	}
-	
-	ArrayList<BackwardRecord> getBackwardRecords() {
-		return this.rcdBackwards;
-	}
-	
 	ArrayList<Map<Variable, Variable>> getRenameMapList() {
 		return this.renameMapList;
-	}
-	
-	
-	private static boolean isOutOfScope(SymbolicHeap heap) {
-		return heap.getAllObjects().size() - heap.getVariables().size() > 5;
 	}
 	
 }

@@ -74,12 +74,16 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		
 	}
 		
-	static public int __countExecution=0;
+	private int __countExecution=0;
+	
+	@Override
+	public int getExecutionCount() {
+		return this.__countExecution;
+	}
 	
 	private static RunParameters getRunParameters(MethodInvoke mInvoke) {
 		JBSEParameters parms = JBSEParameters.I(); 
 		Options options = Options.I();
-		parms.setShowOnConsole(true);
 		parms.setTargetClassPath(options.getTargetClassPath());
 		parms.setTargetSourcePath(options.getTargetSourcePath());
 		parms.setTargetMethod(mInvoke.getJavaMethod());
@@ -237,7 +241,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 
 	@Override
 	public Collection<PathDescriptor> executeMethod(SymbolicHeap initHeap, MethodInvoke mInvoke) {
-		SymbolicExecutorWithCachedJBSE.__countExecution++;
+		this.__countExecution++;
 		List<PathDescriptor> pds = new ArrayList<>();
 		if(!Modifier.isStatic(mInvoke.getJavaMethod().getModifiers())&&mInvoke.getInvokeArguments().get(0).isNullObject()) return pds;
 		

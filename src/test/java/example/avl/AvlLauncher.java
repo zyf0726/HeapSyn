@@ -1,16 +1,27 @@
 package example.avl;
 
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import heapsyn.algo.HeapTransGraphBuilder;
+import heapsyn.algo.Statement;
 import heapsyn.algo.TestGenerator;
 import heapsyn.algo.WrappedHeap;
 import heapsyn.common.settings.JBSEParameters;
+import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
+import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
+import heapsyn.smtlib.Variable;
+import heapsyn.wrapper.symbolic.SpecFactory;
+import heapsyn.wrapper.symbolic.Specification;
+import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
@@ -18,38 +29,65 @@ public class AvlLauncher {
 	
 	private static TestGenerator testGenerator;
 	
-	private static void buildGraph(Collection<Method> methods) {
+	private static void buildGraph(Collection<Method> methods) throws FileNotFoundException {
 		long start = System.currentTimeMillis();
-		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(
-				new SymbolicExecutorWithCachedJBSE(), methods);
+		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
+		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
+		gb.setHeapScope(AvlTree.class, 1);
+		gb.setHeapScope(AvlNode.class, 6);
 		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
+		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/avl.txt"));
 		testGenerator = new TestGenerator(heaps);
-		System.out.println("number of all heaps = " + heaps.size());
-		System.out.print("number of symbolic execution = ");
-		System.out.println(SymbolicExecutorWithCachedJBSE.__countExecution);
 		long end = System.currentTimeMillis();
 		System.out.println(">> buildGraph: " + (end - start) + "ms\n");
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException, NoSuchMethodException {
 		JBSEParameters parms = JBSEParameters.I();
+		parms.setShowOnConsole(true);
 		parms.setSettingsPath("HEXsettings/avltree.jbse");
-		parms.setHeapScope(AvlNode.class, 5);
+		parms.setHeapScope(AvlTree.class, 1);
+		parms.setHeapScope(AvlNode.class, 6);
 		List<Method> methods = new ArrayList<>();
-		try {
-			methods.add(AvlTree.class.getMethod("__new__"));
-			 methods.add(AvlTree.class.getMethod("find", int.class));
-			methods.add(AvlTree.class.getMethod("findMax"));
-			 methods.add(AvlTree.class.getMethod("findMin"));
-			 methods.add(AvlTree.class.getMethod("insertElem", int.class));
-			 methods.add(AvlTree.class.getMethod("isEmpty"));
-			 methods.add(AvlTree.class.getMethod("makeEmpty"));
-		} catch (NoSuchMethodException e) {
-			System.err.println("NoSuchMethodException: " + e.getMessage());
-			System.exit(-1);
-		}
+		methods.add(AvlTree.class.getMethod("__new__"));
+		methods.add(AvlTree.class.getMethod("find", int.class));
+		methods.add(AvlTree.class.getMethod("findMax"));
+		methods.add(AvlTree.class.getMethod("findMin"));
+		methods.add(AvlTree.class.getMethod("insertElem", int.class));
+		methods.add(AvlTree.class.getMethod("isEmpty"));
+		methods.add(AvlTree.class.getMethod("makeEmpty"));
 		buildGraph(methods);
+		genTest1();
+	}
+	
+	private static void genTest1() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH avlTree = specFty.mkRefDecl(AvlTree.class, "t");
+		specFty.addRefSpec("t", "root", "root");
+		specFty.addRefSpec("root", "element", "v3", "left", "root.l", "right", "root.r");
+		specFty.addRefSpec("root.l", "element", "v1", "left", "root.l.l", "right", "root.l.r");
+		specFty.addRefSpec("root.r", "element", "v4", "left", "null", "right", "root.r.r");
+		specFty.addRefSpec("root.l.l", "element", "v0", "left", "null", "right", "null");
+		specFty.addRefSpec("root.l.r", "element", "v2", "left", "null", "right", "null");
+		specFty.addRefSpec("root.r.r", "element", "v5", "left", "null", "right", "null");
+		specFty.setAccessible("t");
+		specFty.addVarSpec("(= v0 -7)");
+		specFty.addVarSpec("(= v1 -2)");
+		specFty.addVarSpec("(= v2 0)");
+		specFty.addVarSpec("(= v3 1)");
+		specFty.addVarSpec("(= v4 7)");
+		specFty.addVarSpec("(= v5 12)");
+		Specification spec = specFty.genSpec();
+		
+		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
+		Map<Variable, Constant> vModel = new HashMap<>();
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
+		stmts.add(new Statement(objSrc, vModel, avlTree));
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTest1: " + (end - start) + "ms\n");
 	}
 
 }
