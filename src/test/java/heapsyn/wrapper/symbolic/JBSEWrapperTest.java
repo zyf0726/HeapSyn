@@ -29,7 +29,7 @@ public class JBSEWrapperTest {
 
 	@Test
 	public void test() {
-		SymbolicExecutor executor = new SymbolicExecutorWithJBSE();
+		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
 		
 		SymbolicHeap emp = new SymbolicHeapWithJBSE(null);
 		ObjectH elem$1 = new ObjectH(new IntVar());

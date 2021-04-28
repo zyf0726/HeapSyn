@@ -12,7 +12,6 @@ import heapsyn.heap.SymbolicHeap;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
-import heapsyn.wrapper.symbolic.SymbolicExecutorWithJBSE;
 import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
 public class GraphBuilderTest {
@@ -26,7 +25,6 @@ public class GraphBuilderTest {
 						ListNode.mAddBefore, ListNode.mAddAfter
 				)
 		);
-		gb.setHeapScope(ListNode.class, 2);
 		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap);
 		HeapTransGraphBuilder.__debugPrintOut(genHeaps, executor, ps);
@@ -36,12 +34,6 @@ public class GraphBuilderTest {
 	public void testListNodeManual() throws Exception {
 		PrintStream ps = new PrintStream("build/testListNode-Manual.log");
 		makeTestListNode(ManualExecutor.I(), ps);
-	}
-	
-	@Test
-	public void testListNodeJBSE() throws Exception {
-		PrintStream ps = new PrintStream("build/testListNode-JBSE.log");
-		makeTestListNode(new SymbolicExecutorWithJBSE(), ps);
 	}
 	
 	@Test

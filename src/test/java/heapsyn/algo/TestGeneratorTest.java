@@ -35,7 +35,6 @@ import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
-import heapsyn.wrapper.symbolic.SymbolicExecutorWithJBSE;
 import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
 public class TestGeneratorTest {
@@ -198,7 +197,7 @@ public class TestGeneratorTest {
 	}
 	
 	private void makeTest(SymbolicExecutor executor, PrintStream ps) throws Exception {
-		HeapTransGraphBuilder graphBuilder = new HeapTransGraphBuilder(
+		HeapTransGraphBuilder gb  = new HeapTransGraphBuilder(
 				executor,
 				Arrays.asList(
 						ListNode.mNew, ListNode.mGetNext,
@@ -207,7 +206,7 @@ public class TestGeneratorTest {
 				)
 		);
 		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
-		List<WrappedHeap> genHeaps = graphBuilder.buildGraph(initHeap);
+		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap);
 		TestGenerator testgen = new TestGenerator(genHeaps);
 		
 		IntVar y = new IntVar();
@@ -242,13 +241,8 @@ public class TestGeneratorTest {
 		makeTest(ManualExecutor.I(), new PrintStream("build/ManualTestgen.txt"));
 	}
 	
-	// @Test
-	public void test3() throws Exception {
-		makeTest(new SymbolicExecutorWithJBSE(), new PrintStream("build/JBSETestgen.txt"));
-	}
-	
 	@Test
-	public void test4() throws Exception {
+	public void test3() throws Exception {
 		makeTest(new SymbolicExecutorWithCachedJBSE(), new PrintStream("build/CachedJBSETestgen.txt"));
 	}
 
