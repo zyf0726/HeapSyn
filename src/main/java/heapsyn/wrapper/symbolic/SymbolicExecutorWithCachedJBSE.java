@@ -419,7 +419,33 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				pd.retVal=null;
 			}
 			
+			boolean issame=true;
+			
 			SymbolicHeap symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
+			if(symHeap.maybeIsomorphicWith(initHeap)) {
+				for(Entry<ObjectH,ObjectH> obj:objSrcMap.entrySet()) {
+					ObjectH finobj=obj.getKey();
+					ObjectH initobj=obj.getValue();
+					for(FieldH field:finobj.getFields()) {
+						ObjectH val=finobj.getFieldValue(field);
+						if(val.isVariable()) {
+							SMTExpression expr=varExprMap.get(val.getVariable());
+							if(!(expr instanceof heapsyn.smtlib.Variable)) {
+								issame=false;
+								break;
+							}
+							heapsyn.smtlib.Variable var=(heapsyn.smtlib.Variable)expr;
+							heapsyn.smtlib.Variable initvar=initobj.getFieldValue(field).getVariable();
+							if(var!=initvar) {
+								issame=false;
+								break;
+							}
+						}
+					}
+					if(issame==false) break;
+				}
+				if(issame==true) continue; 
+			}
 			pd.finHeap = symHeap;
 			pd.objSrcMap=objSrcMap;
 			pd.varExprMap=varExprMap;
