@@ -419,10 +419,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				pd.retVal=null;
 			}
 			
-			boolean issame=true;
+//			boolean issame=true;
 			
 			SymbolicHeap symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
-			if(symHeap.maybeIsomorphicWith(initHeap)) {
+/*			if(symHeap.maybeIsomorphicWith(initHeap)) {
 				for(Entry<ObjectH,ObjectH> obj:objSrcMap.entrySet()) {
 					ObjectH finobj=obj.getKey();
 					ObjectH initobj=obj.getValue();
@@ -445,7 +445,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					if(issame==false) break;
 				}
 				if(issame==true) continue; 
-			}
+			} */
 			pd.finHeap = symHeap;
 			pd.objSrcMap=objSrcMap;
 			pd.varExprMap=varExprMap;

@@ -122,9 +122,14 @@ public class HeapTransGraphBuilder {
 				++sccEnd;
 			}
 			if (sccEnd - sccBegin > 1) {
-				for (int repeat = 0; repeat < 3; ++repeat)
+				for (int repeat = 0; repeat < 2; ++repeat) {
 					for (WrappedHeap heap : this.allHeaps.subList(sccBegin, sccEnd))
 						heap.recomputeConstraint();
+				}
+				for (WrappedHeap heap : this.allHeaps.subList(sccBegin, sccEnd)) {
+					if (heap.isActive())
+						heap.recomputeConstraint();
+				}
 			} else {
 				this.allHeaps.get(sccBegin).recomputeConstraint();
 			}

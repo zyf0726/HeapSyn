@@ -73,12 +73,12 @@ public class AvlLauncher {
 		specFty.addRefSpec("root.l.r", "element", "v2", "left", "null", "right", "null");
 		specFty.addRefSpec("root.r.r", "element", "v5", "left", "null", "right", "null");
 		specFty.setAccessible("t");
-		specFty.addVarSpec("(= v0 -7)");
-		specFty.addVarSpec("(= v1 -2)");
-		specFty.addVarSpec("(= v2 0)");
-		specFty.addVarSpec("(= v3 1)");
-		specFty.addVarSpec("(= v4 7)");
-		specFty.addVarSpec("(= v5 12)");
+		specFty.addVarSpec("(= (- v1 v0) 27)"); // v0 = -115
+		specFty.addVarSpec("(= (- v2 v1) 47)"); // v1 = -88
+		specFty.addVarSpec("(= (- v3 v2) 36)"); // v2 = -41
+		specFty.addVarSpec("(= (- v4 v3) 71)"); // v3 = -5
+		specFty.addVarSpec("(= (- v5 v4) 62)"); // v4 = 66
+		specFty.addVarSpec("(= (+ v0 v5) 13)"); // v5 = 128
 		Specification spec = specFty.genSpec();
 		
 		Map<ObjectH, ObjectH> objSrc = new HashMap<>();

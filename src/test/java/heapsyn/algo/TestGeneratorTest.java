@@ -166,7 +166,7 @@ public class TestGeneratorTest {
 			H3.recomputeConstraint();
 			H4.recomputeConstraint();
 		}
-	
+		
 		/*
 		H0.__debugPrintOut(System.out);
 		H1.__debugPrintOut(System.out);
@@ -174,6 +174,8 @@ public class TestGeneratorTest {
 		H3.__debugPrintOut(System.out);
 		H4.__debugPrintOut(System.out);
 		*/
+		
+		H1.recomputeConstraint();
 		
 		Specification spec = new Specification();
 		IntVar x = new IntVar(), arg = new IntVar();

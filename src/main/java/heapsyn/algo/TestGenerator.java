@@ -49,16 +49,6 @@ public class TestGenerator {
 				break;
 			}
 		}
-		if (matchRet == null) {
-			for (WrappedHeap heap : this.heaps) {
-				if (heap.isActive()) continue;
-				matchRet = heap.matchSpecification(spec);
-				if (matchRet != null) {
-					finHeap = heap;
-					break;
-				}
-			}
-		}
 		if (matchRet == null) return null;
 		
 		if (objSrc == null) {
@@ -128,12 +118,15 @@ public class TestGenerator {
 						}
 					}
 					if (br.mInvoke != null) {
-						stmts.add(new Statement(br.mInvoke, br.retVal));
+						Statement stmt = new Statement(br.mInvoke, br.retVal);
 						for (ObjectH arg : br.mInvoke.getInvokeArguments()) {
 							if (arg.isNonNullObject()) {
 								objSrc.put(arg, arg);
+							} else {
+								stmt.constValues.put(arg.getVariable(), vModel.get(arg.getVariable()));
 							}
 						}
+						stmts.add(stmt);
 					}
 					finHeap = br.oriHeap;
 					break;
@@ -145,10 +138,10 @@ public class TestGenerator {
 		for (Statement stmt : stmts) {
 			for (int i = 0; i < stmt.objArgs.size(); ++i) {
 				ObjectH arg = stmt.objArgs.get(i);
-				if (arg.isHeapObject()) {
+				if (arg.isNonNullObject()) {
 					stmt.objArgs.set(i, objSrc.get(arg));
 				} else {
-					stmt.constValues.put(arg.getVariable(), vModel.get(arg.getVariable()));
+					// do nothing
 				}
 			}
 		}		
