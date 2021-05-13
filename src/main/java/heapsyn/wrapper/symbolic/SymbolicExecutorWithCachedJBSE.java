@@ -1,6 +1,7 @@
 package heapsyn.wrapper.symbolic;
 
 import java.lang.reflect.Method;
+
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -238,6 +239,31 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			return ret;
 		}
 	}
+	
+	private boolean isSomorphic(SymbolicHeap finHeap,SymbolicHeap initHeap,
+			Map<ObjectH, ObjectH> objSrcMap) {
+		Set<ObjectH> finacc=finHeap.getAccessibleObjects();
+		Set<ObjectH> initacc=initHeap.getAccessibleObjects();
+		for(ObjectH obj:finacc) {
+			if(obj.isNullObject()) continue;
+			if(!initacc.contains(objSrcMap.get(obj)))
+				return false;
+		}
+		Set<ObjectH> finobjs=finHeap.getAllObjects();
+		//Set<ObjectH> initobjs=initHeap.getAllObjects();
+		for(ObjectH obj:finobjs) {
+			if(obj.isVariable()||obj.isNullObject()) continue;
+			ObjectH initobj=objSrcMap.get(obj);
+			if(initobj==null) return false;
+			for(FieldH field:obj.getFields()) {
+				ObjectH val=obj.getFieldValue(field);
+				if(val.isNonNullObject()) {
+					if(initobj.getFieldValue(field)!=objSrcMap.get(val)) return false;
+				}
+			}
+		}
+		return true;
+	}
 
 	@Override
 	public Collection<PathDescriptor> executeMethod(SymbolicHeap initHeap, MethodInvoke mInvoke) {
@@ -419,13 +445,20 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				pd.retVal=null;
 			}
 			
-//			boolean issame=true;
+			boolean issame=true;
 			
 			SymbolicHeap symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
-/*			if(symHeap.maybeIsomorphicWith(initHeap)) {
-				for(Entry<ObjectH,ObjectH> obj:objSrcMap.entrySet()) {
-					ObjectH finobj=obj.getKey();
-					ObjectH initobj=obj.getValue();
+			
+			
+			if(this.isSomorphic(symHeap, initHeap, objSrcMap)&&this.isSomorphic(initHeap, symHeap, rvsobjSrcMap)) {
+				for(ObjectH obj:symHeap.getAllObjects()) {
+					if(obj.isVariable()||obj.isNullObject()) continue;
+					ObjectH finobj=obj;
+					ObjectH initobj=objSrcMap.get(obj);
+					if(initobj==null) {
+						issame=false;
+						break;
+					}
 					for(FieldH field:finobj.getFields()) {
 						ObjectH val=finobj.getFieldValue(field);
 						if(val.isVariable()) {
@@ -445,7 +478,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					if(issame==false) break;
 				}
 				if(issame==true) continue; 
-			} */
+			}
 			pd.finHeap = symHeap;
 			pd.objSrcMap=objSrcMap;
 			pd.varExprMap=varExprMap;
