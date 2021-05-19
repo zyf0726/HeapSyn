@@ -240,7 +240,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		}
 	}
 	
-	private boolean isSomorphic(SymbolicHeap finHeap,SymbolicHeap initHeap,
+	private boolean isIsomorphic(SymbolicHeap finHeap,SymbolicHeap initHeap,
 			Map<ObjectH, ObjectH> objSrcMap) {
 		Set<ObjectH> finacc=finHeap.getAccessibleObjects();
 		Set<ObjectH> initacc=initHeap.getAccessibleObjects();
@@ -450,7 +450,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			SymbolicHeap symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
 			
 			
-			if(this.isSomorphic(symHeap, initHeap, objSrcMap)&&this.isSomorphic(initHeap, symHeap, rvsobjSrcMap)) {
+			if(this.isIsomorphic(symHeap, initHeap, objSrcMap)&&this.isIsomorphic(initHeap, symHeap, rvsobjSrcMap)) {
 				for(ObjectH obj:symHeap.getAllObjects()) {
 					if(obj.isVariable()||obj.isNullObject()) continue;
 					ObjectH finobj=obj;

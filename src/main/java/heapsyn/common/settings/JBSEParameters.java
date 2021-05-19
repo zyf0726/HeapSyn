@@ -19,7 +19,7 @@ import jbse.apps.settings.SettingsReader;
 
 public class JBSEParameters {
 	
-	private static final String Z3_PATH			=	"libs/z3.exe";
+	private static final String Z3_PATH			=	"libs/z3-4.8.10-x64-win/z3.exe";
 	private static final String JBSE_HOME		=	"jbse/";
 	private static final String JBSE_CLASSPATH	= 	JBSE_HOME + "build/classes/java/main";
 	private static final String JBSE_SOURCEPATH	=	JBSE_HOME + "src/main/java/";

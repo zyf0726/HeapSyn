@@ -44,7 +44,7 @@ public class DecisionProcedureTest {
 
     //BEGIN TO PATCH
     private static final ArrayList<String> COMMAND_LINE = Z3_COMMAND_LINE;
-    private static final String SMT_SOLVER_PATH = "../libs/z3.exe";
+    private static final String SMT_SOLVER_PATH = "../libs/z3-4.8.10-x64-win/z3.exe";
     //END TO PATCH
 
     static {
