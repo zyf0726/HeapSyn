@@ -61,15 +61,23 @@ public class Z3JavaAPI implements SMTSolver {
 	
 	@Override
 	public boolean checkSat(SMTExpression constraint, Map<Variable, Constant> model) {
+		long startT = System.currentTimeMillis();
+		boolean isSat = this.__checkSat(constraint, model);
+		long endT = System.currentTimeMillis();
+		System.err.println("INFO: invoke Z3 Java API, elapsed " + (endT - startT) + "ms");
+		return isSat;
+	}
+	
+	public boolean __checkSat(SMTExpression constraint, Map<Variable, Constant> model) {
 		Context ctx = new Context();
 		StringBuilder sb = new StringBuilder();
 		List<Symbol> declNames = new ArrayList<>();
-		List<FuncDecl> decls = new ArrayList<>();
+		List<FuncDecl<?>> decls = new ArrayList<>();
 		for (Variable v : constraint.getFreeVariables()) {
 			// sb.append(v.getSMTDecl() + "\n");
 			Symbol varSymb = ctx.mkSymbol(v.toSMTString());
 			declNames.add(varSymb);
-			FuncDecl varDecl = ctx.mkConstDecl(varSymb, convertSort(ctx, v.getSMTSort()));
+			FuncDecl<?> varDecl = ctx.mkConstDecl(varSymb, convertSort(ctx, v.getSMTSort()));
 			decls.add(varDecl);
 		}
 		for (UserFunc uf : getAllUserFunctions(constraint)) {
@@ -104,7 +112,7 @@ public class Z3JavaAPI implements SMTSolver {
 			for (Variable var : constraint.getFreeVariables()) {
 				if (model.containsKey(var)) continue;
 				Symbol varSymb = ctx.mkSymbol(var.toSMTString());
-				FuncDecl varDecl = ctx.mkConstDecl(varSymb, convertSort(ctx, var.getSMTSort()));
+				FuncDecl<?> varDecl = ctx.mkConstDecl(varSymb, convertSort(ctx, var.getSMTSort()));
 				if (z3Model.getConstInterp(varDecl) == null) {
 					switch (var.getSMTSort()) {
 					case BOOL:
@@ -115,7 +123,7 @@ public class Z3JavaAPI implements SMTSolver {
 						break;
 					}
 				} else {
-					Expr val = z3Model.getConstInterp(varDecl).simplify();
+					Expr<?> val = z3Model.getConstInterp(varDecl).simplify();
 					switch (var.getSMTSort()) {
 					case BOOL:
 						model.put(var, new BoolConst(((BoolExpr) val).isTrue()));
