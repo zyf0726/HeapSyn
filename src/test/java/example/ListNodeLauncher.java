@@ -13,6 +13,7 @@ import heapsyn.algo.TestGenerator;
 import heapsyn.algo.WrappedHeap;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
+import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.SMTSort;
@@ -21,7 +22,6 @@ import heapsyn.wrapper.symbolic.SpecFactory;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
-import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
 public class ListNodeLauncher {
 	
@@ -32,7 +32,7 @@ public class ListNodeLauncher {
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(ListNode.class, 5);
-		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
+		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		testGenerator = new TestGenerator(heaps);
 		System.out.println("number of all heaps = " + heaps.size());

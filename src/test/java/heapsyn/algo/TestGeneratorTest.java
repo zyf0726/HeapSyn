@@ -35,7 +35,6 @@ import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
-import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
 public class TestGeneratorTest {
 	
@@ -207,7 +206,7 @@ public class TestGeneratorTest {
 						ListNode.mAddBefore, ListNode.mAddAfter
 				)
 		);
-		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
+		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap);
 		TestGenerator testgen = new TestGenerator(genHeaps);
 		

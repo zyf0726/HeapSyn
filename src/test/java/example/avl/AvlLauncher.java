@@ -16,6 +16,7 @@ import heapsyn.algo.WrappedHeap;
 import heapsyn.common.settings.JBSEParameters;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
+import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.Variable;
@@ -23,7 +24,6 @@ import heapsyn.wrapper.symbolic.SpecFactory;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
-import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
 public class AvlLauncher {
 	
@@ -35,7 +35,7 @@ public class AvlLauncher {
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(AvlTree.class, 1);
 		gb.setHeapScope(AvlNode.class, 6);
-		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
+		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/avl.txt"));
 		testGenerator = new TestGenerator(heaps);

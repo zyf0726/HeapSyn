@@ -9,10 +9,10 @@ import org.junit.Test;
 import example.ListNode;
 import example.ManualExecutor;
 import heapsyn.heap.SymbolicHeap;
+import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
-import heapsyn.wrapper.symbolic.SymbolicHeapWithJBSE;
 
 public class GraphBuilderTest {
 
@@ -25,7 +25,7 @@ public class GraphBuilderTest {
 						ListNode.mAddBefore, ListNode.mAddAfter
 				)
 		);
-		SymbolicHeap initHeap = new SymbolicHeapWithJBSE(ExistExpr.ALWAYS_TRUE);
+		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap);
 		HeapTransGraphBuilder.__debugPrintOut(genHeaps, executor, ps);
 	}
