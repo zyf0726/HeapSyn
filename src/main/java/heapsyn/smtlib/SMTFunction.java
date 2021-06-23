@@ -1,5 +1,6 @@
 package heapsyn.smtlib;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -7,7 +8,7 @@ import java.util.List;
  * or user-defined function (by command <tt>define-fun</tt>)
  */
 
-public interface SMTFunction {
+public interface SMTFunction extends Serializable {
 	
 	public String getName();
 	

@@ -2,6 +2,9 @@ package heapsyn.smtlib;
 
 public class BoolConst extends Constant {
 	
+	private static final long serialVersionUID = 6182795371835401206L;
+	
+
 	public static BoolConst DEFAULT = new BoolConst(false);
 	
 	private boolean aBool; 

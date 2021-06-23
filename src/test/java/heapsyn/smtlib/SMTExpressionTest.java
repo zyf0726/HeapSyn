@@ -30,8 +30,8 @@ public class SMTExpressionTest {
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		BoolVar.resetCounter();
-		IntVar.resetCounter();
+		BoolVar.resetCounter(0);
+		IntVar.resetCounter(0);
 		bv0 = new BoolVar();
 		ivTest = new IntVar("Vtest");
 		bvTest = new BoolVar("Vtest");

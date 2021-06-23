@@ -14,6 +14,9 @@ import com.google.common.collect.ImmutableSet;
 
 public class ExistExpr implements SMTQuantifiedExpr {
 	
+	private static final long serialVersionUID = -4908507598779926176L;
+	
+	
 	public static ExistExpr ALWAYS_TRUE = new ExistExpr(null, new BoolConst(true));
 	public static ExistExpr ALWAYS_FALSE = new ExistExpr(null, new BoolConst(false));
 	

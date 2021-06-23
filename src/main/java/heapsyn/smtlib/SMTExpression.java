@@ -1,5 +1,6 @@
 package heapsyn.smtlib;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
@@ -7,7 +8,7 @@ import java.util.Set;
  * SMT-LIB quantifier-free expression
  */
 
-public interface SMTExpression {
+public interface SMTExpression extends Serializable {
 
 	public SMTSort getSMTSort();
 	public String toSMTString();

@@ -9,6 +9,9 @@ import com.google.common.base.Preconditions;
 
 public abstract class Variable implements SMTExpression, Comparable<Variable> {
 	
+	private static final long serialVersionUID = -1151227570581088219L;
+	
+	
 	private String varName;
 	
 	Variable(String varName) {

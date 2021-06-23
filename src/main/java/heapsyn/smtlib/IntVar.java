@@ -2,12 +2,15 @@ package heapsyn.smtlib;
 
 public class IntVar extends Variable {
 	
+	private static final long serialVersionUID = -3977981872367981816L;
+	
+
 	static final String VARNAME_PREFIX = "I";
 	
 	private static int countVars = 0;
 	
-	public static void resetCounter() {
-		IntVar.countVars = 0;
+	public static void resetCounter(int start) {
+		IntVar.countVars = start;
 	}
 	
 	public static int getCounter() {

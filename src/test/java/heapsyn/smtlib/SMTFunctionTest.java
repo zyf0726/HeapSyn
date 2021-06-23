@@ -22,7 +22,7 @@ public class SMTFunctionTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		UserFunc.resetCounter();
+		UserFunc.resetCounter(0);
 		iv1 = new IntVar("iv1");
 		bv2 = new BoolVar("bv2");
 		iv3 = new IntVar("iv3");

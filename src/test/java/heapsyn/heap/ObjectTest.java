@@ -2,6 +2,11 @@ package heapsyn.heap;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -17,6 +22,9 @@ import heapsyn.smtlib.SMTSort;
 import heapsyn.smtlib.Variable;
 
 public class ObjectTest {
+	
+	private static final String filename = "tmp/ObjectTest.tmp";
+	private static final File file = new File(filename);
 	
 	@SuppressWarnings("unused")
 	private class Node {
@@ -37,12 +45,12 @@ public class ObjectTest {
 	@After
 	public void tearDown() throws Exception {
 		ObjectH.STRICT_MODE = true;
+		file.delete();
 	}
 
 	@Test
 	public void testClass1() {
-		ClassH cNull = ClassH.of(), cNull_dup = ClassH.of();
-		assertTrue(cNull == cNull_dup);
+		ClassH cNull = ClassH.CLS_NULL;
 		
 		assertNull(cNull.getJavaClass());
 		assertNull(cNull.getSMTSort());
@@ -56,7 +64,7 @@ public class ObjectTest {
 	public void testClass2() {
 		ClassH cNode_dup = ClassH.of(Node.class);
 		assertTrue(cNode == cNode_dup);
-		assertNotEquals(ClassH.of(), cNode_dup);
+		assertNotEquals(ClassH.CLS_NULL, cNode_dup);
 		
 		assertEquals(Node.class, cNode.getJavaClass());
 		assertNull(cNode.getSMTSort());
@@ -83,6 +91,28 @@ public class ObjectTest {
 		assertTrue(cBool.isSMTSort());
 	}
 	
+	@Test
+	public void testClassSerial() throws Exception {
+		FileOutputStream fos = new FileOutputStream(file);
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(ClassH.CLS_NULL); 
+		oos.writeObject(ClassH.of(Node.class)); 
+		oos.writeObject(ClassH.of(Node.class));
+		oos.writeObject(ClassH.of(SMTSort.BOOL));
+		oos.writeObject(ClassH.of(SMTSort.INT));
+		oos.close();
+		fos.close();
+		FileInputStream fis = new FileInputStream(file);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		assertTrue(ClassH.CLS_NULL == ois.readObject());
+		assertTrue(ClassH.of(Node.class) == ois.readObject());
+		assertTrue(ClassH.of(Node.class) == ois.readObject());
+		assertTrue(ClassH.of(SMTSort.BOOL) == ois.readObject());
+		assertTrue(ClassH.of(SMTSort.INT) == ois.readObject());
+		ois.close();
+		fis.close();
+	}
+	
 	@Test(expected = NullPointerException.class)
 	public void testClassExc1() {
 		ClassH.of((Class<Node>) null);
@@ -107,6 +137,26 @@ public class ObjectTest {
 		assertEquals("value", fValue.getName());
 	}
 	
+	@Test
+	public void testFieldSerial() throws Exception {
+		FileOutputStream fos = new FileOutputStream(file);
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(FieldH.of(Node.class.getField("next")));
+		oos.writeObject(FieldH.of(Node.class.getField("value")));
+		oos.writeObject(FieldH.of(Node.class.getField("next")));
+		oos.writeObject(FieldH.of(Node.class.getField("value")));
+		oos.close();
+		fos.close();
+		FileInputStream fis = new FileInputStream(file);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		assertTrue(fNext == ois.readObject());
+		assertTrue(fValue == ois.readObject());
+		assertTrue(fNext == ois.readObject());
+		assertTrue(fValue == ois.readObject());
+		ois.close();
+		fis.close();
+	}
+	
 	@Test(expected = NullPointerException.class)
 	public void testFieldExc1() {
 		FieldH.of(null);
@@ -119,7 +169,7 @@ public class ObjectTest {
 		assertFalse(oNull.isNonNullObject());
 		assertTrue(oNull.isHeapObject());
 		assertFalse(oNull.isVariable());
-		assertEquals(ClassH.of(), oNull.getClassH());
+		assertEquals(ClassH.CLS_NULL, oNull.getClassH());
 		assertNull(oNull.getVariable());
 	}
 	
@@ -167,6 +217,36 @@ public class ObjectTest {
 		assertEquals(o1.getEntries(), o2.getEntries());
 	}
 	
+	@Test
+	public void testObjectSerial() throws Exception {
+		FileOutputStream fos = new FileOutputStream(file);
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(ObjectH.NULL);
+		ObjectH ov = new ObjectH(new IntVar());
+		ObjectH o1 = new ObjectH(cNode, ImmutableMap.of());
+		ObjectH o2 = new ObjectH(cNode, ImmutableMap.of(fNext, o1, fValue, ov));
+		oos.writeObject(ov);
+		oos.writeObject(o1);
+		oos.writeObject(o2);
+		oos.close();
+		fos.close();
+		FileInputStream fis = new FileInputStream(file);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		assertTrue(ObjectH.NULL == ois.readObject());
+		ObjectH rv = (ObjectH) ois.readObject();
+		assertEquals(SMTSort.INT, rv.getVariable().getSMTSort());
+		assertEquals(ov.getVariable(), rv.getVariable());
+		ObjectH r1 = (ObjectH) ois.readObject();
+		assertTrue(cNode == r1.getClassH());
+		assertTrue(r1.getEntries().isEmpty());
+		ObjectH r2 = (ObjectH) ois.readObject();
+		assertTrue(cNode == r2.getClassH());
+		assertTrue(r1 == r2.getFieldValue(fNext));
+		assertTrue(rv == r2.getFieldValue(fValue));
+		ois.close();
+		fis.close();
+	}
+	
 	@Test(expected = IllegalStateException.class)
 	public void testObjectExc1() {
 		ObjectH o = new ObjectH(cNode, ImmutableMap.of());
@@ -178,5 +258,20 @@ public class ObjectTest {
 		ObjectH o = new ObjectH(cNode, null);
 		o.setFieldValueMap(null);
 	}
+	
+	@Test(expected = NullPointerException.class)
+	public void testObjectExc3() {
+		new ObjectH(null);
+	}
 
+	@Test(expected = NullPointerException.class)
+	public void testObjectExc4() {
+		new ObjectH(null, ImmutableMap.of());
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void testObjectExc5() {
+		new ObjectH(ClassH.CLS_NULL, ImmutableMap.of());
+	}
+	
 }

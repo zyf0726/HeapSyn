@@ -10,12 +10,15 @@ import com.google.common.collect.Sets;
 
 public class UserFunc implements SMTFunction, Comparable<UserFunc> {
 	
+	private static final long serialVersionUID = 1216842976409320454L;
+	
+
 	static final String FUNCNAME_PREFIX = "FUN";
 	
 	private static int countFuncs = 0;
 	
-	public static void resetCounter() {
-		UserFunc.countFuncs = 0;
+	public static void resetCounter(int start) {
+		UserFunc.countFuncs = start;
 	}
 	
 	public static int getCounter() {

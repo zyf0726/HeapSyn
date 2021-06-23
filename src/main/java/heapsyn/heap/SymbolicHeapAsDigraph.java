@@ -1,5 +1,8 @@
 package heapsyn.heap;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +29,9 @@ import heapsyn.util.graph.GraphAnalyzer;
 
 public class SymbolicHeapAsDigraph implements SymbolicHeap {
 	
+	private static final long serialVersionUID = 8975670477694251838L;
+	
+	
 	private ImmutableSet<ObjectH> accObjs;
 	private ExistExpr constraint;
 	
@@ -33,6 +39,28 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 	private ImmutableList<Variable> vars;
 	
 	private GraphAnalyzer<ObjectH, FieldH> GA;
+	
+	private void writeObject(ObjectOutputStream oos) throws IOException {
+		oos.writeObject(this.accObjs);
+		oos.writeObject(this.constraint);
+		oos.writeObject(this.allObjs);
+		oos.writeObject(this.vars);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void readObject(ObjectInputStream ois)
+	throws ClassNotFoundException, IOException, NoSuchFieldException, SecurityException {
+		this.accObjs = (ImmutableSet<ObjectH>) ois.readObject();
+		this.constraint = (ExistExpr) ois.readObject();
+		this.allObjs = (ImmutableSet<ObjectH>) ois.readObject();
+		this.vars = (ImmutableList<Variable>) ois.readObject();
+		List<Edge<ObjectH, FieldH>> edges = new ArrayList<>();
+		for (ObjectH o : this.allObjs) {
+			for (Entry<FieldH, ObjectH> entry : o.getEntries())
+				edges.add(new Edge<ObjectH, FieldH>(o, entry.getValue(), entry.getKey()));
+		}
+		this.GA = new GraphAnalyzer<>(this.allObjs, edges);
+	}
 
 	public SymbolicHeapAsDigraph(ExistExpr constraint) {
 		this.accObjs = ImmutableSet.of(ObjectH.NULL);

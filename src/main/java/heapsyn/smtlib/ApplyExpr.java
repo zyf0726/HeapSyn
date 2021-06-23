@@ -12,6 +12,9 @@ import com.google.common.collect.ImmutableList;
 
 public class ApplyExpr implements SMTExpression {
 	
+	private static final long serialVersionUID = 8850037903095904635L;
+	
+	
 	private SMTFunction operator;
 	private ImmutableList<SMTExpression> operands;
 	

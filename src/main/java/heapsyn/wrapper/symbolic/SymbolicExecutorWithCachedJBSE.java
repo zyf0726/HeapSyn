@@ -13,6 +13,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
+import static heapsyn.wrapper.symbolic.JBSEHeapTransformer.BLANK_OBJ;
+
 import heapsyn.algo.MethodInvoke;
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.common.exceptions.UnhandledJBSEPrimitive;
@@ -380,7 +382,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				Set<FieldH> fields=obj.getFields();
 				for(FieldH field:fields) {
 					ObjectH val=obj.getFieldValue(field);
-					if(val==ObjectH.BLANK) {
+					if(val==BLANK_OBJ) {
 						ObjectH initObj=changedObjSrcMap.get(obj);
 						for(FieldH initField:initObj.getFields()) {
 							if(initField.getName().equals(field.getName())) {

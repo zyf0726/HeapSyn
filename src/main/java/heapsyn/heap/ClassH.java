@@ -1,5 +1,7 @@
 package heapsyn.heap;
 
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,11 +9,15 @@ import com.google.common.base.Preconditions;
 
 import heapsyn.smtlib.SMTSort;
 
-public final class ClassH {
+public final class ClassH implements Serializable {
 	
-	private static Map<Class<?>, ClassH> INSTANCE_JAVA = new HashMap<>();
-	private static Map<SMTSort, ClassH> INSTANCE_SMT = new HashMap<>();
-	private static ClassH NULL_CLASS = new ClassH();
+	private static final long serialVersionUID = 4108294590353253314L;
+	
+	
+	private static Map<Class<?>, ClassH> INST_JAVA = new HashMap<>();
+	private static Map<SMTSort, ClassH> INST_SMT = new HashMap<>();
+	
+	static ClassH CLS_NULL = new ClassH(); 
 	
 	private Class<?> javaClass;
 	private SMTSort smtSort;
@@ -33,22 +39,18 @@ public final class ClassH {
 		this.smtSort = smtSort;
 	}
 	
-	public static ClassH of() {
-		return NULL_CLASS;
-	}
-	
 	public static ClassH of(Class<?> javaClass) {
-		if (!INSTANCE_JAVA.containsKey(javaClass)) {
-			INSTANCE_JAVA.put(javaClass, new ClassH(javaClass));
+		if (!INST_JAVA.containsKey(javaClass)) {
+			INST_JAVA.put(javaClass, new ClassH(javaClass));
 		}
-		return INSTANCE_JAVA.get(javaClass);
+		return INST_JAVA.get(javaClass);
 	}
 	
 	public static ClassH of(SMTSort smtSort) {
-		if (!INSTANCE_SMT.containsKey(smtSort)) {
-			INSTANCE_SMT.put(smtSort, new ClassH(smtSort));
+		if (!INST_SMT.containsKey(smtSort)) {
+			INST_SMT.put(smtSort, new ClassH(smtSort));
 		}
-		return INSTANCE_SMT.get(smtSort);
+		return INST_SMT.get(smtSort);
 	}
 	
 	public Class<?> getJavaClass() {
@@ -73,6 +75,16 @@ public final class ClassH {
 	
 	public boolean isSMTSort() {
 		return this.smtSort != null;
+	}
+	
+	private Object readResolve() throws ObjectStreamException {
+		if (this.javaClass != null) {
+			return of(this.javaClass);
+		} else if (this.smtSort != null) {
+			return of(this.smtSort);
+		} else {
+			return CLS_NULL;
+		}
 	}
 	
 }

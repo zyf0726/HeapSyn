@@ -35,6 +35,8 @@ import jbse.val.Value;
 
 public class JBSEHeapTransformer {
 	
+	static ObjectH BLANK_OBJ = new ObjectH(ClassH.of(JBSEHeapTransformer.class), null);
+	
 	// private static int MAX_HEAP_SIZE_JBSE = 1_000_000; 
 	private Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
 	private Map<Primitive, ObjectH> finjbseVarMap = new HashMap<>();
@@ -155,7 +157,7 @@ public class JBSEHeapTransformer {
 				 			value = this.finjbseObjMap.get(objekts.get(pos));
 				 		}
 				 	} else {
-				 		value = ObjectH.BLANK;
+				 		value = BLANK_OBJ;
 				 	}
 				 	fieldValMap.put(field, value);
 				} else if (varValue instanceof Primitive) {

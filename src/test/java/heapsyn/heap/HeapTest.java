@@ -2,6 +2,11 @@ package heapsyn.heap;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,9 +21,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import heapsyn.smtlib.ApplyExpr;
+import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.ExistExpr;
+import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.IntVar;
 import heapsyn.smtlib.SMTOperator;
+import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
 
 public class HeapTest {
@@ -91,6 +99,7 @@ public class HeapTest {
 				new ApplyExpr(SMTOperator.UN_NOT, ivs[1].getVariable()));
 		SymbolicHeap h3 = new SymbolicHeapAsDigraph(Arrays.asList(o2, oNull, o0), e);
 		
+		assertFalse(emp.getVariables().isEmpty());
 		assertEquals(ImmutableSet.of(oNull), emp.getAllObjects());
 		assertEquals(ImmutableSet.of(o1, oNull), h1.getAllObjects());
 		assertEquals(ImmutableSet.of(o1, o2, oNull, ivs[0], ivs[1], ivs[2]), h2.getAllObjects());
@@ -382,6 +391,48 @@ public class HeapTest {
 		
 		HS.findEmbeddingInto(HO, ctr);
 		assertEquals(2, ctr.mappingCounter);
+	}
+	
+	@Test
+	public void testAboutSerialization() throws Exception {
+		Variable v1 = new IntVar();
+		Variable v2 = new BoolVar();
+		List<ObjectH> A = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(nodes, 0, 9)));
+		A.add(ObjectH.NULL);
+		A.get(0).setFieldValueMap(ImmutableMap.of(fNext, A.get(2)));
+		A.get(1).setFieldValueMap(ImmutableMap.of(fNext, A.get(2)));
+		A.get(2).setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL));
+		A.get(3).setFieldValueMap(ImmutableMap.of(fNext, A.get(4)));
+		A.get(4).setFieldValueMap(ImmutableMap.of(fNext, A.get(5)));
+		A.get(5).setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL));
+		A.get(6).setFieldValueMap(ImmutableMap.of(fNext, A.get(7)));
+		A.get(7).setFieldValueMap(ImmutableMap.of(fNext, A.get(8)));
+		A.get(8).setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL));
+		SymbolicHeap hA = new SymbolicHeapAsDigraph(A,
+				new ExistExpr(Arrays.asList(v1, v2), new IntConst(404)));
+		File tmpfile = new File("tmp/HeapTest.tmp");
+		FileOutputStream fos = new FileOutputStream(tmpfile);
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(emp);
+		oos.writeObject(hA);
+		oos.close();
+		fos.close();
+		FileInputStream fis = new FileInputStream(tmpfile);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		SymbolicHeap __emp = (SymbolicHeap) ois.readObject();
+		assertEquals(emp.getAccessibleObjects(), __emp.getAccessibleObjects());
+		assertEquals(emp.getAllObjects(), __emp.getAllObjects());
+		assertEquals(emp.getConstraint().toSMTString(), __emp.getConstraint().toSMTString());
+		assertEquals(emp.getVariables(), __emp.getVariables());
+		assertEquals(emp.getFeatureCode(), __emp.getFeatureCode());
+		SymbolicHeap __hA = (SymbolicHeap) ois.readObject();
+		assertEquals(hA.getConstraint().toSMTString(), __hA.getConstraint().toSMTString());
+		assertEquals(hA.getVariables(), __hA.getVariables());
+		assertTrue(__hA.maybeIsomorphicWith(hA));
+		assertTrue(__hA.findIsomorphicMappingTo(__hA, new MappingChecker()));
+		ois.close();
+		fis.close();
+		tmpfile.delete();
 	}
 	
 }

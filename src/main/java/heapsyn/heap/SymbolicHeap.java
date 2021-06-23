@@ -1,5 +1,6 @@
 package heapsyn.heap;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
@@ -7,7 +8,7 @@ import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
 
-public interface SymbolicHeap {
+public interface SymbolicHeap extends Serializable {
 	
 	public Set<ObjectH> getAllObjects();
 	public Set<ObjectH> getAccessibleObjects();
