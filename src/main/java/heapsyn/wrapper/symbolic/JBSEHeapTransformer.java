@@ -35,7 +35,7 @@ import jbse.val.Value;
 
 public class JBSEHeapTransformer {
 	
-	static ObjectH BLANK_OBJ = new ObjectH(ClassH.of(JBSEHeapTransformer.class), null);
+	public static ObjectH BLANK_OBJ = new ObjectH(ClassH.of(JBSEHeapTransformer.class), null);
 	
 	// private static int MAX_HEAP_SIZE_JBSE = 1_000_000; 
 	private Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
@@ -91,18 +91,21 @@ public class JBSEHeapTransformer {
         return (u,v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); };
     }
 	
-	public void transform(State state) throws FrozenStateException {		
+	public void transform(State state)  {		
 		//Heap heap=state.__getHeap();
 		PathCondition pathCond=state.__getPathCondition();
 		
 		//Heap delHeap = filterPreObjekt(heap);
-		final Set<Long> reachable;
-		reachable= new ReachableObjectsCollector().reachable(state, false);
-
-
-		Set<Map.Entry<Long, Objekt>> entries = state.getHeap().entrySet().stream()
-		        .filter(e -> reachable.contains(e.getKey()))
-		        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), throwingMerger(), TreeMap::new)).entrySet();
+		Set<Map.Entry<Long, Objekt>> entries = null;
+		try {
+			final Set<Long> reachable= new ReachableObjectsCollector().reachable(state, false);
+			entries = state.getHeap().entrySet().stream()
+			        .filter(e -> reachable.contains(e.getKey()))
+			        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), throwingMerger(), TreeMap::new)).entrySet();
+		} catch (FrozenStateException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		//Map<Long, HeapObjekt> objekts = delHeap.__getObjects();
 		Map<Long,HeapObjekt> objekts=new HashMap<>();

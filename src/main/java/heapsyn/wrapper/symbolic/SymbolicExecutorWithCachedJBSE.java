@@ -56,6 +56,7 @@ import jbse.val.ReferenceSymbolic;
 import jbse.val.ReferenceSymbolicMemberField;
 import jbse.val.Simplex;
 import jbse.val.Value;
+import jbse.val.WideningConversion;
 
 public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	
@@ -215,13 +216,32 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			Operator op=expr.getOperator();
 			SMTOperator smtop=opMap.get(op);
 			if(smtop==null) throw new UnsupportedSMTOperator(op.toString());
+			if(fst instanceof WideningConversion || snd instanceof WideningConversion) { //only boolean to int
+				assert(smtop==SMTOperator.BIN_EQ||smtop==SMTOperator.BIN_NE);
+				if(fst instanceof WideningConversion) {
+					assert(snd instanceof Simplex&&snd.getType()=='I');
+					Integer n=(Integer) ((Simplex) snd).getActualValue();
+					assert(n==0||n==1);
+					Primitive ori=((WideningConversion) fst).getArg();
+					assert(ori.getType()=='Z');
+					return new ApplyExpr(smtop,JBSEexpr2SMTexpr(ref2Obj,val2Obj,ori),new BoolConst(n==1));
+				}
+				else if(snd instanceof WideningConversion) {
+					assert(fst instanceof Simplex&&fst.getType()=='I');
+					Integer n=(Integer) ((Simplex) fst).getActualValue();
+					assert(n==0||n==1);
+					Primitive ori=((WideningConversion) snd).getArg();
+					assert(ori.getType()=='Z');
+					return new ApplyExpr(smtop,JBSEexpr2SMTexpr(ref2Obj,val2Obj,ori),new BoolConst(n==1));
+				}
+			}
 			if(expr.isUnary()) {
 				return new ApplyExpr(smtop,JBSEexpr2SMTexpr(ref2Obj,val2Obj,snd));
 			}
 			else {
 				return new ApplyExpr(smtop,JBSEexpr2SMTexpr(ref2Obj,val2Obj,fst),JBSEexpr2SMTexpr(ref2Obj,val2Obj,snd));
 			}
-		} else {
+		}	else {
 			throw new UnhandledJBSEPrimitive(p.getClass().getName());
 		}
 	}
@@ -233,13 +253,14 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			pds.add(this.JBSEexpr2SMTexpr(ref2Obj,val2Obj,ca.getCondition()));
 		}
 		if(pds.size()==0) return null;
-		else {
-			ApplyExpr ret=(ApplyExpr)pds.get(0);
-			for(int i=1;i<pds.size();++i) {
-				ret=new ApplyExpr(SMTOperator.AND,ret,(ApplyExpr)pds.get(i));
-			}
-			return ret;
-		}
+//		else {
+//			ApplyExpr ret=(ApplyExpr)pds.get(0);
+//			for(int i=1;i<pds.size();++i) {
+//				ret=new ApplyExpr(SMTOperator.AND,ret,(ApplyExpr)pds.get(i));
+//			}
+//			return ret;
+//		}
+		else return new ApplyExpr(SMTOperator.AND,pds);
 	}
 	
 	private boolean isIsomorphic(SymbolicHeap finHeap,SymbolicHeap initHeap,

@@ -32,11 +32,19 @@ public class Options {
 		return this.targetClassPath;
 	}
 	
+	public void setTargetClassPath(String tcp) {
+		this.targetClassPath=tcp;
+	}
+	
 	// target source path
 	private String targetSrcPath = "src/test/java";
 	
 	public String getTargetSourcePath() {
 		return this.targetSrcPath;
+	}
+	
+	public void setTargetSrcPath(String tsp) {
+		this.targetSrcPath=tsp;
 	}
 	
 }
