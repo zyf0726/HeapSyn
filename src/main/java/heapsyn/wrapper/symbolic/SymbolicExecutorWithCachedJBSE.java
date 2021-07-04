@@ -336,12 +336,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			if(!this.isSat(refclause, ref2Obj)) continue;
 			
 			JBSEHeapTransformer jhs=new JBSEHeapTransformer();
-			try {
-				jhs.transform(state);
-			} catch (FrozenStateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			jhs.transform(state);
+
 			
 			Map<HeapObjekt, ObjectH> finjbseObjMap = jhs.getfinjbseObjMap();
 			
