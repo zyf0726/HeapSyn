@@ -394,7 +394,7 @@ public class HeapTest {
 	}
 	
 	@Test
-	public void testAboutSerialization() throws Exception {
+	public void testAboutSerialization1() throws Exception {
 		Variable v1 = new IntVar();
 		Variable v2 = new BoolVar();
 		List<ObjectH> A = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(nodes, 0, 9)));
@@ -433,6 +433,31 @@ public class HeapTest {
 		ois.close();
 		fis.close();
 		tmpfile.delete();
+	}
+	
+	@Test
+	public void testAboutSerialization2() throws Exception {
+		ObjectH o1 = new ObjectH(cNode, null);
+		ObjectH o2 = new ObjectH(cNode, null);
+		ObjectH o3 = new ObjectH(cNode, null);
+		o1.setFieldValueMap(ImmutableMap.of(fNext, o2));
+		o2.setFieldValueMap(ImmutableMap.of(fNext, o3));
+		o3.setFieldValueMap(ImmutableMap.of(fNext, o1));
+		SymbolicHeap h = new SymbolicHeapAsDigraph(Arrays.asList(o1, ObjectH.NULL), null);
+		File tmpfile = new File("tmp/HeapTest.tmp");
+		FileOutputStream fos = new FileOutputStream(tmpfile);
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(h);
+		oos.close();
+		fos.close();
+		FileInputStream fis = new FileInputStream(tmpfile);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		SymbolicHeap h2 = (SymbolicHeap) ois.readObject();
+		ois.close();
+		fis.close();
+		ObjectH p1 = h2.getAccessibleObjects()
+				.stream().filter(o -> o != null).findAny().get();
+		assertEquals(p1, p1.getFieldValue(fNext).getFieldValue(fNext).getFieldValue(fNext));
 	}
 	
 }

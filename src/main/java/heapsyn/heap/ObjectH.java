@@ -27,13 +27,7 @@ public class ObjectH implements Serializable {
 	private ImmutableSortedMap<FieldH, ObjectH> field2val;
 	
 	private Object readResolve() throws ObjectStreamException {
-		if (this.var != null) {
-			return new ObjectH(this.var);
-		} else if (this.clsH != ClassH.CLS_NULL) {
-			return new ObjectH(this.clsH, this.field2val);
-		} else {
-			return NULL;
-		}
+		return this.clsH == ClassH.CLS_NULL ? NULL : this;
 	}
 	
 	private ObjectH() {
