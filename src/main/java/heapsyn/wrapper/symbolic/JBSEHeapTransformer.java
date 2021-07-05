@@ -103,8 +103,7 @@ public class JBSEHeapTransformer {
 			        .filter(e -> reachable.contains(e.getKey()))
 			        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), throwingMerger(), TreeMap::new)).entrySet();
 		} catch (FrozenStateException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			throw new UnexpectedInternalException(e1);
 		}
 
 		//Map<Long, HeapObjekt> objekts = delHeap.__getObjects();

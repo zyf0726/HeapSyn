@@ -45,7 +45,6 @@ import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
 import jbse.mem.PathCondition;
 import jbse.mem.State;
-import jbse.mem.exc.FrozenStateException;
 import jbse.val.Expression;
 import jbse.val.Operator;
 import jbse.val.Primitive;
