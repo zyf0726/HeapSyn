@@ -8,14 +8,11 @@ import java.util.TreeSet;
 
 import jbse.common.exc.UnexpectedInternalException;
 import jbse.mem.exc.HeapMemoryExhaustedException;
-import jbse.val.Value;
 
 /**
  * Class that implements the heap in the JVM's memory.
  */
-/* =================== modified, start ================ */
 public final class Heap implements Cloneable {
-/* ==================== modified, end ================= */
     private final long maxHeapSize;
 	private Heap delegate; //nonfinal to allow cloning
     private TreeMap<Long, HeapObjekt> objects; //nonfinal to allow cloning
@@ -27,9 +24,7 @@ public final class Heap implements Cloneable {
      * @param maxHeapSize an {@code int}, the maximum number
      *        of objects this heap can store.
      */
-    /* ============== modified, start =========== */
-    public Heap(long maxHeapSize) {
-    /* =============== modified, end ============ */
+    Heap(long maxHeapSize) {
     	this.delegate = null;
         this.maxHeapSize = maxHeapSize;
         this.objects = new TreeMap<>();
@@ -53,55 +48,6 @@ public final class Heap implements Cloneable {
         }
         return addNewSurely(item);
     }
-    
-    /* ======================== modified, start ======================== */
-    long addNew(HeapObjekt item) throws HeapMemoryExhaustedException {
-    	if (this.objects.size() >= this.maxHeapSize) {
-    		throw new HeapMemoryExhaustedException();
-    	}
-    	return addNewSurely(item);
-    }
-    
-    long addNewSurely(HeapObjekt item) {
-    	this.objects.put(this.nextIndex, item);
-    	long retVal = this.nextIndex;
-    	while (existsAt(this.nextIndex)) {
-    		if (this.nextIndex == Long.MAX_VALUE) {
-    			throw new UnexpectedInternalException("Heap space exhausted.");
-    		}
-    		++this.nextIndex;
-    	}
-    	return retVal;
-    }
-    
-    private Long startPos;
-    
-    public Long getStartPosition() {
-    	return this.startPos;
-    }
-    
-    public void setStartPosition(Long pos) {
-    	this.startPos = new Long(pos);
-    }
-    
-    private Value retVal;
-    
-    public Value getReturnValue() {
-    	return this.retVal;
-    }
-    
-    public void setReturnValue(Value val) {
-    	this.retVal = val;
-    }
-    
-    public long getNextIndex() {
-    	return this.nextIndex;
-    }
-    
-    public void setNextIndex(long ind) {
-    	this.nextIndex=ind;
-    }
-    /* ========================== modified, end ========================= */
 
     /**
      * Stores a new object into the heap. This operation
@@ -230,12 +176,6 @@ public final class Heap implements Cloneable {
     	makeAllWrappers();
         return new TreeMap<>(this.objects);
     }    
-    
-    /* ============== modified, start =============== */
-    public TreeMap<Long, HeapObjekt> __getObjects() {
-    	return this.objects;
-    }
-    /* =============== modified, end ================ */
 
     /**
      * Returns the number of objects in the heap.

@@ -673,8 +673,8 @@ public final class ArrayImpl extends HeapObjektImpl implements Array {
     }
     
     @Override
-    public Iterator<? extends AccessOutcomeIn> entries() {
-    	return this.entries.iterator();
+    public Collection<? extends AccessOutcomeIn> entries() {
+    	return this.entries;
     }
     
     @Override
@@ -777,12 +777,12 @@ public final class ArrayImpl extends HeapObjektImpl implements Array {
     	for (AccessOutcomeInImpl entry : otherImpl.entries) {
     		final AccessOutcomeInImpl entryClone = entry.clone();
     		try {
-    			entryClone.accessCondition = (Expression) calc.push(entryClone.accessCondition).replace(this.indexFormal, otherImpl.indexFormal).pop();
+    			entryClone.accessCondition = (Expression) calc.push(entryClone.accessCondition).replace(otherImpl.indexFormal, this.indexFormal).pop();
     		} catch (InvalidTypeException | InvalidOperandException e) {
     			//this should never happen
     			throw new UnexpectedInternalException(e);
     		}
-    		this.entries.add(entry.clone());
+    		this.entries.add(entryClone);
     	}
     }
 

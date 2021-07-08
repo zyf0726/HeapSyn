@@ -91,7 +91,7 @@ public class JBSEHeapTransformer {
         return (u,v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); };
     }
 	
-	public void transform(State state)  {		
+	public boolean transform(State state)  {		
 		//Heap heap=state.__getHeap();
 		PathCondition pathCond=state.__getPathCondition();
 		
@@ -129,14 +129,16 @@ public class JBSEHeapTransformer {
 			Map<FieldH, ObjectH> fieldValMap = new HashMap<>();
 			for (Variable var : ok.fields().values()) {
 				FieldH field = null;
+				String clsName="";
 				try {
-					String clsName = ok.getType().getClassName().replace('/', '.');
+					clsName = ok.getType().getClassName().replace('/', '.');
 					Class<?> javaClass = Class.forName(clsName);
 					Field javaField = javaClass.getDeclaredField(var.getName());
 					field = FieldH.of(javaField);
 				} catch (NoSuchFieldException | SecurityException | ClassNotFoundException e) {
 					// this should never happen
-					throw new UnexpectedInternalException(e);
+					return false;
+					//throw new UnexpectedInternalException(e);
 				}
 				Value varValue = var.getValue();
 				if (varValue instanceof ReferenceConcrete) {
@@ -176,6 +178,7 @@ public class JBSEHeapTransformer {
 			}
 			oh.setFieldValueMap(fieldValMap);
 		}
+		return true;
 						
 	}
 }

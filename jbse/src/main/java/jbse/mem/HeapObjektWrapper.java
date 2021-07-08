@@ -26,7 +26,7 @@ abstract class HeapObjektWrapper<T extends HeapObjektImpl> extends ObjektWrapper
     }
     
     @SuppressWarnings("unchecked")
-	public final void possiblyCloneDelegate() {
+	protected final void possiblyCloneDelegate() {
     	//does nothing if the delegate is already a clone
     	if (isDelegateAClone()) {
     		return;

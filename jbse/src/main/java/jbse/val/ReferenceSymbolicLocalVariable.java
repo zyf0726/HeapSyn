@@ -42,7 +42,7 @@ public final class ReferenceSymbolicLocalVariable extends ReferenceSymbolicAtomi
     	if (variableName == null) {
     		throw new InvalidInputException("Attempted the creation of a ReferenceSymbolicLocalVariable with null variableName.");
     	}
-    	this.variableName = variableName+id;
+    	this.variableName = variableName;
     	this.asOriginString = "{ROOT}:" + this.variableName;
     	
     	//calculates hashCode

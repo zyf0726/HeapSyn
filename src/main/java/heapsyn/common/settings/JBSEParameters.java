@@ -22,6 +22,7 @@ public class JBSEParameters {
 	private static final String Z3_PATH			=	"libs/z3-4.8.10-x64-win/z3.exe";
 	private static final String JBSE_HOME		=	"jbse/";
 	private static final String JBSE_CLASSPATH	= 	JBSE_HOME + "build/classes/java/main";
+	//private static final String JBSE_CLASSPATH	= 	"C:\\junior(1)\\HeapSyn\\build\\libs\\HeapSyn-0.10.0-SNAPSHOT-all.jar";
 	private static final String JBSE_SOURCEPATH	=	JBSE_HOME + "src/main/java/";
 	private static final String JRE_SOURCEPATH	=	System.getProperty("java.home", "") + "src.zip";
 	
@@ -39,6 +40,9 @@ public class JBSEParameters {
 	private Method targetMethod;
 	private String targetClassPath;
 	private String targetSourcePath;
+	
+	private int depthScope;
+	private int countScope;
 	
 	
 	public void setShowOnConsole(boolean onConsole) {
@@ -73,6 +77,14 @@ public class JBSEParameters {
 		this.targetSourcePath = targetSourcePath;
 	}
 	
+	public void setDepthScope(int ds) {
+		this.depthScope=ds;
+	}
+	
+	public void setCountScope(int cs) {
+		this.countScope=cs;
+	}
+	
 	
 	private static JBSEParameters INSTANCE = null;
 	
@@ -102,6 +114,8 @@ public class JBSEParameters {
 		rp.setStateFormatMode(this.stateFormatMode);
 		rp.setStepShowMode(this.stepShowMode);
 		rp.setShowOnConsole(this.showOnConsole);
+		rp.setDepthScope(this.depthScope);
+		rp.setCountScope(this.countScope);
 		if (this.outFilePath != null) {
 			rp.setOutputFilePath(this.outFilePath);
 		} else {
@@ -128,16 +142,20 @@ public class JBSEParameters {
 	// https://stackoverflow.com/questions/45072268/how-can-i-get-the-signature-field-of-java-reflection-method-object
 	private static String getMethodSignature(Method m) {
 		String sig;
-		try {
-			Field gSig = Method.class.getDeclaredField("signature");
-			gSig.setAccessible(true);
-			sig = (String) gSig.get(m);
-			if (sig != null)
-				return sig;
-		} catch (IllegalAccessException | NoSuchFieldException e) {
-			// this should never happen
-			throw new UnexpectedInternalException(e);
-		}
+//		try {
+//			Field gSig = Method.class.getDeclaredField("signature");
+//			gSig.setAccessible(true);
+//			sig = (String) gSig.get(m);
+//			if (sig != null) {
+//				int i=sig.indexOf(')');
+//				if(sig.substring(i+1)=="TV") sig
+//				return sig;
+//				
+//			}
+//		} catch (IllegalAccessException | NoSuchFieldException e) {
+//			// this should never happen
+//			throw new UnexpectedInternalException(e);
+//		}
 
 		StringBuilder sb = new StringBuilder("(");
 		for (Class<?> c : m.getParameterTypes()) {

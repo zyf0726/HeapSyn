@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.Supplier;
 
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ArrayReference;
@@ -146,7 +147,12 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 	public DecisionProcedureGuidanceJDI(DecisionProcedure component, Calculator calc, RunnerParameters runnerParameters, Signature stopSignature, int numberOfHits) 
 	throws GuidanceException, InvalidInputException {
 		super(component, new JVMJDI(calc, runnerParameters, stopSignature, numberOfHits));
-		((JVMJDI) this.jvm).injectStateSupplier(this);
+	}
+	
+	@Override
+	public void setCurrentStateSupplier(Supplier<State> currentStateSupplier) {
+		super.setCurrentStateSupplier(currentStateSupplier);
+		((JVMJDI) this.jvm).setCurrentStateSupplier(this.currentStateSupplier);
 	}
 
 	/**
@@ -182,21 +188,21 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 
 		private final RunnerParameters runnerParameters;
 		private final Signature stopSignature;
-		private final int stopSignatureNumberOfHits;
+		private final int numberOfHits;
 		
 		// Handling of uninterpreted functions
 		private Map<SymbolicApply, SymbolicApplyJVMJDI> symbolicApplyCache = new HashMap<>();
 		private Map<String, List<String>> symbolicApplyOperatorOccurrences = new HashMap<>();
 		private String currentHashMapModelMethod;
 		
-		private DecisionProcedureGuidanceJDI currentStateSupplier = null;
+		private Supplier<State> currentStateSupplier = null;
 		
 		public JVMJDI(RunnerParameters runnerParameters, Signature stopSignature) 
 		throws GuidanceException {
 			super(null, runnerParameters, stopSignature, Integer.MAX_VALUE);
 			this.runnerParameters = runnerParameters;
 			this.stopSignature = stopSignature;
-			this.stopSignatureNumberOfHits = Integer.MAX_VALUE;
+			this.numberOfHits = Integer.MAX_VALUE;
 			this.vm = createVM();
 			try {
 				goToBreakpoint(stopSignature, 0, Integer.MAX_VALUE);			
@@ -209,8 +215,8 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 			throw new GuidanceException("This constructor continues the execution up to termination, thus JDI will throw an exception eventually upon disconnecting.");
 		}
 		
-		void injectStateSupplier(DecisionProcedureGuidanceJDI decisionProcedureGuidanceJDI) {
-			this.currentStateSupplier = decisionProcedureGuidanceJDI;
+		void setCurrentStateSupplier(Supplier<State> currentStateSupplier) {
+			this.currentStateSupplier = currentStateSupplier;
 		}
 
 		public JVMJDI(Calculator calc, RunnerParameters runnerParameters, Signature stopSignature, int numberOfHits) 
@@ -218,7 +224,7 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 			super(calc, runnerParameters, stopSignature, numberOfHits);
 			this.runnerParameters = runnerParameters;
 			this.stopSignature = stopSignature;
-			this.stopSignatureNumberOfHits = numberOfHits;
+			this.numberOfHits = numberOfHits;
 			this.vm = createVM();
 			goToBreakpoint(stopSignature, 0, numberOfHits);
 			try {
@@ -238,8 +244,8 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 		}
 		
 		/**
-		 * StreamRedirectThread is a thread which copies it's input to
-		 * it's output and terminates when it completes.
+		 * StreamRedirectThread is a thread which copies its input to
+		 * its output and terminates when it completes.
 		 *
 		 * @author Robert Field
 		 */
@@ -275,8 +281,8 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 					    this.out.write(cbuf, 0, count);
 					}
 					this.out.flush();
-				} catch(IOException exc) {
-					System.err.println("Child I/O Transfer - " + exc);
+				} catch (IOException exc) {
+					//do nothing
 				}
 			}
 
@@ -284,7 +290,7 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 				try {
 				    this.out.flush();
 				} catch (IOException exc) {
-					System.err.println("Child I/O Transfer - " + exc);
+					//do nothing
 				}
 			}
 		}
@@ -293,14 +299,14 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 		private VirtualMachine createVM() 
 		throws GuidanceException {
 			try {
-				final Iterable<Path> classPath = this.runnerParameters.getClasspath().classPath();
+				final Iterable<Path> classPath = this.runnerParameters.getClasspath().userClassPath();
 				final ArrayList<String> listClassPath = new ArrayList<>();
 				classPath.forEach(p -> listClassPath.add(p.toString()));
 				final String stringClassPath = String.join(File.pathSeparator, listClassPath.toArray(new String[0]));
 				final String mainClass = DecisionProcedureGuidanceJDILauncher.class.getName();
 				final String targetClass = binaryClassName(this.runnerParameters.getMethodSignature().getClassName());
 				final String startMethodName = this.runnerParameters.getMethodSignature().getName();
-				return launchTarget("-classpath \"" + stringClassPath + "\" " + mainClass + " " + targetClass + " " + startMethodName);
+				return launchTarget("-classpath \"" + stringClassPath + File.pathSeparator + this.runnerParameters.getClasspath().jbseLibPath() + "\" " + mainClass + " " + targetClass + " " + startMethodName);
 			} catch (IOException e) {
 				throw new GuidanceException(e);
 			}
@@ -376,7 +382,7 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 					if (stopPointFound) {
 						return; //must not try to disable event requests
 					} else {
-						throw new GuidanceException("while looking for " + sig + "::" + offset + ", number of hits: " + stopSignatureNumberOfHits + " : " + e);
+						throw new GuidanceException("while looking for " + sig + "::" + offset + ", number of hits: " + numberOfHits + " : " + e);
 					}
 				}
 			}
@@ -645,11 +651,11 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 			 * However, this can become expensive if there are many invocations of ReferenceSymbolicApply 
 			 * uninterpreted functions. 			  
 			 */
-			if (isSymbolicApplyOnInitialMap(this.currentStateSupplier.currentStateSupplier.get().getClassHierarchy(), (jbse.val.Value) symbolicApply)) {
+			if (isSymbolicApplyOnInitialMap(this.currentStateSupplier.get().getClassHierarchy(), (jbse.val.Value) symbolicApply)) {
 				final String op = this.currentHashMapModelMethod; //the operator is containsKey, but we need to move into the jbse.base.JAVA_MAP method where containskey is being evaluated to obtain the proper value of the key
 				final List<String> hitCallCtxs = this.symbolicApplyOperatorOccurrences.get(op);
 				final SymbolicMemberField initialMap = (SymbolicMemberField) symbolicApply.getArgs()[0];
-				final InitialMapSymbolicApplyJVMJDI symbolicApplyVm = new InitialMapSymbolicApplyJVMJDI(this.calc, this.runnerParameters, this.stopSignature, this.stopSignatureNumberOfHits, op, hitCallCtxs, initialMap);
+				final InitialMapSymbolicApplyJVMJDI symbolicApplyVm = new InitialMapSymbolicApplyJVMJDI(this.calc, this.runnerParameters, this.stopSignature, this.numberOfHits, op, hitCallCtxs, initialMap, this.currentStateSupplier);
 				symbolicApplyVm.eval_INVOKEX();
 				if (symbolicApplyVm.getValueAtKey() == null) {
 					// the return value of containsKey is a boolean and there is no Object associated with this key,
@@ -659,11 +665,14 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 				return symbolicApplyVm;
 			}
 			final String op = symbolicApply.getOperator();
-			String opWithContext = SymbolicApplyJVMJDI.formatContextualSymbolicApplyOperatorOccurrence(op, this.currentStateSupplier.currentStateSupplier.get());
+			String opWithContext = SymbolicApplyJVMJDI.formatContextualSymbolicApplyOperatorOccurrence(op, this.currentStateSupplier.get());
+			if (opWithContext == null) {
+				throw new UninterpretedNoContextException();
+			}
             storeNewSymbolicApplyOperatorContextualOccurrence(op, opWithContext);
 			final List<String> hitCallCtxs = this.symbolicApplyOperatorOccurrences.get(op);
 
-			final SymbolicApplyJVMJDI symbolicApplyVm = new SymbolicApplyJVMJDI(this.calc, this.runnerParameters, this.stopSignature, this.stopSignatureNumberOfHits, op, hitCallCtxs);
+			final SymbolicApplyJVMJDI symbolicApplyVm = new SymbolicApplyJVMJDI(this.calc, this.runnerParameters, this.stopSignature, this.numberOfHits, op, hitCallCtxs);
 			symbolicApplyVm.eval_INVOKEX();
 			
 			//If the return value is a primitive, we do not need this vm any further
@@ -675,8 +684,8 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 		}
 		
 		private void storeNewSymbolicApplyOperatorContextualOccurrence(String symbolicApplyOperator, String symbolicApplyOperatorCallWithContext) {
-			if (!symbolicApplyOperatorOccurrences.containsKey(symbolicApplyOperator)) {
-				symbolicApplyOperatorOccurrences.put(symbolicApplyOperator, new ArrayList<>());
+			if (!this.symbolicApplyOperatorOccurrences.containsKey(symbolicApplyOperator)) {
+				this.symbolicApplyOperatorOccurrences.put(symbolicApplyOperator, new ArrayList<>());
 			}
 			List<String> occurrences = symbolicApplyOperatorOccurrences.get(symbolicApplyOperator);
 			occurrences.add(symbolicApplyOperatorCallWithContext);
@@ -709,7 +718,7 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 
 		private com.sun.jdi.Value getJDIValueField(SymbolicMemberField origin, Object o) 
 		throws GuidanceException {
-			if (isInitialMapField(this.currentStateSupplier.currentStateSupplier.get().getClassHierarchy(), (jbse.val.Value) origin)) {
+			if (isInitialMapField(this.currentStateSupplier.get().getClassHierarchy(), (jbse.val.Value) origin)) {
 				return cloneInitialMap(getCurrentThread(), o);
 			}
 			final String fieldName = origin.getFieldName();
@@ -869,6 +878,8 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 			}
 		}
 		
+		// NB: This method return null if the call stack indicate a call nested within hash map models,
+		// because these calls do not match actual call in the concrete execution observed with JDI.
 		public static String formatContextualSymbolicApplyOperatorOccurrence(String symbolicApplyOperator, State state) {
             String callCtxString = "";
             try {
@@ -886,7 +897,9 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 	            //this should never happen
 	            failExecution(e);
 			}
-            callCtxString += SymbolicApplyJVMJDI.callContextSeparator + symbolicApplyOperator;
+            if (symbolicApplyOperator != null) {
+            	callCtxString += SymbolicApplyJVMJDI.callContextSeparator + symbolicApplyOperator;
+            }
             return callCtxString;
 		}
 
@@ -897,9 +910,9 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 		@Override
 		protected boolean handleBreakpointEvents(Event event, int numberOfHits) throws GuidanceException {
 			if (this.postInitial && this.targetMethodExitedBreakpoint.equals(event.request())) {
-				try { //Did we exited from target method? Should not happen 
+				try { //Did we exit from target method? Should not happen 
 					if (numFramesFromRootFrameConcrete() < 0) {
-						throw new UnexpectedInternalException("Exited from target method, while looking for method " + symbolicApplyOperator + " - " + hitCallCtxs);
+						throw new UnexpectedInternalException("Exited from target method, while looking for method " + this.symbolicApplyOperator + " - " + this.hitCallCtxs);
 					}
 				} catch (IncompatibleThreadStateException e) {
 					throw new UnexpectedInternalException(e);
@@ -1041,9 +1054,10 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 		private final ObjectReference initialMapRef;
 		private Value valueAtKey;
 
-		public InitialMapSymbolicApplyJVMJDI(Calculator calc, RunnerParameters runnerParameters, Signature stopSignature, int numberOfHits, String symbolicApplyOperator, List<String> hitCallCtxs, SymbolicMemberField initialMapOrigin) 
+		public InitialMapSymbolicApplyJVMJDI(Calculator calc, RunnerParameters runnerParameters, Signature stopSignature, int numberOfHits, String symbolicApplyOperator, List<String> hitCallCtxs, SymbolicMemberField initialMapOrigin, Supplier<State> currentStateSupplier) 
 		throws GuidanceException, ImpureMethodException {
 			super(calc, runnerParameters, stopSignature, numberOfHits, symbolicApplyOperator, hitCallCtxs);
+			setCurrentStateSupplier(currentStateSupplier);
 			this.initialMapRef = (ObjectReference) getJDIValue(initialMapOrigin);
 		}
 		
@@ -1065,17 +1079,16 @@ public final class DecisionProcedureGuidanceJDI extends DecisionProcedureGuidanc
 	}
 
 	public void notifyExecutionOfMapModelMethod(Signature currentMethodSignature, State state) {
-		String methodWithContext = SymbolicApplyJVMJDI.formatContextualSymbolicApplyOperatorOccurrence("", state);
-		if (methodWithContext != null) {
-			methodWithContext = methodWithContext.substring(0, methodWithContext.lastIndexOf(SymbolicApplyJVMJDI.callContextSeparator));
-			((JVMJDI) this.jvm).storeNewSymbolicApplyOperatorContextualOccurrence(currentMethodSignature.toString(), methodWithContext);
+		final String jbseMethodWithCtx = SymbolicApplyJVMJDI.formatContextualSymbolicApplyOperatorOccurrence(null, state);
+		if (jbseMethodWithCtx != null) {
+			((JVMJDI) this.jvm).storeNewSymbolicApplyOperatorContextualOccurrence(currentMethodSignature.toString(), jbseMethodWithCtx);
 			((JVMJDI) this.jvm).currentHashMapModelMethod = currentMethodSignature.toString();
 			//consistency check
-			String lastInCtx = methodWithContext.substring(methodWithContext.lastIndexOf(SymbolicApplyJVMJDI.callContextSeparator) + SymbolicApplyJVMJDI.callContextSeparator.length());
-			if (!currentMethodSignature.toString().equals(lastInCtx)) {
-				throw new UnexpectedInternalException("We expect that the currently executing method is the last in the context string, but CURRENT=" + currentMethodSignature + " while LAST=" + lastInCtx + " and CONTEXT=" + methodWithContext);
+			final String lastCall = jbseMethodWithCtx.substring(jbseMethodWithCtx.lastIndexOf(SymbolicApplyJVMJDI.callContextSeparator) + SymbolicApplyJVMJDI.callContextSeparator.length());
+			if (!currentMethodSignature.toString().equals(lastCall)) {
+				throw new UnexpectedInternalException("We expect that the notified method is the last that jbse is executing, but CURRENT=" + currentMethodSignature + " while LAST=" + lastCall + " withing the CONTEXT=" + jbseMethodWithCtx);
 			}
-		}
+		} //else: it is an invocation nested in a chain of JAVA_MAP methods. We ignore it.
 	}
 }
 

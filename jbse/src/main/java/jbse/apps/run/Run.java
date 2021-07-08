@@ -96,19 +96,6 @@ import jbse.val.Simplex;
  * @author Pietro Braione
  */
 public final class Run {
-	
-	/* ======================= modified, start ===================== */
-	private HashSet<State> executed = new HashSet<>();
-	
-	public HashSet<State> getExecuted() {
-		return this.executed;
-	}
-	
-	public void setExecuted(HashSet<State> executed) {
-		this.executed = executed;
-	}
-	/* ======================== modified, end ====================== */	
-	
     /** The {@link RunParameters} of the symbolic execution. */
     private final RunParameters parameters;
 
@@ -177,6 +164,8 @@ public final class Run {
 
     /** The number of states traversed during the pre-initial phase. */
     private long preInitialStateCount = 0;
+
+	private HashSet<State> executed=new HashSet<>();
 
     /**
      * Constructor.
@@ -434,14 +423,11 @@ public final class Run {
         @Override
         public boolean atPathEnd() {
             try {
-            	final State currentState = Run.this.engine.getCurrentState();
-            	/* ======================== modified, start =================== */
-            	if(this.pathKind.equals(PathTypes.SAFE)) {
-	                currentState.__getHeap().setReturnValue(currentState.getStuckReturn());
+                final State currentState = Run.this.engine.getCurrentState();
+                if(this.pathKind.equals(PathTypes.SAFE)) {
+	                //currentState.__getHeap().setReturnValue(currentState.getStuckReturn());
 	                executed.add(currentState);
-	                /* ========================= modified, end ==================== */
-            	}
-                
+                }
                 //prints the leaf state if the case
                 if (Run.this.parameters.getStepShowMode() == StepShowMode.ALL ||       //already shown
                     Run.this.parameters.getStepShowMode() == StepShowMode.SOURCE ||    //already shown
@@ -731,16 +717,6 @@ public final class Run {
             if (this.engine == null) {
                 return 1;
             }
-            /* ======================= modified, start ====================== */
-            //this.engine.setInitState(this.parameters.getInitState());
-            //this.engine.setInitHeap(this.parameters.getInitHeap());
-            //this.engine.setInitPathCond(this.parameters.getInitPathCond());
-            this.engine.setObjects(this.parameters.getObjects());
-            this.engine.setClauses(this.parameters.getClauses());
-            this.engine.setPrimid(this.parameters.getPrimid());
-            this.engine.setRefid(this.parameters.getRefid());
-            this.engine.setArguments(this.parameters.getArguments());
-            /* ======================== modified, end ======================= */
             createHeapChecker(this.decisionProcedureConcretization);
             createFormatter();
         } catch (NonexistingObservedVariablesException e) {
@@ -1373,4 +1349,8 @@ public final class Run {
 
     /** Prompt: ask user whether should continue execution by backtracking. */
     private static final String PROMPT_SHOULD_BACKTRACK = "At the end of the path, pending backtrack points; proceed with backtrack? (x: abort, any other: backtrack): ";
+
+	public HashSet<State> getExecuted() {
+		return this.executed;
+	}
 }

@@ -11,10 +11,8 @@ import static jbse.bc.Opcodes.OP_INVOKEVIRTUAL;
 import static jbse.bc.Opcodes.OP_IRETURN;
 import static jbse.bc.Opcodes.OP_RETURN;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.TreeMap;
 
 import jbse.algo.Algorithm;
 import jbse.algo.ExecutionContext;
@@ -35,7 +33,6 @@ import jbse.jvm.exc.FailureException;
 import jbse.jvm.exc.InitializationException;
 import jbse.jvm.exc.NonexistingObservedVariablesException;
 import jbse.mem.Clause;
-import jbse.mem.HeapObjekt;
 import jbse.mem.State;
 import jbse.mem.State.Phase;
 import jbse.mem.exc.ContradictionException;
@@ -67,64 +64,6 @@ import jbse.val.ReferenceSymbolic;
  */
 public final class Engine implements AutoCloseable {
     //Architecture of the engine
-	
-	/* ====================== modified, start ======================= */
-//	private State initState;
-	private HeapObjekt[] args;
-	
-//	public State getInitState() {
-//		return this.initState;
-//	}
-//	
-//	public void setInitState(State state) {
-//		this.initState = state;
-//	}
-	
-	private TreeMap<Long,HeapObjekt> objects;
-	private ArrayList<Clause> clauses;
-	private int refid;
-	private int primid;
-	
-	public TreeMap<Long,HeapObjekt> getObjects() {
-		return this.objects;
-	}
-
-	public ArrayList<Clause> getClauses() {
-		return this.clauses;
-	}
-	
-	public int getPrimid() {
-		return this.primid;
-	}
-	
-	public int getRefid() {
-		return this.refid;
-	}
-	
-	public void setObjects(TreeMap<Long,HeapObjekt> objects) {
-		this.objects=objects;
-	}
-
-	public void setClauses(ArrayList<Clause> clauses) {
-		this.clauses=clauses;
-	}
-	
-	public void setPrimid(int prim) {
-		this.primid=prim;
-	}
-	
-	public void setRefid(int ref) {
-		this.refid=ref;
-	}
-	
-	public HeapObjekt[] getArguments() {
-		return this.args;
-	}
-	
-	public void setArguments(HeapObjekt[] args) {
-		this.args = args;
-	}
-	/* ======================== modified, end ======================== */	
 
     /** The {@link ExecutionContext}. */
     private final ExecutionContext ctx; 
@@ -364,24 +303,9 @@ public final class Engine implements AutoCloseable {
         	this.preStepSourceRow = (this.preStepStackSize == 0 ? -1 : this.currentState.getSourceRow());
 
         	//steps
-        	/* ============================= modified, start =============================== */
-        	Action action;
-        	if (atLastPreInitialState) {
-        		action = this.ctx.dispatcher.selectInit();
-        		//this.currentState.setInitState(this.initState);
-        		this.currentState.setObjects(this.objects);
-        		this.currentState.setClauses(this.clauses);
-        		this.currentState.setPrimid(this.primid);
-        		this.currentState.setRefid(this.refid);
-        		this.currentState.setArguments(this.args);
-        		this.currentState.__getHeap().setStartPosition(
-        				this.currentState.__getHeap().getNextIndex());
-        		//this.ctx.decisionProcedure.clearAssumptions();
-        		if(this.clauses!=null) this.ctx.decisionProcedure.addAssumptions(this.clauses);
-        	} else {
-        		action = this.ctx.dispatcher.select(this.currentState.getInstruction());
-        	}
-        	/* ============================== modified, end ================================ */
+        	Action action = (atLastPreInitialState ? 
+  				             this.ctx.dispatcher.selectInit() :
+  				             this.ctx.dispatcher.select(this.currentState.getInstruction()));
         	boolean hasContinuation;
         	do {
         		try {
@@ -410,7 +334,7 @@ public final class Engine implements AutoCloseable {
         	
         	//cleans, stores and creates a branch for the initial state
     	    if (atInitialState()) {
-    			//this.currentState.gc();
+    			this.currentState.gc();
     			this.ctx.switchInitial(this.currentState);
         		this.vom.init(this);
     	    	this.ctx.stateTree.addStateInitial(this.currentState);

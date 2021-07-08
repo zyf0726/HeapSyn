@@ -30,8 +30,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.Map.Entry;
 
 import jbse.bc.ClassFile;
 import jbse.bc.ClassFileFactory;
@@ -89,86 +87,6 @@ import jbse.val.exc.InvalidTypeException;
  * Class that represents the state of the execution.
  */
 public final class State implements Cloneable {
-	
-/* ================== modified, start ================== */
-	//private State initState;
-	private Long startPos;
-	private HeapObjekt[] args;
-	private Value[] vargs;
-	public int argpos; //记录pathcondition中参数指定开始的位置
-	public int refarglen; //记录ref参数的个数
-	public int pdpos;
-	
-	private TreeMap<Long,HeapObjekt> objects;
-	private ArrayList<Clause> clauses;
-	private int refid;
-	private int primid;
-	
-	public TreeMap<Long,HeapObjekt> getObjects() {
-		return this.objects;
-	}
-
-	public ArrayList<Clause> getClauses() {
-		return this.clauses;
-	}
-	
-	public int getPrimid() {
-		return this.primid;
-	}
-	
-	public int getRefid() {
-		return this.refid;
-	}
-	
-	public void setObjects(TreeMap<Long,HeapObjekt> objects) {
-		this.objects=objects;
-	}
-
-	public void setClauses(ArrayList<Clause> clauses) {
-		this.clauses=clauses;
-	}
-	
-	public void setPrimid(int prim) {
-		this.primid=prim;
-	}
-	
-	public void setRefid(int ref) {
-		this.refid=ref;
-	}
-	
-//	public State getInitState() {
-//		return this.initState;
-//	}
-//	
-//	public void setInitState(State state) {
-//		this.initState = state;
-//	}
-	
-	public Long getStartPosition() {
-		return this.startPos;
-	}
-	
-	public void setStartPosition(Long pos) {
-		this.startPos = pos;
-	}
-	
-	public HeapObjekt[] getArguments() {
-		return this.args;
-	}
-	
-	public void setArguments(HeapObjekt[] args) {
-		this.args = args;
-	}
-	
-	public Value[] getVargs() {
-		return this.vargs;
-	}
-	
-	public SymbolFactory getsf() {
-		return this.symbolFactory;
-	}
-/* ================== modified, end ==================== */ 
-	
     /**
      * The phase types of the symbolic execution.
      * 
@@ -310,6 +228,8 @@ public final class State implements Cloneable {
      * must be reexecuted.
      */
     private boolean stutters;
+
+	private Value[] vargs;
 
     /**
      * Constructor. It returns a virgin, pre-initial {@link State}.
@@ -2667,46 +2587,10 @@ public final class State implements Cloneable {
      */
     public ReferenceSymbolic pushFrameSymbolic(ClassFile classMethodImpl, Signature methodSignatureImpl) 
     throws MethodNotFoundException, MethodCodeNotFoundException, 
-    HeapMemoryExhaustedException, CannotAssumeSymbolicObjectException, FrozenStateException,
-    InvalidInputException, ContradictionException {
+    HeapMemoryExhaustedException, CannotAssumeSymbolicObjectException, FrozenStateException {
     	if (this.frozen) {
     		throw new FrozenStateException();
     	}
-    	
-//    	if (this.initState != null) {
-//    		this.heap = this.initState.__getHeap().clone();
-//    		this.pathCondition=this.initState.__getPathCondition().clone();
-//    		this.symbolFactory.setnextPrim(this.initState.symbolFactory.getnextPrim());
-//    		this.symbolFactory.setnextRef(this.initState.symbolFactory.getnextRef());
-//    	}
-    	
-    	if (this.objects != null) {
-			Long ind=this.heap.getNextIndex();
-			for(Entry<Long,HeapObjekt> entry:this.objects.entrySet()) {
-				if(ind<entry.getKey()+1) ind=entry.getKey()+1;
-				this.heap.__getObjects().put(entry.getKey(), entry.getValue().clone());
-			}
-			this.heap.setNextIndex(ind);
-    	}
-    	
-    	//this.pathCondition.__getClauses().addAll(this.clauses);
-    	this.pdpos=this.pathCondition.__getClauses().size();
-    	if (this.clauses != null) {
-			for(int i=0;i<this.clauses.size();++i) {
-				Clause cs=this.clauses.get(i);
-				if(cs instanceof ClauseAssumeExpands) {
-					ClauseAssumeExpands sae=(ClauseAssumeExpands) cs;
-					this.pathCondition.addClauseAssumeExpands(sae.getReference(), sae.getHeapPosition(), this.heap.getObject(sae.getHeapPosition()));
-				}
-				else {
-					ClauseAssume ca=(ClauseAssume) cs;
-					this.pathCondition.addClauseAssume(ca.getCondition());
-				}
-			}
-    	}
-    	this.symbolFactory.setnextPrim(this.primid);
-    	this.symbolFactory.setnextRef(this.refid);
-    	
         final boolean isStatic = classMethodImpl.isMethodStatic(methodSignatureImpl);
         final MethodFrame f = new MethodFrame(methodSignatureImpl, classMethodImpl);
         final Value[] args = makeArgsSymbolic(f, isStatic);
@@ -2717,61 +2601,9 @@ public final class State implements Cloneable {
             //this should never happen
             throw new UnexpectedInternalException(e);
         }
-        
-        /* ======================== modified, start ======================== */
-        this.argpos=this.pathCondition.getClauses().size();
-        this.refarglen=0;
-        if (this.args != null) {
-        	possiblyReset();
-        	for (int i = 0; i < this.args.length; ++i) { // how to get position from a heapobjekt?
-        		if(this.args[i]==null) continue;
-        		InstanceImpl_DEFAULT id = (InstanceImpl_DEFAULT) this.args[i];
-        		Simplex s = (Simplex) id.getIdentityHashCode();
-        		id=(InstanceImpl_DEFAULT) this.heap.getObject((Integer)s.getActualValue());
-        		try {
-        			this.pathCondition.addClauseAssumeExpands(
-        					(ReferenceSymbolic) args[i],
-        					(Integer) s.getActualValue(),
-        					id);
-        			id.setOrigin((ReferenceSymbolic) args[i]);
-        			++this.nPushedClauses;
-        			this.refarglen++;
-        		} catch (InvalidInputException e) {
-        			throw new InvalidInputException(
-        					"(caused by modified code!!) " + e.getMessage());
-        		} catch (ContradictionException e) {
-        			throw new ContradictionException(
-        					"(caused by modified code!!) " + e.getMessage());
-        		}
-        	}
-        }
-        
-//        for (Entry<Long, HeapObjekt> entry : this.heap.__getObjects().entrySet()) {
-//			if (entry.getKey() >= heap.getStartPosition()) {
-//				InstanceImpl_DEFAULT id = (InstanceImpl_DEFAULT) entry.getValue();
-//				if(id.getOrigin()!=null) continue;
-//				String type="L"+id.getType().getClassName()+";";
-//				ReferenceSymbolic rs;
-//				try {
-//					rs = (ReferenceSymbolic) this.createSymbolLocalVariable(type, type, "Object");
-//					id.setOrigin(rs);
-//				} catch (InvalidTypeException | InvalidInputException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}
-//		}
-        /* ======================= modified, end ========================== */
-        
         this.stack.push(f);
         return (isStatic ? null : ((ReferenceSymbolic) args[0]));
     }
-    
-    /* ========== modified, start ======= */
-    public Heap __getHeap() {
-    	return this.heap;
-    }
-    /* ========== modified, end ========= */
 
     /**
      * Parses the signature of a method, and returns the
@@ -3345,11 +3177,9 @@ public final class State implements Cloneable {
         return this.pathCondition.getClauses();
     }
     
-    /* ============= modified, start ============ */
     public PathCondition __getPathCondition() {
     	return this.pathCondition;
     }
-    /* ============== modified, end ============= */
 
     /**
      * Returns the path condition clauses that have been pushed since
@@ -4144,4 +3974,8 @@ public final class State implements Cloneable {
 
         return o;
     }
+
+	public Value[] getVargs() {
+		return this.vargs;
+	}
 }

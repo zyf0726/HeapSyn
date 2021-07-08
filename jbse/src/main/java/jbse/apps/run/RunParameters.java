@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -31,8 +30,6 @@ import jbse.jvm.ExecutionObserver;
 import jbse.jvm.RunnerParameters;
 import jbse.jvm.EngineParameters.BreadthMode;
 import jbse.jvm.EngineParameters.StateIdentificationMode;
-import jbse.mem.Clause;
-import jbse.mem.HeapObjekt;
 import jbse.mem.State;
 import jbse.rewr.CalculatorRewriting;
 import jbse.rewr.RewriterCalculatorRewriting;
@@ -84,66 +81,6 @@ import jbse.val.ReferenceSymbolic;
  * @author Pietro Braione
  */
 public final class RunParameters implements Cloneable {
-	
-	/* ====================== modified, start ====================== */
-//	private State initState;
-//	private Heap initHeap;
-//	private PathCondition initPathCond;
-	private HeapObjekt[] args;
-	private TreeMap<Long,HeapObjekt> objects;
-	private ArrayList<Clause> clauses;
-	private int refid;
-	private int primid;
-	
-	public TreeMap<Long,HeapObjekt> getObjects() {
-		return this.objects;
-	}
-
-	public ArrayList<Clause> getClauses() {
-		return this.clauses;
-	}
-	
-	public int getPrimid() {
-		return this.primid;
-	}
-	
-	public int getRefid() {
-		return this.refid;
-	}
-	
-	public void setObjects(TreeMap<Long,HeapObjekt> objects) {
-		this.objects=objects;
-	}
-
-	public void setClauses(ArrayList<Clause> clauses) {
-		this.clauses=clauses;
-	}
-	
-	public void setPrimid(int prim) {
-		this.primid=prim;
-	}
-	
-	public void setRefid(int ref) {
-		this.refid=ref;
-	}
-	
-//	public State getInitState() {
-//		return this.initState;
-//	}
-//	
-//	public void setInitState(State state) {
-//		this.initState = state;
-//	}
-	
-	public HeapObjekt[] getArguments() {
-		return this.args;
-	}
-	
-	public void setArguments(HeapObjekt[] args) {
-		this.args = args;
-	}
-	/* ======================== modified, end ====================== */
-	
     /**
      * Enumeration of the possible decision procedures.
      * 

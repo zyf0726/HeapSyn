@@ -119,10 +119,6 @@ public abstract class ObjektImpl implements Objekt {
     public final ReferenceSymbolic getOrigin() {
     	return this.origin;
     }
-    
-    public void setOrigin(ReferenceSymbolic rs) {
-    	this.origin=rs;
-    }
 
     @Override
     public final HistoryPoint historyPoint() {

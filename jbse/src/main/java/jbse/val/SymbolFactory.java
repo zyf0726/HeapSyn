@@ -24,22 +24,6 @@ public final class SymbolFactory implements Cloneable {
         this.nextIdRefSym = 0;
         this.nextIdPrimSym = 0;
     }
-    
-    public int getnextRef() {
-    	return this.nextIdRefSym;
-    }
-    
-    public int getnextPrim() {
-    	return this.nextIdPrimSym;
-    }
-    
-    public void setnextRef(int ref) {
-    	this.nextIdRefSym=ref;
-    }
-    
-    public void setnextPrim(int prim) {
-    	this.nextIdPrimSym=prim;
-    }
 
     /**
      * A Factory Method for creating primitive symbolic values. 

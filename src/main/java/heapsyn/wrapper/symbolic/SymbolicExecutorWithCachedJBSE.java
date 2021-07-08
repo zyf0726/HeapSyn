@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.Stack;
 
 import static heapsyn.wrapper.symbolic.JBSEHeapTransformer.BLANK_OBJ;
@@ -43,8 +44,10 @@ import jbse.mem.ClauseAssumeNull;
 import jbse.mem.ClauseAssumeReferenceSymbolic;
 import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
+import jbse.mem.Objekt;
 import jbse.mem.PathCondition;
 import jbse.mem.State;
+import jbse.mem.exc.FrozenStateException;
 import jbse.val.Expression;
 import jbse.val.Operator;
 import jbse.val.Primitive;
@@ -74,6 +77,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		opMap.put(Operator.LT, SMTOperator.BIN_LT);
 		opMap.put(Operator.GE, SMTOperator.BIN_GE);
 		opMap.put(Operator.GT, SMTOperator.BIN_GT);
+		opMap.put(Operator.NEG, SMTOperator.UN_MINUS);
 		
 	}
 		
@@ -296,6 +300,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		Method method=mInvoke.getJavaMethod();
 		if(!this.cachedJBSE.containsKey(method)) {
 			RunParameters p = getRunParameters(mInvoke);
+			p.setDepthScope(500);
+			p.setCountScope(6000);
 			Run r=new Run(p);
 			r.run();
 			HashSet<State> executed = r.getExecuted();
@@ -319,8 +325,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			ArrayList<Clause> primclause=new ArrayList<>(); // clauses about primitive
 			
 			PathCondition jbsepd=state.__getPathCondition();
-			List<Clause> clauses=jbsepd.__getClauses();
-			for(int i=state.pdpos;i<clauses.size();++i) {
+			List<Clause> clauses=jbsepd.getClauses();
+			for(int i=0;i<clauses.size();++i) {
 				Clause clause=clauses.get(i);
 				if(clause instanceof ClauseAssume) {
 					primclause.add(clause);
@@ -335,7 +341,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			if(!this.isSat(refclause, ref2Obj)) continue;
 			
 			JBSEHeapTransformer jhs=new JBSEHeapTransformer();
-			jhs.transform(state);
+			if(jhs.transform(state)==false) continue;
 
 			
 			Map<HeapObjekt, ObjectH> finjbseObjMap = jhs.getfinjbseObjMap();
@@ -404,6 +410,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 							if(initField.getName().equals(field.getName())) {
 								ObjectH initval=initObj.getFieldValue(initField);
 								ObjectH newval=rvsobjSrcMap.get(initval);
+								if(newval!=null) obj.setFieldValue(field, newval);
+								else newval=rvschangedObjSrcMap.get(initval);
 								if(newval==null) obj.setFieldValue(field, ObjectH.NULL);
 								else obj.setFieldValue(field, newval);
 								break;
@@ -436,13 +444,20 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				varExprMap.put(entry.getKey().getVariable(), smt);
 			}
 			
-			Heap finHeapJBSE=state.__getHeap();
-			Value retVal = finHeapJBSE.getReturnValue();
+			SortedMap<Long, Objekt> finHeapJBSE = null;
+			try {
+				finHeapJBSE = state.getHeap();
+			} catch (FrozenStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//Value retVal = finHeapJBSE.getReturnValue();
+			Value retVal=state.getStuckReturn();
 			if(retVal==null||retVal.getType()=='0') pd.retVal=null;
 			else if (retVal instanceof ReferenceConcrete) {
 				ReferenceConcrete refRetVal = (ReferenceConcrete) retVal;
 				Long pos = refRetVal.getHeapPosition();
-				HeapObjekt ho = finHeapJBSE.__getObjects().get(pos);
+				HeapObjekt ho = (HeapObjekt) finHeapJBSE.get(pos);
 				if (ho != null) {
 					accObjs.add(finjbseObjMap.get(ho));
 					pd.retVal=finjbseObjMap.get(ho);

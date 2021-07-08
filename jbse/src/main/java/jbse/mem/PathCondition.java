@@ -20,9 +20,7 @@ import jbse.val.Simplex;
  * different branch points traversed during execution as a 
  * suitable {@link Collection}{@code <}{@link Clause}{@code >}. 
  */
-/* ===================== modified, start ===================== */
 public final class PathCondition implements Cloneable {
-/* ====================== modified, end ====================== */
     /** {@link ArrayList} of all the {@link Clause}s forming the path condition. */
     private ArrayList<Clause> clauses;
 
@@ -257,12 +255,8 @@ public final class PathCondition implements Cloneable {
      * representing all the {@link Clause}s cumulated in {@code this}. 
      * It is valid until {@code this} is modified.
      */
-    List<Clause> getClauses() {
+    public List<Clause> getClauses() {
         return Collections.unmodifiableList(this.clauses);
-    }
-    
-    public List<Clause> __getClauses() {
-    	return this.clauses;
     }
     
     @Override

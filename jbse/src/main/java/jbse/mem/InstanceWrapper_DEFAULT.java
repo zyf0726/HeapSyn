@@ -8,7 +8,7 @@ import jbse.val.ReferenceSymbolic;
  * Class that wraps an instance of an object in the heap, implementing 
  * copy-on-write.
  */
-final public class InstanceWrapper_DEFAULT extends InstanceWrapper<InstanceImpl_DEFAULT> implements Instance {
+final class InstanceWrapper_DEFAULT extends InstanceWrapper<InstanceImpl_DEFAULT> implements Instance {
 	/**
 	 * Constructor.
 	 * 
