@@ -7,6 +7,8 @@ import heapsyn.heap.SymbolicHeap;
 
 public interface SymbolicExecutor {
 	
+	public void resetIg();
+	
 	public int getExecutionCount();
 	
 	public Collection<PathDescriptor> executeMethod(SymbolicHeap initHeap, MethodInvoke mInvoke);

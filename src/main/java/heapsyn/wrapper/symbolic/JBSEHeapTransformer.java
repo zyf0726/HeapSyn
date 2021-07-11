@@ -42,6 +42,11 @@ public class JBSEHeapTransformer {
 	private Map<Primitive, ObjectH> finjbseVarMap = new HashMap<>();
 	private Map<ObjectH,Primitive> finVarjbseMap = new HashMap<>(); // a Primitive may correspond to more than one ObjectH
 	private TreeMap<Long,HeapObjekt> objects;
+	private boolean ignore;
+	
+	public JBSEHeapTransformer(boolean ignore) {
+		this.ignore=ignore;
+	}
 	
 	public Map<HeapObjekt, ObjectH> getfinjbseObjMap() {
 		return this.finjbseObjMap;
@@ -128,6 +133,7 @@ public class JBSEHeapTransformer {
 			ObjectH oh = entry.getValue();
 			Map<FieldH, ObjectH> fieldValMap = new HashMap<>();
 			for (Variable var : ok.fields().values()) {
+				if(this.ignore&&var.getName().charAt(0)=='_') continue;
 				FieldH field = null;
 				String clsName="";
 				try {

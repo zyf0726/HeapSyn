@@ -83,9 +83,17 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		
 	private int __countExecution=0;
 	
+	private boolean ignore=true;
+	
 	@Override
 	public int getExecutionCount() {
 		return this.__countExecution;
+	}
+	
+	@Override
+	public void resetIg() {
+		this.ignore=false;
+		
 	}
 	
 	private static RunParameters getRunParameters(MethodInvoke mInvoke) {
@@ -105,8 +113,16 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	
 	private Map<ReferenceSymbolic,ObjectH> ref2ObjMap(ArrayList<Clause> refclause,Map<Value,ObjectH> val2Obj) {
 		Map<ReferenceSymbolic,ObjectH> ref2Obj=new HashMap<>();
+		
+		Set<ReferenceSymbolic> resolved=new HashSet<>();
+		for(int i=0;i<refclause.size();++i) {
+			ClauseAssumeReferenceSymbolic clause=(ClauseAssumeReferenceSymbolic) refclause.get(i);
+			ReferenceSymbolic ref=clause.getReference();
+			resolved.add(ref);
+		}
+		
 		for(Entry<Value,ObjectH> entry:val2Obj.entrySet()) {
-			if(entry.getKey() instanceof ReferenceSymbolic) {
+			if((entry.getKey() instanceof ReferenceSymbolic) && resolved.contains(entry.getKey()) ) {
 				ref2Obj.put((ReferenceSymbolic)entry.getKey(), entry.getValue());
 			}
 		}
@@ -290,6 +306,37 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		}
 		return true;
 	}
+	
+	private boolean toIgnore(Primitive p) {
+		if(p instanceof PrimitiveSymbolicLocalVariable) {
+			return false;
+		}
+		if(p instanceof PrimitiveSymbolicMemberField) {
+			PrimitiveSymbolicMemberField pfield=(PrimitiveSymbolicMemberField)p;
+			ReferenceSymbolic ref=pfield.getContainer();
+			return pfield.getFieldName().charAt(0)=='_';
+		}
+		else if(p instanceof Simplex) {
+			return false;
+		}
+		else if(p instanceof Expression) {
+			Expression expr=(Expression) p;
+			Primitive fst=expr.getFirstOperand();
+			Primitive snd=expr.getSecondOperand();
+			if(expr.isUnary()) {
+				return toIgnore(snd);
+			}
+			else {
+				return toIgnore(fst)||toIgnore(snd);
+			}
+		}
+		else if(p instanceof WideningConversion) {
+			return toIgnore(((WideningConversion)p).getArg());
+		}
+		else {
+			throw new UnhandledJBSEPrimitive(p.getClass().getName());
+		}
+	}
 
 	@Override
 	public Collection<PathDescriptor> executeMethod(SymbolicHeap initHeap, MethodInvoke mInvoke) {
@@ -329,9 +376,16 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			for(int i=0;i<clauses.size();++i) {
 				Clause clause=clauses.get(i);
 				if(clause instanceof ClauseAssume) {
-					primclause.add(clause);
+					if(this.ignore==false) primclause.add(clause);
+					else if(!toIgnore(((ClauseAssume)clause).getCondition())) primclause.add(clause);
 				}
 				else if(clause instanceof ClauseAssumeReferenceSymbolic) {
+					ReferenceSymbolic ref=((ClauseAssumeReferenceSymbolic)clause).getReference();
+					if(this.ignore==true && ref instanceof ReferenceSymbolicMemberField) {
+						ReferenceSymbolicMemberField memberref=(ReferenceSymbolicMemberField) ref;
+						String fieldname=memberref.getFieldName();
+						if(fieldname.charAt(0)=='_') continue;
+					}
 					refclause.add(clause);
 				}
 			}
@@ -340,7 +394,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			
 			if(!this.isSat(refclause, ref2Obj)) continue;
 			
-			JBSEHeapTransformer jhs=new JBSEHeapTransformer();
+			JBSEHeapTransformer jhs=new JBSEHeapTransformer(this.ignore);
 			if(jhs.transform(state)==false) continue;
 
 			
@@ -411,9 +465,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 								ObjectH initval=initObj.getFieldValue(initField);
 								ObjectH newval=rvsobjSrcMap.get(initval);
 								if(newval!=null) obj.setFieldValue(field, newval);
+								//else obj.setFieldValue(field, ObjectH.NULL);
 								else newval=rvschangedObjSrcMap.get(initval);
-								if(newval==null) obj.setFieldValue(field, ObjectH.NULL);
-								else obj.setFieldValue(field, newval);
+								if(newval!=null) obj.setFieldValue(field, newval);
+								else obj.setFieldValue(field, ObjectH.NULL);
 								break;
 							}
 						}
@@ -529,6 +584,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+
 	
 	
 
