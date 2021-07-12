@@ -455,6 +455,7 @@ public class HeapTest {
 		SymbolicHeap h2 = (SymbolicHeap) ois.readObject();
 		ois.close();
 		fis.close();
+		tmpfile.delete();
 		ObjectH p1 = h2.getAccessibleObjects()
 				.stream().filter(o -> o != null).findAny().get();
 		assertEquals(p1, p1.getFieldValue(fNext).getFieldValue(fNext).getFieldValue(fNext));
