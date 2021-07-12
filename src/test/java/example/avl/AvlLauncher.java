@@ -31,7 +31,8 @@ public class AvlLauncher {
 	
 	private static void buildGraph(Collection<Method> methods) throws FileNotFoundException {
 		long start = System.currentTimeMillis();
-		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
+		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE(
+				name -> !name.startsWith("_"));
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(AvlTree.class, 1);
 		gb.setHeapScope(AvlNode.class, 6);
@@ -58,10 +59,54 @@ public class AvlLauncher {
 		methods.add(AvlTree.class.getMethod("isEmpty"));
 		methods.add(AvlTree.class.getMethod("makeEmpty"));
 		buildGraph(methods);
-		genTest1();
+		genTest4$1();
+		genTest4$2();
+		genTest6$1();
 	}
 	
-	private static void genTest1() {
+	private static void genTest4$1() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH avlTree = specFty.mkRefDecl(AvlTree.class, "t");
+		specFty.addRefSpec("t", "root", "root");
+		specFty.addRefSpec("root", "element", "v2", "left", "root.l", "right", "root.r");
+		specFty.addRefSpec("root.l", "element", "v1", "left", "root.l.l", "right", "null");
+		specFty.addRefSpec("root.l.l", "element", "v0", "left", "null", "right", "null");
+		specFty.addRefSpec("root.r", "element", "v3", "left", "null", "right", "null");
+		specFty.setAccessible("t");
+		Specification spec = specFty.genSpec();
+		
+		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
+		Map<Variable, Constant> vModel = new HashMap<>();
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
+		stmts.add(new Statement(objSrc, vModel, avlTree));
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTest4$1: " + (end - start) + "ms\n");
+	}
+	
+	private static void genTest4$2() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH avlTree = specFty.mkRefDecl(AvlTree.class, "t");
+		specFty.addRefSpec("t", "root", "root");
+		specFty.addRefSpec("root", "element", "v1", "left", "root.l", "right", "root.r");
+		specFty.addRefSpec("root.l", "element", "v0", "left", "null", "right", "null");
+		specFty.addRefSpec("root.r", "element", "v3", "left", "root.r.l", "right", "null");
+		specFty.addRefSpec("root.r.l", "element", "v2", "left", "null", "right", "null");
+		specFty.setAccessible("t");
+		Specification spec = specFty.genSpec();
+		
+		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
+		Map<Variable, Constant> vModel = new HashMap<>();
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
+		stmts.add(new Statement(objSrc, vModel, avlTree));
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTest4$2: " + (end - start) + "ms\n");
+	}
+
+	private static void genTest6$1() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH avlTree = specFty.mkRefDecl(AvlTree.class, "t");
@@ -87,7 +132,7 @@ public class AvlLauncher {
 		stmts.add(new Statement(objSrc, vModel, avlTree));
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
-		System.out.println(">> genTest1: " + (end - start) + "ms\n");
+		System.out.println(">> genTest6$1: " + (end - start) + "ms\n");
 	}
 
 }

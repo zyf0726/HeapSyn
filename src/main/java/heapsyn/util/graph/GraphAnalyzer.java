@@ -65,11 +65,11 @@ public class GraphAnalyzer<N, L extends Comparable<L>> {
 		
 		for (int u = 0; u < numNodes; ++u)
 			if (dfsNum[u] == 0) { // not visited yet
-				__tarjanDFS(u, timeStamp, dfsNum, dfsLow, aStack, inStack);
+				timeStamp = __tarjanDFS(u, timeStamp, dfsNum, dfsLow, aStack, inStack);
 			}
 	}
 	
-	private void __tarjanDFS(int u, int timeStamp, int[] dfsNum, int[] dfsLow,
+	private int __tarjanDFS(int u, int timeStamp, int[] dfsNum, int[] dfsLow,
 			Deque<Integer> aStack, boolean[] inStack) {
 		timeStamp += 1;
 		dfsNum[u] = timeStamp;
@@ -79,7 +79,7 @@ public class GraphAnalyzer<N, L extends Comparable<L>> {
 		
 		for (int v : this.adjMap.get(u).values()) {
 			if (dfsNum[v] == 0) {  // tree edge
-				__tarjanDFS(v, timeStamp, dfsNum, dfsLow, aStack, inStack);
+				timeStamp = __tarjanDFS(v, timeStamp, dfsNum, dfsLow, aStack, inStack);
 				dfsLow[u] = Math.min(dfsLow[u], dfsLow[v]);
 			} else if (inStack[v]) {  // back edge
 				dfsLow[u] = Math.min(dfsLow[u], dfsNum[v]);
@@ -98,6 +98,7 @@ public class GraphAnalyzer<N, L extends Comparable<L>> {
 			}
 			this.allSCCs.add(scc);
 		}
+		return timeStamp;
 	}
 	
 	public Integer getSCCIdentifier(N anode) {

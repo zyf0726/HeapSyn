@@ -4,6 +4,9 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -178,7 +181,7 @@ public class GraphAnalyzerTest {
 	}
 	
 	@Test
-	public void testAboutTarjanAlgorithm() {
+	public void testAboutTarjanAlgorithm1() {
 		assertEquals(null, gaRand1.getSCCIdentifier(6));
 		assertEquals(null, gaRand2.getSCCMembers(0));
 		
@@ -201,6 +204,143 @@ public class GraphAnalyzerTest {
 		assertTrue(gaRand2.getSCCIdentifier(4) < gaRand2.getSCCIdentifier(2));
 		assertTrue(gaRand2.getSCCIdentifier(6) < gaRand2.getSCCIdentifier(5));
 		assertTrue(gaRand2.getSCCIdentifier(2) < gaRand2.getSCCIdentifier(1));
+	}
+	
+	@Test
+	public void testAboutTarjanAlgorithm2() {
+		List<Edge<Integer, Integer>> es = new ArrayList<>();
+		es.add(new Edge<>(0, 1, 0));
+		es.add(new Edge<>(8, 1, 1));
+		es.add(new Edge<>(15, 1, 2));
+		es.add(new Edge<>(22, 1, 3));
+		es.add(new Edge<>(35, 1, 4));
+		es.add(new Edge<>(53, 1, 5));
+		es.add(new Edge<>(72, 1, 6));
+		es.add(new Edge<>(90, 1, 7));
+		es.add(new Edge<>(109, 1, 8));
+		es.add(new Edge<>(1, 3, 9));
+		es.add(new Edge<>(7, 3, 10));
+		es.add(new Edge<>(3, 5, 11));
+		es.add(new Edge<>(10, 5, 12));
+		es.add(new Edge<>(13, 5, 13));
+		es.add(new Edge<>(3, 6, 14));
+		es.add(new Edge<>(20, 6, 15));
+		es.add(new Edge<>(21, 6, 16));
+		es.add(new Edge<>(3, 7, 17));
+		es.add(new Edge<>(3, 8, 18));
+		es.add(new Edge<>(5, 10, 19));
+		es.add(new Edge<>(5, 11, 20));
+		es.add(new Edge<>(12, 11, 21));
+		es.add(new Edge<>(14, 11, 22));
+		es.add(new Edge<>(17, 11, 23));
+		es.add(new Edge<>(18, 11, 24));
+		es.add(new Edge<>(19, 11, 25));
+		es.add(new Edge<>(26, 11, 26));
+		es.add(new Edge<>(27, 11, 27));
+		es.add(new Edge<>(29, 11, 28));
+		es.add(new Edge<>(31, 11, 29));
+		es.add(new Edge<>(33, 11, 30));
+		es.add(new Edge<>(5, 12, 31));
+		es.add(new Edge<>(5, 13, 32));
+		es.add(new Edge<>(5, 14, 33));
+		es.add(new Edge<>(5, 15, 34));
+		es.add(new Edge<>(6, 17, 35));
+		es.add(new Edge<>(6, 18, 36));
+		es.add(new Edge<>(6, 19, 37));
+		es.add(new Edge<>(6, 20, 38));
+		es.add(new Edge<>(6, 21, 39));
+		es.add(new Edge<>(6, 22, 40));
+		es.add(new Edge<>(11, 24, 41));
+		es.add(new Edge<>(28, 24, 42));
+		es.add(new Edge<>(39, 24, 43));
+		es.add(new Edge<>(43, 24, 44));
+		es.add(new Edge<>(44, 24, 45));
+		es.add(new Edge<>(46, 24, 46));
+		es.add(new Edge<>(47, 24, 47));
+		es.add(new Edge<>(48, 24, 48));
+		es.add(new Edge<>(49, 24, 49));
+		es.add(new Edge<>(52, 24, 50));
+		es.add(new Edge<>(11, 25, 51));
+		es.add(new Edge<>(58, 25, 52));
+		es.add(new Edge<>(62, 25, 53));
+		es.add(new Edge<>(63, 25, 54));
+		es.add(new Edge<>(65, 25, 55));
+		es.add(new Edge<>(66, 25, 56));
+		es.add(new Edge<>(68, 25, 57));
+		es.add(new Edge<>(70, 25, 58));
+		es.add(new Edge<>(11, 26, 59));
+		es.add(new Edge<>(11, 27, 60));
+		es.add(new Edge<>(11, 28, 61));
+		es.add(new Edge<>(11, 29, 62));
+		es.add(new Edge<>(11, 30, 63));
+		es.add(new Edge<>(32, 30, 64));
+		es.add(new Edge<>(74, 30, 65));
+		es.add(new Edge<>(76, 30, 66));
+		es.add(new Edge<>(77, 30, 67));
+		es.add(new Edge<>(79, 30, 68));
+		es.add(new Edge<>(83, 30, 69));
+		es.add(new Edge<>(84, 30, 70));
+		es.add(new Edge<>(85, 30, 71));
+		es.add(new Edge<>(86, 30, 72));
+		es.add(new Edge<>(11, 31, 73));
+		es.add(new Edge<>(11, 32, 74));
+		es.add(new Edge<>(11, 33, 75));
+		es.add(new Edge<>(11, 34, 76));
+		es.add(new Edge<>(95, 34, 77));
+		es.add(new Edge<>(96, 34, 78));
+		es.add(new Edge<>(99, 34, 79));
+		es.add(new Edge<>(102, 34, 80));
+		es.add(new Edge<>(104, 34, 81));
+		es.add(new Edge<>(105, 34, 82));
+		es.add(new Edge<>(106, 34, 83));
+		es.add(new Edge<>(11, 35, 84));
+		es.add(new Edge<>(24, 39, 85));
+		es.add(new Edge<>(24, 43, 86));
+		es.add(new Edge<>(24, 44, 87));
+		es.add(new Edge<>(24, 46, 88));
+		es.add(new Edge<>(24, 47, 89));
+		es.add(new Edge<>(24, 48, 90));
+		es.add(new Edge<>(24, 49, 91));
+		es.add(new Edge<>(24, 52, 92));
+		es.add(new Edge<>(24, 53, 93));
+		es.add(new Edge<>(25, 58, 94));
+		es.add(new Edge<>(25, 62, 95));
+		es.add(new Edge<>(25, 63, 96));
+		es.add(new Edge<>(25, 65, 97));
+		es.add(new Edge<>(25, 66, 98));
+		es.add(new Edge<>(25, 68, 99));
+		es.add(new Edge<>(25, 70, 100));
+		es.add(new Edge<>(25, 72, 101));
+		es.add(new Edge<>(30, 74, 102));
+		es.add(new Edge<>(30, 76, 103));
+		es.add(new Edge<>(30, 77, 104));
+		es.add(new Edge<>(30, 79, 105));
+		es.add(new Edge<>(30, 83, 106));
+		es.add(new Edge<>(30, 84, 107));
+		es.add(new Edge<>(30, 85, 108));
+		es.add(new Edge<>(30, 86, 109));
+		es.add(new Edge<>(30, 90, 110));
+		es.add(new Edge<>(34, 95, 111));
+		es.add(new Edge<>(34, 96, 112));
+		es.add(new Edge<>(34, 99, 113));
+		es.add(new Edge<>(34, 102, 114));
+		es.add(new Edge<>(34, 104, 115));
+		es.add(new Edge<>(34, 105, 116));
+		es.add(new Edge<>(34, 106, 117));
+		es.add(new Edge<>(34, 109, 118));
+		Set<Integer> vs = new HashSet<>();
+		for (Edge<Integer, Integer> e : es) {
+			vs.add(e.head);
+			vs.add(e.tail);
+		}
+		GraphAnalyzer<Integer, Integer> ga = new GraphAnalyzer<>(vs, es);
+		for (Integer v : vs) {
+			if (v != 0) {
+				assertEquals(Integer.valueOf(0), ga.getSCCIdentifier(v));
+			} else {
+				assertEquals(Integer.valueOf(1), ga.getSCCIdentifier(v));
+			}
+		}
 	}
 
 }
