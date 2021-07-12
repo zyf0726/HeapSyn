@@ -614,7 +614,17 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			}
 			pd.finHeap = symHeap;
 			pd.objSrcMap=objSrcMap;
-			pd.varExprMap=varExprMap;
+			
+			//pd.varExprMap=varExprMap;
+			
+			pd.varExprMap=new HashMap<>();
+			List<heapsyn.smtlib.Variable> vars= symHeap.getVariables();
+			
+			for(Entry<heapsyn.smtlib.Variable,SMTExpression> entry:varExprMap.entrySet()) {
+				if(vars.contains(entry.getKey())) pd.varExprMap.put(entry.getKey(), entry.getValue());
+			}
+			
+			
 			pd.pathCond=this.getPathcond(primclause, ref2Obj,val2Obj);
 			
 			pds.add(pd);
