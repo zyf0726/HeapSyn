@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.Stack;
+import java.util.function.Predicate;
 
 import static heapsyn.wrapper.symbolic.JBSEHeapTransformer.BLANK_OBJ;
 
@@ -83,18 +84,13 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		
 	private int __countExecution=0;
 	
-	private boolean ignore=true;
+	private Predicate<String> fieldFilter;
 	
 	@Override
 	public int getExecutionCount() {
 		return this.__countExecution;
 	}
 	
-	@Override
-	public void resetIg() {
-		this.ignore=false;
-		
-	}
 	
 	private static RunParameters getRunParameters(MethodInvoke mInvoke) {
 		JBSEParameters parms = JBSEParameters.I(); 
@@ -109,6 +105,12 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	
 	public SymbolicExecutorWithCachedJBSE() {
 		this.cachedJBSE=new HashMap<>();
+		this.fieldFilter=name -> true;
+	}
+	
+	public SymbolicExecutorWithCachedJBSE(Predicate<String> fieldFilter) {
+		this.cachedJBSE=new HashMap<>();
+		this.fieldFilter=fieldFilter;
 	}
 	
 	private Map<ReferenceSymbolic,ObjectH> ref2ObjMap(ArrayList<Clause> refclause,Map<Value,ObjectH> val2Obj) {
@@ -313,8 +315,11 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		}
 		if(p instanceof PrimitiveSymbolicMemberField) {
 			PrimitiveSymbolicMemberField pfield=(PrimitiveSymbolicMemberField)p;
-			ReferenceSymbolic ref=pfield.getContainer();
-			return pfield.getFieldName().charAt(0)=='_';
+			if(this.fieldFilter.test(pfield.getFieldName())==false) {
+			//if(pfield.getFieldName().charAt(0)=='_') {
+				return true;
+			}
+			else return false;
 		}
 		else if(p instanceof Simplex) {
 			return false;
@@ -332,6 +337,40 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		}
 		else if(p instanceof WideningConversion) {
 			return toIgnore(((WideningConversion)p).getArg());
+		}
+		else {
+			throw new UnhandledJBSEPrimitive(p.getClass().getName());
+		}
+	}
+	
+	private boolean check(Primitive p) {
+		if(p instanceof PrimitiveSymbolicLocalVariable) {
+			return false;
+		}
+		if(p instanceof PrimitiveSymbolicMemberField) {
+			PrimitiveSymbolicMemberField pfield=(PrimitiveSymbolicMemberField)p;
+			if(this.fieldFilter.test(pfield.getFieldName())==true) {
+			//if(pfield.getFieldName().charAt(0)!='_') {
+				return true;
+			}
+			else return false;
+		}
+		else if(p instanceof Simplex) {
+			return false;
+		}
+		else if(p instanceof Expression) {
+			Expression expr=(Expression) p;
+			Primitive fst=expr.getFirstOperand();
+			Primitive snd=expr.getSecondOperand();
+			if(expr.isUnary()) {
+				return check(snd);
+			}
+			else {
+				return check(fst)||check(snd);
+			}
+		}
+		else if(p instanceof WideningConversion) {
+			return check(((WideningConversion)p).getArg());
 		}
 		else {
 			throw new UnhandledJBSEPrimitive(p.getClass().getName());
@@ -376,15 +415,21 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			for(int i=0;i<clauses.size();++i) {
 				Clause clause=clauses.get(i);
 				if(clause instanceof ClauseAssume) {
-					if(this.ignore==false) primclause.add(clause);
-					else if(!toIgnore(((ClauseAssume)clause).getCondition())) primclause.add(clause);
+					//primclause.add(clause);
+					Primitive p= ((ClauseAssume)clause).getCondition();
+					if(toIgnore(p)&&check(p)) {
+						// this should never happen
+						throw new UnexpectedInternalException("a pathcondition contains both filtered vars and remained vars");
+					}
+					if(!toIgnore(p)) primclause.add(clause);
 				}
 				else if(clause instanceof ClauseAssumeReferenceSymbolic) {
 					ReferenceSymbolic ref=((ClauseAssumeReferenceSymbolic)clause).getReference();
-					if(this.ignore==true && ref instanceof ReferenceSymbolicMemberField) {
+					if(ref instanceof ReferenceSymbolicMemberField) {
 						ReferenceSymbolicMemberField memberref=(ReferenceSymbolicMemberField) ref;
 						String fieldname=memberref.getFieldName();
-						if(fieldname.charAt(0)=='_') continue;
+						if(this.fieldFilter.test(fieldname)==false) continue;
+						//if(fieldname.charAt(0)=='_') continue;
 					}
 					refclause.add(clause);
 				}
@@ -394,7 +439,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			
 			if(!this.isSat(refclause, ref2Obj)) continue;
 			
-			JBSEHeapTransformer jhs=new JBSEHeapTransformer(this.ignore);
+			JBSEHeapTransformer jhs=new JBSEHeapTransformer(this.fieldFilter);
 			if(jhs.transform(state)==false) continue;
 
 			

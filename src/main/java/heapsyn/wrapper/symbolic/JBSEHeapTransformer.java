@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.Set;
 import java.util.TreeMap;
@@ -42,10 +43,10 @@ public class JBSEHeapTransformer {
 	private Map<Primitive, ObjectH> finjbseVarMap = new HashMap<>();
 	private Map<ObjectH,Primitive> finVarjbseMap = new HashMap<>(); // a Primitive may correspond to more than one ObjectH
 	private TreeMap<Long,HeapObjekt> objects;
-	private boolean ignore;
+	private Predicate<String> fieldFilter;
 	
-	public JBSEHeapTransformer(boolean ignore) {
-		this.ignore=ignore;
+	public JBSEHeapTransformer(Predicate<String> fieldFilter) {
+		this.fieldFilter=fieldFilter;
 	}
 	
 	public Map<HeapObjekt, ObjectH> getfinjbseObjMap() {
@@ -133,7 +134,7 @@ public class JBSEHeapTransformer {
 			ObjectH oh = entry.getValue();
 			Map<FieldH, ObjectH> fieldValMap = new HashMap<>();
 			for (Variable var : ok.fields().values()) {
-				if(this.ignore&&var.getName().charAt(0)=='_') continue;
+				if(this.fieldFilter.test(var.getName())==false) continue;
 				FieldH field = null;
 				String clsName="";
 				try {

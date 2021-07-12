@@ -42,7 +42,6 @@ public class ManualExecutor implements SymbolicExecutor {
 	}
 	
 	private int __countExecution = 0;
-	private boolean ignore=true;
 	
 	private Set<ObjectH> tempAccObjs;
 	private Bijection<ObjectH, ObjectH> tempCloneMap;
@@ -57,11 +56,6 @@ public class ManualExecutor implements SymbolicExecutor {
 	@Override
 	public int getExecutionCount() {
 		return this.__countExecution;
-	}
-	
-	@Override
-	public void resetIg() {
-		this.ignore=false;
 	}
 
 	@Override
