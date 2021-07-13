@@ -9,6 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -16,6 +20,7 @@ import com.google.common.collect.Sets;
 
 import heapsyn.algo.WrappedHeap.BackwardRecord;
 import heapsyn.algo.WrappedHeap.MatchResult;
+import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.common.settings.Options;
 import heapsyn.heap.ObjectH;
 import heapsyn.smtlib.ApplyExpr;
@@ -37,19 +42,77 @@ public class TestGenerator {
 		this.heaps = ImmutableList.copyOf(heaps);
 	}
 	
+	private MatchResult __matchResult;
+	private WrappedHeap __finalHeap;
+	private boolean tryMatchSpec(Specification spec) {
+		this.__matchResult = null;
+		this.__finalHeap = null;
+		List<WrappedHeap> activeHeaps = this.heaps.stream()
+				.filter(o -> o.isActive()).collect(Collectors.toList());
+		
+		if (Options.I().getMaxNumThreads() <= 0) {
+			for (WrappedHeap heap : activeHeaps) {
+				MatchResult ret = heap.matchSpecification(spec);
+				if (ret != null) {
+					this.__matchResult = ret;
+					this.__finalHeap = heap;
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		final CountDownLatch cdlAll = new CountDownLatch(activeHeaps.size());
+		final CountDownLatch cdlOne = new CountDownLatch(1);
+		Thread thIfNotFound = new Thread(() -> {
+			try {
+				cdlAll.await();		// all threads terminated
+				cdlOne.countDown(); // specification not matched, wake up the main thread
+			} catch (InterruptedException e) {
+				// interrupted by the main thread - specification matched
+				// stop waiting for the remaining threads
+			}
+		});
+		thIfNotFound.start();
+		
+		ExecutorService es = Executors.newFixedThreadPool(Options.I().getMaxNumThreads());
+		for (WrappedHeap heap : activeHeaps) {
+			es.submit(() -> {
+				MatchResult ret = heap.matchSpecification(spec);
+				if (ret != null) {
+					synchronized (this) {
+						this.__matchResult = ret;
+						this.__finalHeap = heap;
+					}
+					cdlOne.countDown(); // specification matched, wake up the main thread
+				} else {
+					cdlAll.countDown(); // one thread terminated
+				}
+			});
+		}
+		
+		try {
+			cdlOne.await();
+		} catch (InterruptedException e) {
+			throw new UnexpectedInternalException("main thread interrupted unexpectedly");
+		}
+		thIfNotFound.interrupt();
+		es.shutdownNow();
+		
+		synchronized (this) {
+			return this.__matchResult != null;
+		}
+	}
+	
 	public List<Statement> generateTestWithSpec(Specification spec,
 			Map<ObjectH, ObjectH> objSrc, Map<Variable, Constant> vModel) {
+		if (!tryMatchSpec(spec)) return null;
 		MatchResult matchRet = null;
 		WrappedHeap finHeap = null;
-		for (WrappedHeap heap : this.heaps) {
-			if (!heap.isActive()) continue;
-			matchRet = heap.matchSpecification(spec);
-			if (matchRet != null) {
-				finHeap = heap;
-				break;
-			}
+		synchronized (this) {
+			matchRet = this.__matchResult;
+			finHeap = this.__finalHeap;
 		}
-		if (matchRet == null) return null;
 		
 		if (objSrc == null) {
 			objSrc = new HashMap<>(); 

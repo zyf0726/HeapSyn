@@ -61,10 +61,12 @@ public class Z3JavaAPI implements SMTSolver {
 	
 	@Override
 	public boolean checkSat(SMTExpression constraint, Map<Variable, Constant> model) {
+		boolean toCheck = (model != null) && (!model.isEmpty());
 		long startT = System.currentTimeMillis();
 		boolean isSat = this.__checkSat(constraint, model);
 		long endT = System.currentTimeMillis();
-		System.err.println("INFO: invoke Z3 Java API, elapsed " + (endT - startT) + "ms");
+		System.err.print("INFO: invoke Z3 Java API to " + (toCheck ? "check" : "solve"));
+		System.err.println(", elapsed " + (endT - startT) + "ms ");
 		return isSat;
 	}
 	

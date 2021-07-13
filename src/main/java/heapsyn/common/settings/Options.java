@@ -47,4 +47,11 @@ public class Options {
 		this.targetSrcPath=tsp;
 	}
 	
+	// maximum number of threads
+	private int maxNumThreads = 1;
+	
+	public int getMaxNumThreads() {
+		return this.maxNumThreads;
+	}
+	
 }
