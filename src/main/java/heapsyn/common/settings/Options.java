@@ -47,8 +47,8 @@ public class Options {
 		this.targetSrcPath=tsp;
 	}
 	
-	// maximum number of threads
-	private int maxNumThreads = 1;
+	// maximum number of threads (0 means multi-threading is disabled)
+	private int maxNumThreads = 0;
 	
 	public int getMaxNumThreads() {
 		return this.maxNumThreads;

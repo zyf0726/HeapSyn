@@ -2,14 +2,12 @@ package heapsyn.common.settings;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
 import heapsyn.common.exceptions.LoadSettingsException;
-import heapsyn.common.exceptions.UnexpectedInternalException;
 import jbse.apps.run.RunParameters;
 import jbse.apps.run.RunParameters.DecisionProcedureType;
 import jbse.apps.run.RunParameters.StateFormatMode;
@@ -22,7 +20,6 @@ public class JBSEParameters {
 	private static final String Z3_PATH			=	"libs/z3-4.8.10-x64-win/z3.exe";
 	private static final String JBSE_HOME		=	"jbse/";
 	private static final String JBSE_CLASSPATH	= 	JBSE_HOME + "build/classes/java/main";
-	//private static final String JBSE_CLASSPATH	= 	"C:\\junior(1)\\HeapSyn\\build\\libs\\HeapSyn-0.10.0-SNAPSHOT-all.jar";
 	private static final String JBSE_SOURCEPATH	=	JBSE_HOME + "src/main/java/";
 	private static final String JRE_SOURCEPATH	=	System.getProperty("java.home", "") + "src.zip";
 	

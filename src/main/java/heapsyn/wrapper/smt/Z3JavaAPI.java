@@ -83,10 +83,8 @@ public class Z3JavaAPI implements SMTSolver {
 			decls.add(varDecl);
 		}
 		for (UserFunc uf : getAllUserFunctions(constraint)) {
-			/*
-			 *  'define-fun' is semantically equivalent to 'declare-fun' + 'assert forall',
-			 *  but is more efficient than the latter.
-			 */
+			// 'define-fun' is semantically equivalent to 'declare-fun' + 'assert forall',
+			// but the former is more efficient than the latter.
 			// sb.append(uf.getSMTDecl() + "\n");
 			// sb.append(uf.getSMTAssert() + "\n");
 			sb.append(uf.getSMTDef() + "\n");

@@ -43,7 +43,6 @@ import jbse.mem.ClauseAssume;
 import jbse.mem.ClauseAssumeAliases;
 import jbse.mem.ClauseAssumeNull;
 import jbse.mem.ClauseAssumeReferenceSymbolic;
-import jbse.mem.Heap;
 import jbse.mem.HeapObjekt;
 import jbse.mem.Objekt;
 import jbse.mem.PathCondition;
@@ -386,6 +385,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		Method method=mInvoke.getJavaMethod();
 		if(!this.cachedJBSE.containsKey(method)) {
 			RunParameters p = getRunParameters(mInvoke);
+			// TODO remove magic numbers
 			p.setDepthScope(500);
 			p.setCountScope(6000);
 			Run r=new Run(p);
