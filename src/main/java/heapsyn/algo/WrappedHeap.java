@@ -77,8 +77,16 @@ public class WrappedHeap {
 				ps.print(" " + __objNameMap.get(o) + " ");
 			}
 			ps.print(":");
-			for (FieldH field : o.getFields())
-				ps.print(" (." + field.getName() + ", " + __objNameMap.get(o.getFieldValue(field)) + ")");
+			for (FieldH field : o.getFields()) {
+				ObjectH val = o.getFieldValue(field);
+				ps.print(" (." + field.getName() + ", ");
+				if (!val.isHeapObject() && heap.getAccessibleObjects().contains(val))
+					ps.print("<");
+				ps.print(__objNameMap.get(val));
+				if (!val.isHeapObject() && heap.getAccessibleObjects().contains(val))
+					ps.print(">");
+				ps.print(")");
+			}
 			ps.println();
 		}
 		if (!renameMapList.isEmpty()) {
@@ -272,17 +280,19 @@ public class WrappedHeap {
 				andClauses.add(br.pathCond);
 			}
 			for (Variable var : this.heap.getVariables()) {
-				SMTExpression clause = new ApplyExpr(SMTOperator.BIN_EQ,
-						var, br.varExprMap.get(var));
-				andClauses.add(clause);
+				if (br.varExprMap.containsKey(var)) {
+					SMTExpression clause = new ApplyExpr(SMTOperator.BIN_EQ,
+							var, br.varExprMap.get(var));
+					andClauses.add(clause);
+				}
 			}
 			ExistExpr guardCond = new ExistExpr(boundVars,
 					new ApplyExpr(SMTOperator.AND, andClauses));
 			br.guardCondList.add(guardCond);
 			assert(Sets.difference(
 					guardCond.getBody().getFreeVariables(),
-					guardCond.getBoundVariables()
-					).immutableCopy().equals(ImmutableSet.copyOf(this.heap.getVariables())));
+					guardCond.getBoundVariables())
+					.immutableCopy().equals(ImmutableSet.copyOf(this.heap.getVariables())));
 		}
 		
 		Map<Variable, Variable> newRenameMap = new HashMap<>();

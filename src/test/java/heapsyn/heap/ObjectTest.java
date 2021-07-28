@@ -218,6 +218,16 @@ public class ObjectTest {
 	}
 	
 	@Test
+	public void testObject5() {
+		ObjectH o = new ObjectH(ClassH.of(Object.class), null);
+		assertFalse(o.isNonNullObject());
+		assertFalse(o.isHeapObject());
+		assertFalse(o.isNullObject());
+		assertTrue(o.isVariable());
+		assertNotNull(o.getVariable());
+	}
+	
+	@Test
 	public void testObjectSerial() throws Exception {
 		FileOutputStream fos = new FileOutputStream(file);
 		ObjectOutputStream oos = new ObjectOutputStream(fos);

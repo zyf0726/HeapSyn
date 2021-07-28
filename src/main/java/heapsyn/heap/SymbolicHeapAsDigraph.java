@@ -249,7 +249,7 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		Set<ObjectH> accObjsClone = new HashSet<>();
 		for (ObjectH obj : this.allObjs) {
 			ObjectH objClone = 
-				obj.isNonNullObject() ?
+				obj.getClassH().isNonNullClass() ?
 					new ObjectH(obj.getClassH(), null) :
 				obj.isVariable() ?
 					new ObjectH(obj.getVariable().cloneVariable()) :

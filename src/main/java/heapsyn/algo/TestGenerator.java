@@ -169,7 +169,7 @@ public class TestGenerator {
 				BoolVar guardVar = guardVars.get(i);
 				if (vModel.get(guardVar).toSMTString().equals("true")) {
 					BackwardRecord br = rcdBackwards.get(i);
-					if (br.retVal != null) {
+					if (br.retVal != null && br.retVal.isNonNullObject()) {
 						objRets.add(br.retVal);
 						objSrc.put(br.retVal, br.retVal);
 					}
@@ -183,7 +183,7 @@ public class TestGenerator {
 					if (br.mInvoke != null) {
 						Statement stmt = new Statement(br.mInvoke, br.retVal);
 						for (ObjectH arg : br.mInvoke.getInvokeArguments()) {
-							if (arg.isNonNullObject()) {
+							if (arg.isHeapObject()) {
 								objSrc.put(arg, arg);
 							} else {
 								stmt.constValues.put(arg.getVariable(), vModel.get(arg.getVariable()));

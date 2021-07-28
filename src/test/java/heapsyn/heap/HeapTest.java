@@ -34,7 +34,7 @@ public class HeapTest {
 	@SuppressWarnings("unused")
 	class Node {
 		private Node next;
-		private int value;
+		private Object value;
 	}
 	
 	@SuppressWarnings("unused")
@@ -50,17 +50,18 @@ public class HeapTest {
 		private long l;
 	}
 	
-	private static ClassH cNode, cA, cB;
+	private static ClassH cNode, cObj, cA, cB;
 	private static FieldH fNext, fValue;
 	private static FieldH fAI, fAA, fAB, fBI, fBL;
 	
 	private static final int N = 50;
 	private static SymbolicHeap emp;
-	private static ObjectH nodes[], ivs[];
+	private static ObjectH nodes[], ivs[], ovs[];
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		cNode = ClassH.of(Node.class);
+		cObj = ClassH.of(Object.class);
 		cA = ClassH.of(ClassA.class);
 		cB = ClassH.of(ClassB.class);
 		fNext = FieldH.of(Node.class.getDeclaredField("next"));
@@ -78,6 +79,9 @@ public class HeapTest {
 		ivs = new ObjectH[N];
 		for (int i = 0; i < N; ++i)
 			ivs[i] = new ObjectH(new IntVar());
+		ovs = new ObjectH[N];
+		for (int i = 0; i < N; ++i)
+			ovs[i] = new ObjectH(cObj, Collections.emptyMap());
 		ObjectH.STRICT_MODE = false;
 	}
 	
@@ -159,8 +163,8 @@ public class HeapTest {
 	
 	@Test
 	public void testCloneObjects() {
-		nodes[0].setFieldValueMap(ImmutableMap.of(fNext, nodes[2], fValue, ivs[0]));
-		nodes[1].setFieldValueMap(ImmutableMap.of(fNext, nodes[2], fValue, ivs[1]));
+		nodes[0].setFieldValueMap(ImmutableMap.of(fNext, nodes[2], fValue, ovs[0]));
+		nodes[1].setFieldValueMap(ImmutableMap.of(fNext, nodes[2], fValue, ovs[1]));
 		nodes[2].setFieldValueMap(ImmutableMap.of(fNext, nodes[3], fValue, ivs[2]));
 		nodes[3].setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL, fValue, ivs[3]));
 		SymbolicHeap h = new SymbolicHeapAsDigraph(
@@ -176,7 +180,11 @@ public class HeapTest {
 		assertEquals(cloneMap.getV(nodes[2]), cloneMap.getV(nodes[0]).getFieldValue(fNext));
 		assertEquals(ObjectH.NULL, cloneMap.getV(nodes[3]).getFieldValue(fNext));
 		assertEquals(nodes[2].getClassH(), cloneMap.getV(nodes[2]).getClassH());
-		for (int i = 0; i < 4; ++i) {
+		for (int i = 0; i < 2; ++i) {
+			assertNotEquals(ovs[i].getVariable(), cloneMap.getV(ovs[i]).getVariable());
+			assertEquals(ovs[i].getClassH(), cloneMap.getV(ovs[i]).getClassH());
+		}
+		for (int i = 2; i < 4; ++i) {
 			assertNotEquals(ivs[i].getVariable(), cloneMap.getV(ivs[i]).getVariable());
 			assertEquals(ivs[i].getClassH(), cloneMap.getV(ivs[i]).getClassH());
 		}
@@ -226,9 +234,9 @@ public class HeapTest {
 		nodesA.add(ObjectH.NULL); nodesB.add(ObjectH.NULL);
 		
 		for (int i = 0; i < 5; ++i)
-			nodesA.get(i).setFieldValueMap(ImmutableMap.of(fValue, ivs[i]));
+			nodesA.get(i).setFieldValueMap(ImmutableMap.of(fValue, ovs[i]));
 		for (int i = 0; i < 10; ++i)
-			nodesB.get(i).setFieldValueMap(ImmutableMap.of(fValue, ivs[i + 5]));
+			nodesB.get(i).setFieldValueMap(ImmutableMap.of(fValue, ovs[i + 5]));
 		SymbolicHeap hA = new SymbolicHeapAsDigraph(nodesA, null);
 		SymbolicHeap hB = new SymbolicHeapAsDigraph(nodesB, null);
 		assertFalse(hA.maybeIsomorphicWith(hB));
@@ -356,7 +364,7 @@ public class HeapTest {
 		s1.setFieldValueMap(ImmutableMap.of(fAA, s2, fAB, s3, fAI, s4));
 		s2.setFieldValueMap(ImmutableMap.of(fBL, s3));
 		s3.setFieldValueMap(ImmutableMap.of(fBL, s2));
-		s4.setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL, fValue, ivs[0]));
+		s4.setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL, fValue, ovs[0]));
 		
 		ObjectH o1 = new ObjectH(cA, null);
 		ObjectH o2 = new ObjectH(cA, null);
@@ -370,8 +378,8 @@ public class HeapTest {
 		o3.setFieldValueMap(ImmutableMap.of(fAI, o7, fAA, o5, fAB, o4));
 		o4.setFieldValueMap(ImmutableMap.of(fBL, o5));
 		o5.setFieldValueMap(ImmutableMap.of(fBL, o4));
-		o6.setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL, fValue, ivs[1]));
-		o7.setFieldValueMap(ImmutableMap.of(fNext, o7, fValue, ivs[2]));
+		o6.setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL, fValue, ovs[1]));
+		o7.setFieldValueMap(ImmutableMap.of(fNext, o7, fValue, ovs[2]));
 		
 		SymbolicHeap HS = new SymbolicHeapAsDigraph(
 				Arrays.asList(s1, ObjectH.NULL), null);
@@ -381,10 +389,10 @@ public class HeapTest {
 		
 		HS.findEmbeddingInto(HO, ctr);
 		assertEquals(1, ctr.mappingCounter);
-		assertEquals(ivs[1], ctr.aMap.getV(ivs[0]));
+		assertEquals(ovs[1], ctr.aMap.getV(ovs[0]));
 		
 		// DANGEROUS operation! set the field-value map of an in-heap object
-		o7.setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL, fValue, ivs[2]));
+		o7.setFieldValueMap(ImmutableMap.of(fNext, ObjectH.NULL, fValue, ovs[2]));
 		HS = new SymbolicHeapAsDigraph(Arrays.asList(s1, ObjectH.NULL), null);
 		HO = new SymbolicHeapAsDigraph(Arrays.asList(o1, o2, o3, ObjectH.NULL), null);
 		ctr = new MappingCounter();

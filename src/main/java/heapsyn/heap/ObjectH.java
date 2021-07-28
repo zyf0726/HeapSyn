@@ -11,6 +11,7 @@ import java.util.Set;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedMap;
 
+import heapsyn.smtlib.IntVar;
 import heapsyn.smtlib.Variable;
 
 public class ObjectH implements Serializable {
@@ -47,7 +48,11 @@ public class ObjectH implements Serializable {
 		Preconditions.checkNotNull(classH, "a non-null classH expected");
 		Preconditions.checkArgument(classH != ClassH.CLS_NULL, "null object already created");
 		this.clsH = classH;
-		this.var = null;
+		if (classH.getJavaClass() == Object.class) {
+			this.var = new IntVar();  // identifier
+		} else {
+			this.var = null;
+		}
 		if (fieldValueMap != null) {
 			this.setFieldValueMap(fieldValueMap);
 		} else {
@@ -59,13 +64,13 @@ public class ObjectH implements Serializable {
 		return this.clsH.isNullClass();
 	}
 	public boolean isNonNullObject() {
-		return this.clsH.isNonNullClass();
+		return this.clsH.isNonNullClass() && this.var == null;
 	}
 	public boolean isHeapObject() {
-		return this.clsH.isJavaClass();
+		return this.clsH.isJavaClass() && this.var == null;
 	}
 	public boolean isVariable() {
-		return this.clsH.isSMTSort();
+		return this.clsH.isSMTSort() || this.var != null;
 	}
 	
 	public ClassH getClassH() {

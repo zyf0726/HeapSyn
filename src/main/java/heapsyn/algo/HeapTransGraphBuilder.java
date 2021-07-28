@@ -176,6 +176,11 @@ public class HeapTransGraphBuilder {
 			for (ArrayList<ObjectH> argSeq : argSeqs)
 				argSeq.add(arg);
 			return argSeqs;
+		} else if (paraType == Object.class) {
+			ObjectH arg = new ObjectH(ClassH.of(paraType), Collections.emptyMap());
+			for (ArrayList<ObjectH> argSeq : argSeqs)
+				argSeq.add(arg);
+			return argSeqs;
 		} else {
 			Collection<ArrayList<ObjectH>> extArgSeqs = new ArrayList<>();
 			for (ArrayList<ObjectH> argSeq : argSeqs) {

@@ -55,30 +55,55 @@ public class Statement {
 	}
 	
 	public static void printStatements(List<Statement> stmts, PrintStream ps) {
+		Map<Integer, String> createdObjs = new HashMap<>();
 		Map<ObjectH, String> objNames = new HashMap<>();
+		createdObjs.put(0, "#NULL");
+		objNames.put(ObjectH.NULL, "#NULL");
 		int countRetVals = 0;
 		for (Statement stmt : stmts) {
-			if (stmt.returnValue != null && stmt.returnValue.isNonNullObject()) {
+			StringBuilder sb = new StringBuilder();
+			if (stmt.returnValue != null) {
 				ObjectH o = stmt.returnValue;
-				objNames.put(o, "o" + (countRetVals++));
-				ps.print(o.getClassH().getJavaClass().getSimpleName() + " ");
-				ps.print(objNames.get(o) + " = ");
+				if (o.isNonNullObject()) {
+					objNames.put(o, "o" + (countRetVals++));
+					sb.append(o.getClassH().getJavaClass().getSimpleName() + " ");
+					sb.append(objNames.get(o) + " = ");
+				} else if (o.getClassH().isNonNullClass()) {
+					Variable idVar = o.getVariable();
+					Constant idVal = stmt.constValues.get(idVar);
+					Integer id = Integer.parseInt(idVal.toSMTString());
+					if (!createdObjs.containsKey(id)) {
+						createdObjs.put(id, "o" + (countRetVals++));
+					}
+					sb.append(o.getClassH().getJavaClass().getSimpleName() + " ");
+					sb.append(createdObjs.get(id) + " = ");
+				}
 			}
 			if (stmt.javaMethod != null) {
-				ps.print(stmt.javaMethod.getName() + "(");
+				sb.append(stmt.javaMethod.getName() + "(");
 			} else {
-				ps.print("@Test(");
+				sb.append("@Test(");
 			}
-			StringBuilder sb = new StringBuilder();
 			for (ObjectH arg : stmt.objArgs) {
-				if (arg.isNonNullObject()) {
+				if (arg.isHeapObject()) {
 					sb.append(objNames.get(arg) + ", ");
-				} else if (arg.isNullObject()) {
-					sb.append("#NULL, ");
 				} else {
 					Variable var = arg.getVariable();
-					Constant constVal = stmt.constValues.get(var);
-					sb.append(constVal.toSMTString() + ", ");
+					Constant val = stmt.constValues.get(var);
+					if (arg.getClassH().isJavaClass()) {
+						Integer id = Integer.parseInt(val.toSMTString());
+						if (createdObjs.containsKey(id)) {
+							sb.append(createdObjs.get(id) + ", ");
+						} else {
+							String type = arg.getClassH().getJavaClass().getSimpleName();
+							String name = "o" + (countRetVals++);
+							createdObjs.put(id, name);
+							ps.println(type + " " + name + " = new " + type + "()");
+							sb.append(name + ", ");
+						}					
+					} else {
+						sb.append(val.toSMTString() + ", ");
+					}
 				}
 			}
 			sb.delete(Math.max(0, sb.length() - 2), sb.length());

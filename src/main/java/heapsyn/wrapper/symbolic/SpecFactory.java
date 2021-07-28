@@ -3,11 +3,13 @@ package heapsyn.wrapper.symbolic;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 
@@ -35,12 +37,33 @@ public class SpecFactory {
 	private List<SMTExpression> varConds;
 	
 	private ObjectH getRefOrDecl(Class<?> javaClass, String refName) {
-		ObjectH o = this.refSymTab.get(refName);
-		if (o == null) {
-			o = new ObjectH(ClassH.of(javaClass), null);
-			this.refSymTab.put(refName, o);
+		if (javaClass == Object.class) {
+			ObjectH o = this.refSymTab.get(refName);
+			if (o == null) {
+				o = new ObjectH(ClassH.of(javaClass), Collections.emptyMap());
+				this.refSymTab.put(refName, o);
+				return o;
+			} else if (o == ObjectH.NULL) {
+				o = new ObjectH(ClassH.of(javaClass), Collections.emptyMap());
+				this.accRefs.add(o);
+				this.varConds.add(new ApplyExpr(SMTOperator.BIN_EQ,
+						o.getVariable(), new IntConst(0)));
+				return o;
+			} else {
+				ObjectH r = new ObjectH(ClassH.of(javaClass), Collections.emptyMap());
+				this.varConds.add(new ApplyExpr(SMTOperator.BIN_EQ,
+						r.getVariable(), o.getVariable()));
+				this.refSymTab.put(refName, r);
+				return r;
+			}
+		} else {
+			ObjectH o = this.refSymTab.get(refName);
+			if (o == null) {
+				o = new ObjectH(ClassH.of(javaClass), null);
+				this.refSymTab.put(refName, o);
+			}
+			return o;
 		}
-		return o;
 	}
 	
 	private ObjectH getVarOrDecl(SMTSort smtSort, String varName) {
@@ -53,6 +76,8 @@ public class SpecFactory {
 	}
 	
 	public ObjectH mkRefDecl(Class<?> javaClass, String refName) {
+		Preconditions.checkArgument(javaClass != Object.class,
+				"no need for declaring a reference of Object.class");
 		Preconditions.checkArgument(!this.refSymTab.containsKey(refName),
 				"duplicated reference symbol %s", refName);
 		ObjectH o = new ObjectH(ClassH.of(javaClass), null);
@@ -122,6 +147,14 @@ public class SpecFactory {
 	public Specification genSpec() {
 		Specification spec = new Specification();
 		spec.expcHeap = new SymbolicHeapAsDigraph(this.accRefs, null);
+		List<ObjectH> os = this.refSymTab.values().stream()
+				.filter(o -> o.isVariable()).collect(Collectors.toList());
+		if (os.size() > 1) {
+			List<SMTExpression> vs = os.stream()
+					.map(o -> o.getVariable()).collect(Collectors.toList());
+			vs.add(new IntConst(0));
+			this.varConds.add(new ApplyExpr(SMTOperator.DISTINCT, vs));
+		}
 		if (this.varConds.isEmpty()) {
 			spec.condition = new BoolConst(true);
 		} else {
@@ -215,7 +248,7 @@ public class SpecFactory {
 		int value;
 	}
 	
-	public static void main(String[] args) {
+	private static void test1() {
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ListNode.class, "o1"); 
 		Variable v1 = specFty.mkVarDecl(SMTSort.INT, "v1").getVariable();
@@ -230,6 +263,50 @@ public class SpecFactory {
 		Specification spec = specFty.genSpec();
 		System.out.println(spec.condition.toSMTString());
 		new WrappedHeap(spec.expcHeap).__debugPrintOut(System.out);
+	}
+	
+	static class MapEntry {
+		static FieldH fNxt, fKey, fVal;
+		static {
+			try {
+				fNxt = FieldH.of(MapEntry.class.getDeclaredField("next"));
+				fKey = FieldH.of(MapEntry.class.getDeclaredField("key"));
+				fVal = FieldH.of(MapEntry.class.getDeclaredField("value"));
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+		}
+		
+		MapEntry next;
+		int key;
+		Object value;
+	}
+	
+	private static void test2() {
+		SpecFactory specFty = new SpecFactory();
+		ObjectH o1 = specFty.mkRefDecl(MapEntry.class, "o1");
+		ObjectH k1 = specFty.mkVarDecl(SMTSort.INT, "k1");
+		assert(specFty.addRefSpec("o1", "next", "o2", "key", "k1", "value", "v1"));
+		assert(specFty.addRefSpec("o2", "next", "o3", "key", "k2", "value", "null"));
+		assert(specFty.addRefSpec("o3", "next", "o4", "key", "k3", "value", "v3"));
+		assert(specFty.addRefSpec("o4", "next", "o5", "key", "k4", "value", "v3"));
+		assert(specFty.addRefSpec("o5", "next", "null", "key", "k5", "value", "v1"));
+		specFty.mkRefDecl(MapEntry.class, "o6");
+		assert(specFty.addRefSpec("o6", "next", "o6", "key", "k6", "value", "null"));
+		assert(specFty.addVarSpec("(= k1 k5)"));
+		assert(specFty.addVarSpec("(= k3 k4)"));
+		assert(specFty.addVarSpec("(distinct k1 k2 k4 k6)"));
+		assert(specFty.setAccessible("o1", "o4", "o6", "v1"));
+		assert(o1.getFieldValue(MapEntry.fKey).getVariable() == k1.getVariable());
+		Specification spec = specFty.genSpec();
+		System.out.println(spec.condition.toSMTString());
+		new WrappedHeap(spec.expcHeap).__debugPrintOut(System.out);	
+	}
+	
+	public static void main(String[] args) {
+		test1();
+		test2();
 	}
 	
 }
