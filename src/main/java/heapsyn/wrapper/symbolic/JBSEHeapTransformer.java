@@ -6,6 +6,7 @@ package heapsyn.wrapper.symbolic;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
@@ -30,6 +31,7 @@ import jbse.mem.State;
 import jbse.mem.Variable;
 import jbse.mem.exc.FrozenStateException;
 import jbse.val.Primitive;
+import jbse.val.Reference;
 import jbse.val.ReferenceConcrete;
 import jbse.val.ReferenceSymbolic;
 import jbse.val.Value;
@@ -42,7 +44,11 @@ public class JBSEHeapTransformer {
 	private Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
 	private Map<Primitive, ObjectH> finjbseVarMap = new HashMap<>();
 	private Map<ObjectH,Primitive> finVarjbseMap = new HashMap<>(); // a Primitive may correspond to more than one ObjectH
-	private TreeMap<Long,HeapObjekt> objects;
+	private Map<ObjectH,ReferenceSymbolic> ObjRefSym = new HashMap<>();
+	private Map<ObjectH,ReferenceConcrete> ObjRefCon=new HashMap<>();
+	private Map<ReferenceSymbolic,ObjectH> RefObjSym = new HashMap<>();
+	private Map<ReferenceConcrete,ObjectH> RefObjCon=new HashMap<>();
+	private Map<Long,HeapObjekt> objects;
 	private Predicate<String> fieldFilter;
 	
 	public JBSEHeapTransformer(Predicate<String> fieldFilter) {
@@ -61,7 +67,23 @@ public class JBSEHeapTransformer {
 		return this.finVarjbseMap;
 	}
 	
-	public TreeMap<Long,HeapObjekt> getobjects() {
+	public Map<ReferenceSymbolic,ObjectH> getRefObjSym() {
+		return this.RefObjSym;
+	}
+	
+	public Map<ReferenceConcrete,ObjectH> getRefObjCon() {
+		return this.RefObjCon;
+	}
+	
+	public Map<ObjectH,ReferenceSymbolic> getObjRefSym() {
+		return this.ObjRefSym;
+	}
+	
+	public Map<ObjectH,ReferenceConcrete> getObjRefCon() {
+		return this.ObjRefCon;
+	}
+	
+	public Map<Long,HeapObjekt> getobjects() {
 		return this.objects;
 	}
 
@@ -117,14 +139,15 @@ public class JBSEHeapTransformer {
 		for(Entry<Long,Objekt> entry: entries) {
 			objekts.put(entry.getKey(), (HeapObjekt) entry.getValue());
 		}
-		this.objects=new TreeMap<>(objekts);
+		this.objects=new HashMap<>(objekts);
 		
 		//Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
 		
 		for (HeapObjekt o : objekts.values()) {
-//			if(o instanceof InstanceWrapper_DEFAULT) {
-//				o=o.ge
-//			}
+			if(o.getType().getClassName().equals(Object.class.getName())) {
+				
+				continue;
+			}
 			this.finjbseObjMap.put(o, transHeapObjektToObjectH((ObjektImpl) o));
 		}
 		
@@ -151,21 +174,39 @@ public class JBSEHeapTransformer {
 				if (varValue instanceof ReferenceConcrete) {
 					ReferenceConcrete rc = (ReferenceConcrete) varValue;
 					HeapObjekt objekt = objekts.get(rc.getHeapPosition());
-					ObjectH value = this.finjbseObjMap.get(objekt);
-					if (value == null) {
-						fieldValMap.put(field, ObjectH.NULL);
-					} else {
+					if(objekt!=null&&objekt.getType().getClassName().equals(Object.class.getName())) {
+						ObjectH value=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
 						fieldValMap.put(field, value);
+						this.ObjRefCon.put(value,rc);
+						this.RefObjCon.put(rc, value);
+					}
+					else {
+						ObjectH value = this.finjbseObjMap.get(objekt);
+						if (value == null) {
+							fieldValMap.put(field, ObjectH.NULL);
+						} else {
+							fieldValMap.put(field, value);
+						}
 					}
 				} else if (varValue instanceof ReferenceSymbolic) {
 					ReferenceSymbolic ref = (ReferenceSymbolic) varValue;
 					ObjectH value = null;
 				 	if (pathCond.resolved(ref)) {
-				 		Long pos = pathCond.getResolution(ref);
-				 		if (pos == jbse.mem.Util.POS_NULL) {
-				 			value = ObjectH.NULL;
-				 		} else {
-				 			value = this.finjbseObjMap.get(objekts.get(pos));
+				 		if(ref.getStaticType().equals("Ljava/lang/Object;")) {
+				 			//System.out.println(ref.getStaticType());
+				 			value=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
+				 			this.ObjRefSym.put(value, ref);
+				 			this.RefObjSym.put(ref, value);
+				 		}
+				 		else {
+					 		Long pos = pathCond.getResolution(ref);
+					 		
+					 		if (pos == jbse.mem.Util.POS_NULL) {
+					 			value = ObjectH.NULL;
+					 		} else {
+					 			HeapObjekt objekt=objekts.get(pos);
+					 			value = this.finjbseObjMap.get(objekt);
+					 		}
 				 		}
 				 	} else {
 				 		value = BLANK_OBJ;

@@ -24,6 +24,7 @@ import heapsyn.common.exceptions.UnsupportedPrimitiveType;
 import heapsyn.common.exceptions.UnsupportedSMTOperator;
 import heapsyn.common.settings.JBSEParameters;
 import heapsyn.common.settings.Options;
+import heapsyn.heap.ClassH;
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
@@ -41,6 +42,7 @@ import jbse.apps.run.RunParameters;
 import jbse.mem.Clause;
 import jbse.mem.ClauseAssume;
 import jbse.mem.ClauseAssumeAliases;
+import jbse.mem.ClauseAssumeExpands;
 import jbse.mem.ClauseAssumeNull;
 import jbse.mem.ClauseAssumeReferenceSymbolic;
 import jbse.mem.HeapObjekt;
@@ -272,7 +274,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			ClauseAssume ca =(ClauseAssume) clauses.get(i);
 			pds.add(this.JBSEexpr2SMTexpr(ref2Obj,val2Obj,ca.getCondition()));
 		}
-		if(pds.size()==0) return null;
+		if(pds.size()==0) return new BoolConst(true);
 //		else {
 //			ApplyExpr ret=(ApplyExpr)pds.get(0);
 //			for(int i=1;i<pds.size();++i) {
@@ -283,12 +285,48 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		else return new ApplyExpr(SMTOperator.AND,pds);
 	}
 	
+	private SMTExpression getObjcond(List<Clause> clauses,Map<ReferenceSymbolic,ObjectH> ref2Obj) {
+		ArrayList<SMTExpression> pds=new ArrayList<>();
+		ArrayList<heapsyn.smtlib.Variable> vars=new ArrayList<>();
+		for(int i=0;i<clauses.size();++i) {
+			ClauseAssumeReferenceSymbolic ca =(ClauseAssumeReferenceSymbolic) clauses.get(i);
+			ReferenceSymbolic ref=ca.getReference();
+			ObjectH obj=ref2Obj.get(ref);
+			if(obj==null) {
+				throw new UnexpectedInternalException("Object misses reference");
+			}
+//			if(!isObj(obj)) {
+//				return null;
+//				//if(obj!=ObjectH.NULL) System.out.println(obj.toString());
+//			}
+			if(ca instanceof ClauseAssumeNull) {
+				pds.add(new ApplyExpr(SMTOperator.BIN_EQ,obj.getVariable(),new IntConst(0)));
+			}
+			else if(ca instanceof ClauseAssumeAliases) {
+				HeapObjekt heapObj=((ClauseAssumeAliases) ca).getObjekt();
+				ReferenceSymbolic oriref=heapObj.getOrigin();
+				ObjectH oriObj=ref2Obj.get(oriref);
+				if(oriObj==null) {
+					throw new UnexpectedInternalException("Object misses reference");
+				}
+				pds.add(new ApplyExpr(SMTOperator.BIN_EQ,obj.getVariable(),oriObj.getVariable()));
+			}
+			else {
+				pds.add(new ApplyExpr(SMTOperator.AND, new ApplyExpr(SMTOperator.BIN_NE,obj.getVariable(),new IntConst(0)),
+						forall(SMTOperator.BIN_NE,SMTOperator.AND,obj.getVariable(),vars)));
+			}
+			vars.add(obj.getVariable());
+		}
+		if(pds.isEmpty()) return new BoolConst(true);
+		return new ApplyExpr(SMTOperator.AND,pds);
+	}
+	
 	private boolean isIsomorphic(SymbolicHeap finHeap,SymbolicHeap initHeap,
 			Map<ObjectH, ObjectH> objSrcMap) {
 		Set<ObjectH> finacc=finHeap.getAccessibleObjects();
 		Set<ObjectH> initacc=initHeap.getAccessibleObjects();
 		for(ObjectH obj:finacc) {
-			if(obj.isNullObject()) continue;
+			if(obj.isNullObject()||isObj(obj)) continue;
 			if(!initacc.contains(objSrcMap.get(obj)))
 				return false;
 		}
@@ -375,6 +413,50 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			throw new UnhandledJBSEPrimitive(p.getClass().getName());
 		}
 	}
+	
+	private boolean isObj(ObjectH obj) {
+		return obj.getClassH().getJavaClass()==Object.class;
+	}
+	
+	private SMTExpression forall(SMTOperator eq,SMTOperator ao,heapsyn.smtlib.Variable intv,ArrayList<heapsyn.smtlib.Variable> intvs) {
+		if(intvs.isEmpty()) {
+			if(eq==SMTOperator.BIN_EQ) return new BoolConst(false);
+			else if(eq==SMTOperator.BIN_NE) return new BoolConst(true);
+		}
+		ArrayList<ApplyExpr> ret=new ArrayList<>();
+		for(heapsyn.smtlib.Variable v:intvs) {
+			ret.add(new ApplyExpr(eq,intv,v));
+		}
+		//if(ret.isEmpty()) return new BoolConst(true);
+		return new ApplyExpr(ao,ret);
+	}
+	
+	private SMTExpression objparams(SymbolicHeap initHeap,ArrayList<ObjectH> args) {
+		Set<ObjectH> allobjs= initHeap.getAllObjects();
+		ArrayList<heapsyn.smtlib.Variable> Oobjs=new ArrayList<>();
+		ArrayList<heapsyn.smtlib.Variable> accOobjs=new ArrayList<>();
+		boolean allacc=true;
+		for(ObjectH obj:allobjs) {
+			if(isObj(obj)) {
+				Oobjs.add(obj.getVariable());
+				if(!initHeap.getAccessibleObjects().contains(obj)) allacc=false;
+				else accOobjs.add(obj.getVariable());
+			}
+		}
+		if(allacc==true&&(!accOobjs.isEmpty())) return new BoolConst(true);
+		ArrayList<ApplyExpr> conds=new ArrayList<>();
+		for(ObjectH obj:args) {
+			if(isObj(obj)) {
+				ApplyExpr cond=new ApplyExpr(SMTOperator.OR,forall(SMTOperator.BIN_NE,SMTOperator.AND,obj.getVariable(),Oobjs),
+						forall(SMTOperator.BIN_EQ,SMTOperator.OR,obj.getVariable(),accOobjs));
+				conds.add(cond);
+			}
+		}
+		if(conds.isEmpty()) return new BoolConst(true);
+		return new ApplyExpr(SMTOperator.AND,conds);
+	}
+	
+	
 
 	@Override
 	public Collection<PathDescriptor> executeMethod(SymbolicHeap initHeap, MethodInvoke mInvoke) {
@@ -386,8 +468,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		if(!this.cachedJBSE.containsKey(method)) {
 			RunParameters p = getRunParameters(mInvoke);
 			// TODO remove magic numbers
-			p.setDepthScope(500);
-			p.setCountScope(6000);
+//			p.setDepthScope(500);
+//			p.setCountScope(6000);
 			Run r=new Run(p);
 			r.run();
 			HashSet<State> executed = r.getExecuted();
@@ -409,6 +491,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			
 			ArrayList<Clause> refclause=new ArrayList<>(); // clauses about reference
 			ArrayList<Clause> primclause=new ArrayList<>(); // clauses about primitive
+			ArrayList<Clause> objclause=new ArrayList<>();
+			ArrayList<Clause> allrefclause=new ArrayList<>();
 			
 			PathCondition jbsepd=state.__getPathCondition();
 			List<Clause> clauses=jbsepd.getClauses();
@@ -424,6 +508,20 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					if(!toIgnore(p)) primclause.add(clause);
 				}
 				else if(clause instanceof ClauseAssumeReferenceSymbolic) {
+//					if(clause instanceof ClauseAssumeAliases) {
+//						HeapObjekt ho=((ClauseAssumeAliases)clause).getObjekt();
+//						if(ho.getType().getClassName().equals(Object.class.getName())) {
+//							objclause.add(clause);
+//							continue;
+//						}
+//					}
+//					else if(clause instanceof ClauseAssumeExpands) {
+//						HeapObjekt ho=((ClauseAssumeExpands)clause).getObjekt();
+//						if(ho.getType().getClassName().equals(Object.class.getName())) {
+//							objclause.add(clause);
+//							continue;
+//						}
+//					}
 					ReferenceSymbolic ref=((ClauseAssumeReferenceSymbolic)clause).getReference();
 					if(ref instanceof ReferenceSymbolicMemberField) {
 						ReferenceSymbolicMemberField memberref=(ReferenceSymbolicMemberField) ref;
@@ -431,13 +529,31 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 						if(this.fieldFilter.test(fieldname)==false) continue;
 						//if(fieldname.charAt(0)=='_') continue;
 					}
+					allrefclause.add(clause);
+					if(ref.getStaticType().equals("Ljava/lang/Object;")) {
+						objclause.add(clause);
+						continue;
+					}
 					refclause.add(clause);
 				}
 			}
 			
-			Map<ReferenceSymbolic,ObjectH> ref2Obj=this.ref2ObjMap(refclause, val2Obj); //map between Reference and ObjectH 
+			Map<ReferenceSymbolic,ObjectH> allref2Obj=this.ref2ObjMap(allrefclause, val2Obj); //map between Reference and ObjectH
+			Map<ReferenceSymbolic,ObjectH> ref2Obj=new HashMap<>();
+			Map<ReferenceSymbolic,ObjectH> Oref2Obj=new HashMap<>();
+			
+			Set<ObjectH> accObjs=new HashSet<>();
+			
+			if(allref2Obj==null) continue;
+			
+			for(Entry<ReferenceSymbolic,ObjectH> entry: allref2Obj.entrySet()) {
+				if(entry.getKey().getStaticType().equals("Ljava/lang/Object;")) Oref2Obj.put(entry.getKey(), entry.getValue());
+				else ref2Obj.put(entry.getKey(), entry.getValue());
+			}
 			
 			if(!this.isSat(refclause, ref2Obj)) continue;
+			SMTExpression Objcond=this.getObjcond(objclause, Oref2Obj);
+			//if(Objcond==null) continue; 
 			
 			JBSEHeapTransformer jhs=new JBSEHeapTransformer(this.fieldFilter);
 			if(jhs.transform(state)==false) continue;
@@ -475,7 +591,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					ObjectH val=value.getFieldValue(field);
 					if(val.isVariable()) {
 						ObjectH var=null;
-						if(val.getVariable() instanceof IntVar) {
+						if(isObj(val)) {
+							var=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
+						}
+						else if(val.getVariable() instanceof IntVar) {
 							var=new ObjectH(new IntVar());
 						}
 						else if(val.getVariable() instanceof BoolVar) {
@@ -483,6 +602,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 						}
 						field2val.put(finField, var);
 						varExprMap.put(var.getVariable(), val.getVariable());
+						if(initHeap.getAccessibleObjects().contains(val))
+							accObjs.add(var);
 					}
 					else {
 						if(val.isNullObject()) {
@@ -508,12 +629,21 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 						for(FieldH initField:initObj.getFields()) {
 							if(initField.getName().equals(field.getName())) {
 								ObjectH initval=initObj.getFieldValue(initField);
-								ObjectH newval=rvsobjSrcMap.get(initval);
-								if(newval!=null) obj.setFieldValue(field, newval);
-								//else obj.setFieldValue(field, ObjectH.NULL);
-								else newval=rvschangedObjSrcMap.get(initval);
-								if(newval!=null) obj.setFieldValue(field, newval);
-								else obj.setFieldValue(field, ObjectH.NULL);
+								if(isObj(initval)) {
+									ObjectH Obj=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
+									obj.setFieldValue(field, Obj);
+									varExprMap.put(Obj.getVariable(), initval.getVariable());
+									if(initHeap.getAccessibleObjects().contains(initval))
+										accObjs.add(Obj);
+								}
+								else {
+									ObjectH newval=rvsobjSrcMap.get(initval);
+									if(newval!=null) obj.setFieldValue(field, newval);
+									//else obj.setFieldValue(field, ObjectH.NULL);
+									else newval=rvschangedObjSrcMap.get(initval);
+									if(newval!=null) obj.setFieldValue(field, newval);
+									else obj.setFieldValue(field, ObjectH.NULL);
+								}
 								break;
 							}
 						}
@@ -528,7 +658,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				rvsobjSrcMap.put(entry.getKey(), entry.getValue());
 			}
 			
-			Set<ObjectH> accObjs=new HashSet<>();
+			
 			accObjs.add(ObjectH.NULL);
 			for(ObjectH obj:initHeap.getAccessibleObjects()) {
 				if(obj.isNonNullObject()) accObjs.add(rvsobjSrcMap.get(obj));
@@ -559,6 +689,9 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				Long pos = refRetVal.getHeapPosition();
 				HeapObjekt ho = (HeapObjekt) finHeapJBSE.get(pos);
 				if (ho != null) {
+					if(ho.getType().getClassName().equals(Object.class.getName())) {
+						accObjs.add(jhs.getRefObjCon().get(refRetVal));
+					}
 					accObjs.add(finjbseObjMap.get(ho));
 					pd.retVal=finjbseObjMap.get(ho);
 				} else {
@@ -567,7 +700,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				}
 			}
 			else if(retVal instanceof ReferenceSymbolic) {
-				ObjectH ret=rvsobjSrcMap.get(ref2Obj.get(retVal));
+				ObjectH ret=jhs.getRefObjSym().get((ReferenceSymbolic)retVal);
+				if (ret==null) rvsobjSrcMap.get(ref2Obj.get(retVal));
 				if(ret!=null) {
 					pd.retVal=ret;
 					accObjs.add(ret);
@@ -578,11 +712,27 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				pd.retVal=null;
 			}
 			
-			boolean issame=true;
 			
+			for(Entry<ObjectH,ReferenceSymbolic> entry: jhs.getObjRefSym().entrySet()) {
+				ObjectH o=Oref2Obj.get(entry.getValue());
+				if(o.equals(ObjectH.NULL)) {
+					varExprMap.put(entry.getKey().getVariable(), new IntConst(0));
+					accObjs.add(entry.getKey());
+				}
+				else {
+					varExprMap.put(entry.getKey().getVariable(), o.getVariable());
+					if(initHeap.getAccessibleObjects().contains(o)) {
+						accObjs.add(entry.getKey());
+					}
+					if(val2Obj.containsValue(o)) {
+						accObjs.add(entry.getKey());
+					}
+				}
+			}
+						
 			SymbolicHeap symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
 			
-			
+			boolean issame=true;
 			if(this.isIsomorphic(symHeap, initHeap, objSrcMap)&&this.isIsomorphic(initHeap, symHeap, rvsobjSrcMap)) {
 				for(ObjectH obj:symHeap.getAllObjects()) {
 					if(obj.isVariable()||obj.isNullObject()) continue;
@@ -620,12 +770,15 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			pd.varExprMap=new HashMap<>();
 			List<heapsyn.smtlib.Variable> vars= symHeap.getVariables();
 			
+
 			for(Entry<heapsyn.smtlib.Variable,SMTExpression> entry:varExprMap.entrySet()) {
 				if(vars.contains(entry.getKey())) pd.varExprMap.put(entry.getKey(), entry.getValue());
 			}
 			
+			SMTExpression Objparams=this.objparams(initHeap, margs);
+
 			
-			pd.pathCond=this.getPathcond(primclause, ref2Obj,val2Obj);
+			pd.pathCond=new ApplyExpr(SMTOperator.AND,this.getPathcond(primclause, ref2Obj,val2Obj),Objparams,Objcond);
 			
 			pds.add(pd);
 			
