@@ -77,15 +77,14 @@ public class WrappedHeap {
 				ps.print(" " + __objNameMap.get(o) + " ");
 			}
 			ps.print(":");
-			for (FieldH field : o.getFields()) {
-				ObjectH val = o.getFieldValue(field);
-				ps.print(" (." + field.getName() + ", ");
-				if (!val.isHeapObject() && heap.getAccessibleObjects().contains(val))
-					ps.print("<");
-				ps.print(__objNameMap.get(val));
-				if (!val.isHeapObject() && heap.getAccessibleObjects().contains(val))
-					ps.print(">");
-				ps.print(")");
+			for (FieldH field : o.getFields())
+				ps.print(" (." + field.getName() + ", " + __objNameMap.get(o.getFieldValue(field)) + ")");
+			ps.println();
+		}
+		if (heap.getAccessibleObjects().stream().anyMatch(o -> o.isVariable())) {
+			for (ObjectH o : heap.getAccessibleObjects()) {
+				if (o.isVariable())
+					ps.print("<" + __objNameMap.get(o) + "> ");
 			}
 			ps.println();
 		}
