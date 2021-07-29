@@ -1,0 +1,31 @@
+resolve begin
+
+-- parameter value and field Entry.value are both distinct objects or null, or alias of each other 
+{ROOT}:value instanceof java/lang/Object aliases target {ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)*.example/treemap/TreeMap$Entry:value;
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)*.example/treemap/TreeMap$Entry:value instanceof java/lang/Object aliases target {ROOT}:value;
+
+------------------------------------------------- 
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)* instanceof example/treemap/TreeMap$Entry aliases nothing;
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)*.example/treemap/TreeMap$Entry:right instanceof example/treemap/TreeMap$Entry expands to instanceof example/treemap/TreeMap$Entry triggers example/treemap/TreeMap$Entry$HEXTriggers:(Lexample/treemap/TreeMap$Entry;)V:_got_TreeMap_RightEntry:{$REF};
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)*.example/treemap/TreeMap$Entry:left instanceof example/treemap/TreeMap$Entry expands to instanceof example/treemap/TreeMap$Entry triggers example/treemap/TreeMap$Entry$HEXTriggers:(Lexample/treemap/TreeMap$Entry;)V:_got_TreeMap_LeftEntry:{$REF};
+{ROOT}:this.example/treemap/TreeMap:root instanceof example/treemap/TreeMap$Entry expands to instanceof example/treemap/TreeMap$Entry triggers example/treemap/TreeMap$Entry$HEXTriggers:(Lexample/treemap/TreeMap$Entry;)V:_got_TreeMap_RootEntry:{$REF};
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)+ instanceof example/treemap/TreeMap$Entry null triggers example/treemap/TreeMap$Entry$HEXTriggers:(Lexample/treemap/TreeMap$Entry;)V:_handlePathClosure:{$REF}.{UP};
+
+{ROOT}:this.root instanceof example/treemap/TreeMap$Entry null triggers example/treemap/TreeMap$HEXTriggers:(Lexample/treemap/TreeMap;)V:_handleNullRoot:{$REF}.{UP};
+
+-- TreeMap.Entry.wellConnected
+{ROOT}:this.example/treemap/TreeMap:root.example/treemap/TreeMap$Entry:parent instanceof example/treemap/TreeMap$Entry expands to nothing;
+{ROOT}:this.example/treemap/TreeMap:root.example/treemap/TreeMap$Entry:parent instanceof example/treemap/TreeMap$Entry aliases nothing;
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)+.example/treemap/TreeMap$Entry:parent instanceof example/treemap/TreeMap$Entry not null;
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)+.example/treemap/TreeMap$Entry:parent instanceof example/treemap/TreeMap$Entry expands to nothing;
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)+.example/treemap/TreeMap$Entry:parent instanceof example/treemap/TreeMap$Entry aliases target {$REF}.{UP}.{UP};
+
+-- all the entries in a TreeMap refer their owner (ghost field)
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)*.example/treemap/TreeMap$Entry:_owner instanceof example/treemap/TreeMap not null;
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)*.example/treemap/TreeMap$Entry:_owner instanceof example/treemap/TreeMap expands to nothing;
+{ROOT}:this.example/treemap/TreeMap:root(.example/treemap/TreeMap$Entry:left|.example/treemap/TreeMap$Entry:right)*.example/treemap/TreeMap$Entry:_owner instanceof example/treemap/TreeMap aliases target {ROOT}:this;
+resolve end
+
+trigger begin
+instanceof example/treemap/TreeMap expands to instanceof example/treemap/TreeMap triggers example/treemap/TreeMap$HEXTriggers:(Lexample/treemap/TreeMap;)V:_got_TreeMap:{$REF};
+trigger end
