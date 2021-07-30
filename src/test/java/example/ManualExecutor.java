@@ -115,6 +115,7 @@ public class ManualExecutor implements SymbolicExecutor {
 		pd.finHeap = new SymbolicHeapAsDigraph(tempAccObjs, ExistExpr.ALWAYS_FALSE);
 		Map<ObjectH, ObjectH> objSrcMap = new HashMap<>(tempCloneMap.getMapV2U());
 		objSrcMap.remove(ObjectH.NULL);
+		objSrcMap.keySet().removeIf(o -> !o.isHeapObject());
 		pd.objSrcMap = ImmutableMap.copyOf(objSrcMap);
 		pd.varExprMap = ImmutableMap.copyOf(tempVarExprMap);
 		return pd;

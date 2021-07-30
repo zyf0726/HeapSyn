@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -104,8 +105,19 @@ public class TestGenerator {
 		}
 	}
 	
+	public List<Statement> generateTestWithSpec(Specification spec, ObjectH... arguments) {
+		return this.generateTestWithSpec(spec, null, null, arguments);
+	}
+	
 	public List<Statement> generateTestWithSpec(Specification spec,
-			Map<ObjectH, ObjectH> objSrc, Map<Variable, Constant> vModel) {
+			Map<ObjectH, ObjectH> objSrc, Map<Variable, Constant> vModel,
+			ObjectH... arguments) {
+		for (ObjectH arg : arguments) {
+			Preconditions.checkArgument(!arg.isHeapObject() ||
+					spec.expcHeap.getAccessibleObjects().contains(arg),
+					"object in arguments not accessible in spec.expcHeap");
+		}
+		
 		if (!tryMatchSpec(spec)) return null;
 		MatchResult matchRet = null;
 		WrappedHeap finHeap = null;
@@ -115,22 +127,27 @@ public class TestGenerator {
 		}
 		
 		if (objSrc == null) {
-			objSrc = new HashMap<>(); 
+			objSrc = new HashMap<>();
 		} else {
 			objSrc.clear();
 		}
+		for (ObjectH o : arguments) {
+			if (o.isHeapObject())
+				objSrc.put(o, matchRet.objSrcMap.get(o));
+		}
+		
 		if (vModel == null) {
 			vModel = new HashMap<>();
 		} else {
 			vModel.clear();
 		}
-		
-		List<Statement> stmts = Lists.newArrayList();
-		Set<ObjectH> objRets = Sets.newHashSet(ObjectH.NULL);
-		for (ObjectH o : spec.expcHeap.getAccessibleObjects()) {
-			objSrc.put(o, matchRet.objSrcMap.get(o));
-		}
 		vModel.putAll(matchRet.model);
+		
+		Statement testStmt = new Statement(arguments);
+		testStmt.updateVars(vModel);
+		List<Statement> stmts = Lists.newArrayList(testStmt);
+		Set<ObjectH> objRets = Sets.newHashSet(ObjectH.NULL);
+		
 		while (true) {
 			List<BackwardRecord> rcdBackwards = finHeap.getBackwardRecords();
 			if (rcdBackwards.isEmpty()) break;
@@ -181,14 +198,12 @@ public class TestGenerator {
 						}
 					}
 					if (br.mInvoke != null) {
-						Statement stmt = new Statement(br.mInvoke, br.retVal);
 						for (ObjectH arg : br.mInvoke.getInvokeArguments()) {
-							if (arg.isHeapObject()) {
+							if (arg.isHeapObject())
 								objSrc.put(arg, arg);
-							} else {
-								stmt.constValues.put(arg.getVariable(), vModel.get(arg.getVariable()));
-							}
 						}
+						Statement stmt = new Statement(br.mInvoke, br.retVal);
+						stmt.updateVars(vModel);
 						stmts.add(stmt);
 					}
 					finHeap = br.oriHeap;
@@ -199,14 +214,7 @@ public class TestGenerator {
 		
 		Collections.reverse(stmts);
 		for (Statement stmt : stmts) {
-			for (int i = 0; i < stmt.objArgs.size(); ++i) {
-				ObjectH arg = stmt.objArgs.get(i);
-				if (arg.isNonNullObject()) {
-					stmt.objArgs.set(i, objSrc.get(arg));
-				} else {
-					// do nothing
-				}
-			}
+			stmt.updateObjs(objSrc);
 		}		
 		return stmts;
 	}

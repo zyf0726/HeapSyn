@@ -6,12 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import heapsyn.common.settings.Options;
@@ -19,6 +21,7 @@ import heapsyn.heap.ActionIfFound;
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
+import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.Constant;
@@ -323,19 +326,51 @@ public class WrappedHeap {
 		
 		@Override
 		public boolean emitMapping(Bijection<ObjectH, ObjectH> isoMap) {
-			Map<Variable, Variable> vRenameMap = new HashMap<>();
+			List<SMTExpression> conds = new ArrayList<>();
+			conds.add(WrappedHeap.this.heap.getConstraint().getBody()); // heap constraint
+			conds.add(this.spec.condition); // path condition
+			
+			// conditions about embedding
 			for (Entry<ObjectH, ObjectH> e : isoMap.getMapU2V().entrySet()) {
 				if (e.getKey().isVariable()) {
-					vRenameMap.put(e.getKey().getVariable(), e.getValue().getVariable());
+					conds.add(new ApplyExpr(SMTOperator.BIN_EQ,
+							e.getKey().getVariable(), e.getValue().getVariable()));
 				}
 			}
-			SMTExpression constraint = new ApplyExpr(SMTOperator.AND,
-					WrappedHeap.this.heap.getConstraint().getBody(),
-					this.spec.condition.getSubstitution(vRenameMap));
+			
+			// conditions about accessibility
+			Set<ObjectH> os = WrappedHeap.this.heap.getAllObjects().stream()
+					.filter(o -> o.getClassH().getJavaClass() == Object.class)
+					.collect(Collectors.toSet());
+			Set<ObjectH> aos = WrappedHeap.this.heap.getAccessibleObjects().stream()
+					.filter(o -> o.getClassH().getJavaClass() == Object.class)
+					.collect(Collectors.toSet());
+			if (!aos.containsAll(os)) {
+				for (ObjectH r : this.spec.expcHeap.getAccessibleObjects()) {
+					if (r.getClassH().getJavaClass() != Object.class) continue;
+					List<SMTExpression> andClauses = new ArrayList<>();
+					for (ObjectH o : os) {
+						SMTExpression clause = new ApplyExpr(SMTOperator.DISTINCT,
+								r.getVariable(), o.getVariable());
+						andClauses.add(clause);
+					}
+					List<SMTExpression> orClauses = Lists.newArrayList(
+							new ApplyExpr(SMTOperator.AND, andClauses));
+					for (ObjectH ao : aos) {
+						SMTExpression clause = new ApplyExpr(SMTOperator.BIN_EQ,
+								r.getVariable(), ao.getVariable());
+						orClauses.add(clause);
+					}
+					conds.add(new ApplyExpr(SMTOperator.OR, orClauses));
+				}
+			}
+			
+			SMTExpression constraint = new ApplyExpr(SMTOperator.AND, conds);
 			SMTSolver solver = Options.I().getSMTSolver();
 			if (solver.checkSat(constraint, this.model)) {
 				for (ObjectH o : this.spec.expcHeap.getAccessibleObjects()) {
-					this.objSrcMap.put(o, isoMap.getV(o));
+					if (o.isHeapObject())
+						this.objSrcMap.put(o, isoMap.getV(o));
 				}
 				return true;
 			}
@@ -350,7 +385,9 @@ public class WrappedHeap {
 			spec.condition = new BoolConst(true);
 		}
 	 	MatchResult action = new MatchResult(spec);
-	 	if (spec.expcHeap.findEmbeddingInto(this.heap, action)) {
+	 	SymbolicHeap coreHeap = new SymbolicHeapAsDigraph(
+	 			Sets.filter(spec.expcHeap.getAccessibleObjects(), o -> o.isHeapObject()), null);
+	 	if (coreHeap.findEmbeddingInto(this.heap, action)) {
 	 		return action;
 	 	}
 		return null;

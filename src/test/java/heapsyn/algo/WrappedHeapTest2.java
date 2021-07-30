@@ -3,6 +3,7 @@ package heapsyn.algo;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -34,8 +35,15 @@ public class WrappedHeapTest2 {
 		private Node next;
 	}
 	
-	private static ClassH cNode;
+	@SuppressWarnings("unused")
+	static class Entry {
+		private Object val;
+		private Entry nxt;
+	}
+	
+	private static ClassH cNode, cEntry, cObj;
 	private static FieldH fValue, fNext;
+	private static FieldH fVal, fNxt;
 	private static ObjectH oNull;
 	
 	static final int N = 20;
@@ -45,8 +53,12 @@ public class WrappedHeapTest2 {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		cNode = ClassH.of(Node.class);
+		cEntry = ClassH.of(Entry.class);
+		cObj = ClassH.of(Object.class);
 		fValue = FieldH.of(Node.class.getDeclaredField("value"));
 		fNext = FieldH.of(Node.class.getDeclaredField("next"));
+		fVal = FieldH.of(Entry.class.getDeclaredField("val"));
+		fNxt = FieldH.of(Entry.class.getDeclaredField("nxt"));
 		oNull = ObjectH.NULL;
 		iv = new IntVar[N];
 		ov = new ObjectH[N];
@@ -148,6 +160,55 @@ public class WrappedHeapTest2 {
 				new ApplyExpr(ADD, new IntConst(2),
 						new ApplyExpr(MUL, iv[8], new IntConst(6))));
 		assertNull(supHeap.matchSpecification(spec6));
+	}
+	
+	@Test
+	public void test2() {
+		ObjectH u0 = new ObjectH(cObj, Collections.emptyMap());
+		ObjectH u1 = new ObjectH(cObj, Collections.emptyMap());
+		ObjectH u2 = new ObjectH(cObj, Collections.emptyMap());
+		ObjectH u3 = new ObjectH(cObj, Collections.emptyMap());
+		ObjectH o3 = new ObjectH(cEntry, ImmutableMap.of(fNxt, oNull, fVal, u3));
+		ObjectH o2 = new ObjectH(cEntry, ImmutableMap.of(fNxt, o3, fVal, u2));
+		ObjectH o1 = new ObjectH(cEntry, ImmutableMap.of(fNxt, o2, fVal, u1));
+		SMTExpression e0 = new ApplyExpr(BIN_EQ, u0.getVariable(), new IntConst(0));
+		SMTExpression e1 = new ApplyExpr(BIN_EQ, u1.getVariable(), new IntConst(1));
+		SMTExpression e2 = new ApplyExpr(BIN_EQ, u2.getVariable(), new IntConst(2));
+		SMTExpression e3 = new ApplyExpr(BIN_EQ, u3.getVariable(), new IntConst(0));
+		SymbolicHeap supSymHeap1 = new SymbolicHeapAsDigraph(
+				Arrays.asList(o1, o2, oNull, u0, u2),
+				new ExistExpr(Arrays.asList(iv[0]), new ApplyExpr(AND, e0, e1, e2, e3))
+		);
+		SymbolicHeap supSymHeap2 = new SymbolicHeapAsDigraph(
+				Arrays.asList(o1, oNull, u0, u1, u2, u3),
+				new ExistExpr(Arrays.asList(iv[0]), new ApplyExpr(AND, e0, e1, e2, e3))
+		);
+		WrappedHeap supHeap1 = new WrappedHeap(supSymHeap1);
+		WrappedHeap supHeap2 = new WrappedHeap(supSymHeap2);
+		supHeap1.__debugPrintOut(System.out);
+		supHeap2.__debugPrintOut(System.out);
+		
+		ObjectH v0 = new ObjectH(cObj, Collections.emptyMap());
+		ObjectH v1 = new ObjectH(cObj, Collections.emptyMap());
+		ObjectH v2 = new ObjectH(cObj, Collections.emptyMap());
+		ObjectH v3 = new ObjectH(cObj, Collections.emptyMap());
+		ObjectH p2 = new ObjectH(cEntry, ImmutableMap.of(fVal, v2));
+		ObjectH p1 = new ObjectH(cEntry, ImmutableMap.of(fNxt, p2, fVal, v1));
+		SMTExpression f0 = new ApplyExpr(BIN_EQ, v0.getVariable(), new IntConst(0));
+		SMTExpression f3 = new ApplyExpr(DISTINCT, v3.getVariable(), new IntConst(0));
+		Specification spec1 = new Specification();
+		spec1.expcHeap = new SymbolicHeapAsDigraph(Arrays.asList(oNull, p1, v0, v1, v2, v3), null);
+		spec1.condition = new ApplyExpr(AND, f0, f3);
+		MatchResult ret11 = supHeap1.matchSpecification(spec1);
+		assertNotNull(ret11);
+		assertEquals(o2, ret11.objSrcMap.get(p1));
+		assertEquals("0", ret11.model.get(v2.getVariable()).toSMTString());
+		assertNotEquals("0", ret11.model.get(v3.getVariable()).toSMTString());
+		assertNotEquals("1", ret11.model.get(v3.getVariable()).toSMTString());
+		MatchResult ret21 = supHeap2.matchSpecification(spec1);
+		assertNotNull(ret21);
+		assertEquals(o1, ret21.objSrcMap.get(p1));
+		assertEquals("2", ret21.model.get(v2.getVariable()).toSMTString());
 	}
 
 }

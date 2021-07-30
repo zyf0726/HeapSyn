@@ -14,10 +14,6 @@ public class TreeMap<V>
 		return new TreeMap<Object>();
 	}
 	
-	public static Object __ONew__() {
-		return new Object();
-	}
-
     private transient Entry<V> root = null;
 
     /**

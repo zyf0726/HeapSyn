@@ -16,6 +16,7 @@ import heapsyn.algo.MethodInvoke;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.heap.SymbolicHeapAsDigraph;
+import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.IntVar;
 
 public class JBSEWrapperTest {
@@ -32,7 +33,7 @@ public class JBSEWrapperTest {
 	public void test() {
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
 		
-		SymbolicHeap emp = new SymbolicHeapAsDigraph(null);
+		SymbolicHeap emp = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		ObjectH elem$1 = new ObjectH(new IntVar());
 		MethodInvoke invoke$new = new MethodInvoke(ListNode.mNew, Arrays.asList(elem$1));
 		Collection<PathDescriptor> pds = executor.executeMethod(emp, invoke$new);

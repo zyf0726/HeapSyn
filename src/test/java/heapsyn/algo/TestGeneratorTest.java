@@ -189,9 +189,9 @@ public class TestGeneratorTest {
 		
 		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
 		Map<Variable, Constant> vModel = new HashMap<>();
-		List<Statement> stmts = testgen.generateTestWithSpec(spec, objSrc, vModel);
+		List<Statement> stmts = testgen.generateTestWithSpec(spec, objSrc, vModel,
+				o, new ObjectH(arg));
 		assertEquals("10", vModel.get(arg).toSMTString());
-		stmts.add(new Statement(objSrc, vModel, o, new ObjectH(arg)));
 		Statement.printStatements(stmts, System.out);
 		System.out.println();
 		System.out.flush();
@@ -229,10 +229,7 @@ public class TestGeneratorTest {
 				new ApplyExpr(SMTOperator.BIN_NE, x3, y),
 				new ApplyExpr(SMTOperator.BIN_NE, x4, y));
 		
-		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
-		Map<Variable, Constant> vModel = new HashMap<>();
-		List<Statement> stmts = testgen.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(objSrc, vModel, o3, o4, o1, new ObjectH(y)));
+		List<Statement> stmts = testgen.generateTestWithSpec(spec, o3, o4, o1, new ObjectH(y));
 		Statement.printStatements(stmts, ps);
 		ps.flush();
 	}

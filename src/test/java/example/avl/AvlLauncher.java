@@ -5,9 +5,7 @@ import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import heapsyn.algo.HeapTransGraphBuilder;
 import heapsyn.algo.Statement;
@@ -17,9 +15,7 @@ import heapsyn.common.settings.JBSEParameters;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.heap.SymbolicHeapAsDigraph;
-import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
-import heapsyn.smtlib.Variable;
 import heapsyn.wrapper.symbolic.SpecFactory;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
@@ -76,10 +72,7 @@ public class AvlLauncher {
 		specFty.setAccessible("t");
 		Specification spec = specFty.genSpec();
 		
-		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
-		Map<Variable, Constant> vModel = new HashMap<>();
-		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(objSrc, vModel, avlTree));
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, avlTree);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTest4$1: " + (end - start) + "ms\n");
@@ -97,10 +90,7 @@ public class AvlLauncher {
 		specFty.setAccessible("t");
 		Specification spec = specFty.genSpec();
 		
-		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
-		Map<Variable, Constant> vModel = new HashMap<>();
-		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(objSrc, vModel, avlTree));
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, avlTree);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTest4$2: " + (end - start) + "ms\n");
@@ -126,10 +116,7 @@ public class AvlLauncher {
 		specFty.addVarSpec("(= (+ v0 v5) 13)"); // v5 = 128
 		Specification spec = specFty.genSpec();
 		
-		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
-		Map<Variable, Constant> vModel = new HashMap<>();
-		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(objSrc, vModel, avlTree));
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, avlTree);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTest6$1: " + (end - start) + "ms\n");

@@ -2,10 +2,11 @@ package heapsyn.algo;
 
 import java.io.PrintStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.Lists;
 
 import heapsyn.heap.ObjectH;
 import heapsyn.smtlib.BoolConst;
@@ -15,36 +16,16 @@ import heapsyn.smtlib.Variable;
 
 public class Statement {
 	
-	public Method javaMethod;
-	public List<ObjectH> objArgs;
-	public Map<Variable, Constant> constValues;
-	public ObjectH returnValue;
+	private Method javaMethod;
+	private List<ObjectH> objArgs;
+	private Map<Variable, Constant> constValues;
+	private ObjectH returnValue;
 	
-	public Statement(Map<ObjectH, ObjectH> objSrc,
-			Map<Variable, Constant> vModel,	ObjectH... arguments) {
+	public Statement(ObjectH... arguments) {
 		this.javaMethod = null;
-		this.objArgs = new ArrayList<>();
+		this.objArgs = Lists.newArrayList(arguments); 
 		this.constValues = new HashMap<>();
 		this.returnValue = null;
-		for (ObjectH arg : arguments) {
-			if (arg.isHeapObject()) {
-				this.objArgs.add(objSrc.get(arg));
-			} else {
-				this.objArgs.add(arg);
-				Variable var = arg.getVariable();
-				Constant constVal = vModel.get(var);
-				if (constVal != null) {
-					this.constValues.put(var, constVal);
-				} else {
-					switch (var.getSMTSort()) {
-					case INT:
-						this.constValues.put(var, IntConst.DEFAULT); break;
-					case BOOL:
-						this.constValues.put(var, BoolConst.DEFAULT); break;
-					}
-				}
-			}
-		}
 	}
 	
 	public Statement(MethodInvoke mInvoke, ObjectH retVal) {
@@ -52,6 +33,47 @@ public class Statement {
 		this.objArgs = mInvoke.getInvokeArguments();
 		this.constValues = new HashMap<>();
 		this.returnValue = retVal;
+	}
+	
+	public void updateVars(Map<Variable, Constant> vModel) {
+		for (ObjectH arg : this.objArgs) {
+			if (arg.isHeapObject()) continue;
+			Variable var = arg.getVariable();
+			Constant val = vModel.get(var);
+			if (val != null) {
+				this.constValues.put(var, val);
+			} else {
+				switch (var.getSMTSort()) {
+				case INT:
+					this.constValues.put(var, IntConst.DEFAULT); break;
+				case BOOL:
+					this.constValues.put(var, BoolConst.DEFAULT); break;
+				}
+			}
+		}
+		if (this.returnValue != null && !this.returnValue.isHeapObject()) {
+			Variable var = this.returnValue.getVariable();
+			Constant val = vModel.get(var);
+			if (val != null) {
+				this.constValues.put(var, val);
+			} else {
+				switch (var.getSMTSort()) {
+				case INT:
+					this.constValues.put(var, IntConst.DEFAULT); break;
+				case BOOL:
+					this.constValues.put(var, BoolConst.DEFAULT); break;
+				}
+			}
+		}
+	}
+	
+	public void updateObjs(Map<ObjectH, ObjectH> objSrc) {
+		for (int i = 0; i < this.objArgs.size(); ++i) {
+			ObjectH arg = this.objArgs.get(i);
+			if (arg.isNonNullObject()) {
+				this.objArgs.set(i, objSrc.get(arg));
+			}
+		}
 	}
 	
 	public static void printStatements(List<Statement> stmts, PrintStream ps) {
@@ -72,11 +94,13 @@ public class Statement {
 					Variable idVar = o.getVariable();
 					Constant idVal = stmt.constValues.get(idVar);
 					Integer id = Integer.parseInt(idVal.toSMTString());
-					if (!createdObjs.containsKey(id)) {
-						createdObjs.put(id, "o" + (countRetVals++));
+					if (id != 0) {
+						if (!createdObjs.containsKey(id)) {
+							createdObjs.put(id, "o" + (countRetVals++));
+						}
+						sb.append(o.getClassH().getJavaClass().getSimpleName() + " ");
+						sb.append(createdObjs.get(id) + " = ");
 					}
-					sb.append(o.getClassH().getJavaClass().getSimpleName() + " ");
-					sb.append(createdObjs.get(id) + " = ");
 				}
 			}
 			if (stmt.javaMethod != null) {
@@ -106,7 +130,9 @@ public class Statement {
 					}
 				}
 			}
-			sb.delete(Math.max(0, sb.length() - 2), sb.length());
+			if (!stmt.objArgs.isEmpty()) {
+				sb.delete(sb.length() - 2, sb.length());
+			}
 			ps.println(sb.toString() + ")");
 		}
 	}

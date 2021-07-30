@@ -1,11 +1,10 @@
 package example.treemap;
 
 import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import heapsyn.algo.HeapTransGraphBuilder;
 import heapsyn.algo.Statement;
@@ -15,9 +14,7 @@ import heapsyn.common.settings.JBSEParameters;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.heap.SymbolicHeapAsDigraph;
-import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
-import heapsyn.smtlib.Variable;
 import heapsyn.wrapper.symbolic.SpecFactory;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
@@ -26,34 +23,26 @@ import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 public class TreeMapLauncher {
 	
 	private static TestGenerator testGenerator;
-	public List<Statement> stmts;
 	
-	public static void buildGraph() {
+	public static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
-		parms.setSettingsPath("HexSettings/tree_map_accurate.jbse");
+		parms.setSettingsPath("HexSettings/treemap.jbse");
 		parms.setHeapScope(TreeMap.class, 1);
 		parms.setHeapScope(TreeMap.Entry.class, 4);
 		parms.setDepthScope(500);
 		parms.setCountScope(6000);
 		List<Method> methods = new ArrayList<>();
-		try {
-			methods.add(TreeMap.class.getMethod("__new__"));
-			//methods.add(TreeMap.class.getMethod("__ONew__"));
-			methods.add(TreeMap.class.getMethod("put",int.class, Object.class));
-			methods.add(TreeMap.class.getMethod("get",int.class));
-			methods.add(TreeMap.class.getMethod("remove",int.class));
-			methods.add(TreeMap.class.getMethod("clear"));
-			methods.add(TreeMap.class.getMethod("size"));
-			methods.add(TreeMap.class.getMethod("containsKey",int.class));
-			methods.add(TreeMap.class.getMethod("containsValue",Object.class));
-			methods.add(TreeMap.class.getMethod("firstKey"));
-			methods.add(TreeMap.class.getMethod("lastKey"));
-
-		} catch (NoSuchMethodException | SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		methods.add(TreeMap.class.getMethod("__new__"));
+		methods.add(TreeMap.class.getMethod("put", int.class, Object.class));
+		methods.add(TreeMap.class.getMethod("get", int.class));
+		methods.add(TreeMap.class.getMethod("remove", int.class));
+		methods.add(TreeMap.class.getMethod("clear"));
+		methods.add(TreeMap.class.getMethod("size"));
+		methods.add(TreeMap.class.getMethod("containsKey", int.class));
+		methods.add(TreeMap.class.getMethod("containsValue", Object.class));
+		methods.add(TreeMap.class.getMethod("firstKey"));
+		methods.add(TreeMap.class.getMethod("lastKey"));
 
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE(
@@ -61,56 +50,61 @@ public class TreeMapLauncher {
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(TreeMap.class, 1);
 		gb.setHeapScope(TreeMap.Entry.class, 4);
-		//gb.setHeapScope(Object.class, 1);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		System.out.println("number of all heaps = " + heaps.size());
 		System.out.println("number of symbolic execution = " + executor.getExecutionCount());
-//		try {
-//			HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("treemap_obj.txt"));
-//		} catch (FileNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/treemap.txt"));
 		testGenerator = new TestGenerator(heaps);
 		long end = System.currentTimeMillis();
 		System.out.println(">> buildGraph: " + (end - start) + "ms\n");
-		
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException, NoSuchMethodException {
-		
 		buildGraph();
-		genTest();
+		genTest4$1();
+		genTest4$2();
 	}
 	
-	public static boolean genTest() {
+	public static void genTest4$1() {
 		long start = System.currentTimeMillis();
-		
 		SpecFactory specFty = new SpecFactory();
-		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "o5");
-		//ObjectH o4=specFty.mkRefDecl(Object.class,"o3");
-		specFty.addRefSpec("o5", "root", "o4");
-		specFty.addRefSpec("o4",  "right", "o1", "parent", "null","left","o0");
-		specFty.addRefSpec("o0", "parent", "o4", "left", "null","right","o2");
-		specFty.addRefSpec("o1",  "parent", "o4");
-		specFty.addRefSpec("o2",  "parent", "o0","left","null","right","null");
-		//specFty.addRefSpec("o3");
-		//specFty.setAccessible("o3");
-		specFty.setAccessible("o5");
-		
+		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
+		ObjectH v1 = specFty.mkRefDecl(Object.class, "v1");
+		ObjectH v2 = specFty.mkRefDecl(Object.class, "v2");
+		ObjectH v3 = specFty.mkRefDecl(Object.class, "v3");
+		specFty.addRefSpec("t", "root", "o1");
+		specFty.addRefSpec("o1", "parent", "null", "left", "o2", "right", "o3", "value", "v1");
+		specFty.addRefSpec("o2", "parent", "o1", "left", "null", "right", "o4", "value", "null");
+		specFty.addRefSpec("o4", "parent", "o2", "left", "null", "right", "null", "value", "v1");
+		specFty.addRefSpec("o3", "parent", "o1", "value", "v2");
+		specFty.setAccessible("t", "v1", "v2", "v3");
 		Specification spec = specFty.genSpec();
-		new WrappedHeap(spec.expcHeap).__debugPrintOut(System.out);
-		//System.out.println(spec.condition.toSMTString());
 		
-		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
-		Map<Variable, Constant> vModel = new HashMap<>();
-		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(objSrc, vModel, treemap));
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, treemap, v1, v2, v3);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
-		System.out.println(">> genTest1: " + (end - start) + "ms\n");
-		return true;
+		System.out.println(">> genTest4$1: " + (end - start) + "ms\n");
+	}
+	
+	public static void genTest4$2() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
+		ObjectH v1 = specFty.mkRefDecl(Object.class, "v1");
+		ObjectH v2 = specFty.mkRefDecl(Object.class, "v2");
+		specFty.addRefSpec("t", "root", "o1");
+		specFty.addRefSpec("o1", "parent", "null", "left", "o2", "right", "o3", "value", "null");
+		specFty.addRefSpec("o2", "parent", "o1", "left", "null", "right", "null", "value", "null");
+		specFty.addRefSpec("o3", "parent", "o1", "left", "null", "right", "o4", "value", "v1");
+		specFty.addRefSpec("o4", "parent", "o3", "value", "v2");
+		specFty.setAccessible("t", "v2");
+		Specification spec = specFty.genSpec();
+		
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, treemap, v1, v2);
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTest4$2: " + (end - start) + "ms\n");
 	}
 
 }

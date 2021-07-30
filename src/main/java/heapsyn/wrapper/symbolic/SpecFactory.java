@@ -76,11 +76,12 @@ public class SpecFactory {
 	}
 	
 	public ObjectH mkRefDecl(Class<?> javaClass, String refName) {
-		Preconditions.checkArgument(javaClass != Object.class,
-				"no need for declaring a reference of Object.class");
 		Preconditions.checkArgument(!this.refSymTab.containsKey(refName),
 				"duplicated reference symbol %s", refName);
 		ObjectH o = new ObjectH(ClassH.of(javaClass), null);
+		if (javaClass == Object.class) {
+			o.setFieldValueMap(Collections.emptyMap());
+		}
 		this.refSymTab.put(refName, o);
 		return o;
 	}
@@ -206,7 +207,7 @@ public class SpecFactory {
 					SMTExpression oprd = this.parseSMTExpr(curExpr.toString());
 					if (oprd == null) return null;
 					oprds.add(oprd);
-					curExpr = new StringBuilder(); 
+					curExpr = new StringBuilder();
 				} else {
 					curExpr.append(' ');
 				}

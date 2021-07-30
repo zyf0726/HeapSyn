@@ -3,9 +3,7 @@ package example;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import heapsyn.algo.HeapTransGraphBuilder;
 import heapsyn.algo.Statement;
@@ -14,10 +12,8 @@ import heapsyn.algo.WrappedHeap;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.heap.SymbolicHeapAsDigraph;
-import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.SMTSort;
-import heapsyn.smtlib.Variable;
 import heapsyn.wrapper.symbolic.SpecFactory;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
@@ -54,12 +50,11 @@ public class ListNodeLauncher {
 		specFty.addVarSpec("(distinct qv 0)");
 		specFty.addVarSpec("(= rv (+ pv qv))");
 		specFty.addVarSpec("(= sv (+ qv rv))");
+		ObjectH tv = specFty.mkVarDecl(SMTSort.INT, "tv");
+		specFty.addVarSpec("(= tv (+ rv sv))");
 		Specification spec = specFty.genSpec();
 		
-		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
-		Map<Variable, Constant> vModel = new HashMap<>();
-		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(objSrc, vModel, p));
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, p, tv);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTest1: " + (end - start) + "ms\n");
@@ -80,10 +75,7 @@ public class ListNodeLauncher {
 		specFty.setAccessible("r", "s", "t");
 		Specification spec = specFty.genSpec();
 		
-		Map<ObjectH, ObjectH> objSrc = new HashMap<>();
-		Map<Variable, Constant> vModel = new HashMap<>();
-		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, objSrc, vModel);
-		stmts.add(new Statement(objSrc, vModel, r, s, t, boolArg));
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, r, s, t, boolArg);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTest2: " + (end - start) + "ms\n");

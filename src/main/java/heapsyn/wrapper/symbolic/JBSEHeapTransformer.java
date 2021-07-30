@@ -6,7 +6,6 @@ package heapsyn.wrapper.symbolic;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
@@ -31,7 +30,6 @@ import jbse.mem.State;
 import jbse.mem.Variable;
 import jbse.mem.exc.FrozenStateException;
 import jbse.val.Primitive;
-import jbse.val.Reference;
 import jbse.val.ReferenceConcrete;
 import jbse.val.ReferenceSymbolic;
 import jbse.val.Value;

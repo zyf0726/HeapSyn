@@ -19,6 +19,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.BoolVar;
@@ -104,7 +105,10 @@ public class HeapTest {
 		SymbolicHeap h3 = new SymbolicHeapAsDigraph(Arrays.asList(o2, oNull, o0), e);
 		
 		assertFalse(emp.getVariables().isEmpty());
-		assertEquals(ImmutableSet.of(oNull), emp.getAllObjects());
+		assertEquals(ImmutableSet.of(oNull),
+				Sets.filter(emp.getAllObjects(), o -> o.isHeapObject()));
+		assertEquals(ImmutableSet.of(oNull),
+				Sets.filter(emp.getAccessibleObjects(), o -> o.isHeapObject()));
 		assertEquals(ImmutableSet.of(o1, oNull), h1.getAllObjects());
 		assertEquals(ImmutableSet.of(o1, o2, oNull, ivs[0], ivs[1], ivs[2]), h2.getAllObjects());
 		assertTrue(h3.getAllObjects().contains(o1));
@@ -428,8 +432,10 @@ public class HeapTest {
 		FileInputStream fis = new FileInputStream(tmpfile);
 		ObjectInputStream ois = new ObjectInputStream(fis);
 		SymbolicHeap __emp = (SymbolicHeap) ois.readObject();
-		assertEquals(emp.getAccessibleObjects(), __emp.getAccessibleObjects());
-		assertEquals(emp.getAllObjects(), __emp.getAllObjects());
+		assertEquals(Sets.filter(emp.getAccessibleObjects(), o -> o.isHeapObject()),
+				Sets.filter(__emp.getAccessibleObjects(), o -> o.isHeapObject()));
+		assertEquals(Sets.filter(emp.getAllObjects(), o -> o.isHeapObject()),
+				Sets.filter(__emp.getAllObjects(), o -> o.isHeapObject()));
 		assertEquals(emp.getConstraint().toSMTString(), __emp.getConstraint().toSMTString());
 		assertEquals(emp.getVariables(), __emp.getVariables());
 		assertEquals(emp.getFeatureCode(), __emp.getFeatureCode());
