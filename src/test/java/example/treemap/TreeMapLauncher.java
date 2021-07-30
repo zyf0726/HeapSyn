@@ -29,7 +29,7 @@ public class TreeMapLauncher {
 		parms.setShowOnConsole(true);
 		parms.setSettingsPath("HexSettings/treemap.jbse");
 		parms.setHeapScope(TreeMap.class, 1);
-		parms.setHeapScope(TreeMap.Entry.class, 4);
+		parms.setHeapScope(TreeMap.Entry.class, 5);
 		parms.setDepthScope(500);
 		parms.setCountScope(6000);
 		List<Method> methods = new ArrayList<>();
@@ -49,7 +49,7 @@ public class TreeMapLauncher {
 				name -> !name.startsWith("_"));
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(TreeMap.class, 1);
-		gb.setHeapScope(TreeMap.Entry.class, 4);
+		gb.setHeapScope(TreeMap.Entry.class, 5);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		System.out.println("number of all heaps = " + heaps.size());
@@ -64,6 +64,7 @@ public class TreeMapLauncher {
 		buildGraph();
 		genTest4$1();
 		genTest4$2();
+		genTest5$1();
 	}
 	
 	public static void genTest4$1() {
@@ -105,6 +106,27 @@ public class TreeMapLauncher {
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTest4$2: " + (end - start) + "ms\n");
+	}
+	
+	public static void genTest5$1() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
+		ObjectH v1 = specFty.mkRefDecl(Object.class, "v1");
+		ObjectH v3 = specFty.mkRefDecl(Object.class, "v3");
+		specFty.addRefSpec("t", "root", "o1");
+		specFty.addRefSpec("o1", "parent", "null", "left", "o2", "right", "o3", "value", "v1");
+		specFty.addRefSpec("o2", "parent", "o1", "left", "o4", "right", "o5", "value", "null");
+		specFty.addRefSpec("o4", "parent", "o2", "left", "null", "right", "null", "value", "v2");
+		specFty.addRefSpec("o5", "parent", "o2", "value", "v1");
+		specFty.addRefSpec("o3", "left", "null", "right", "null", "value", "v2");
+		specFty.setAccessible("t", "v1", "v3");
+		Specification spec = specFty.genSpec();
+		
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, treemap, v1, v3);
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTest5$1: " + (end - start) + "ms\n");
 	}
 
 }
