@@ -306,7 +306,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				ReferenceSymbolic oriref=heapObj.getOrigin();
 				ObjectH oriObj=ref2Obj.get(oriref);
 				if(oriObj==null) {
-					throw new UnexpectedInternalException("Object misses reference");
+					return null;
+					//throw new UnexpectedInternalException("Object misses reference");
 				}
 				pds.add(new ApplyExpr(SMTOperator.BIN_EQ,obj.getVariable(),oriObj.getVariable()));
 			}
@@ -552,7 +553,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			
 			if(!this.isSat(refclause, ref2Obj)) continue;
 			SMTExpression Objcond=this.getObjcond(objclause, Oref2Obj);
-			//if(Objcond==null) continue; 
+			if(Objcond==null) continue; 
 			
 			JBSEHeapTransformer jhs=new JBSEHeapTransformer(this.fieldFilter);
 			if(jhs.transform(state)==false) continue;
@@ -574,12 +575,16 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			Set<ObjectH> allObjs=initHeap.getAllObjects();
 			Collection<ObjectH> changedObjs=ref2Obj.values(); // ObjectHs in ref2Obj are changed(at least used) during the symbolic execution
 			for(ObjectH obj:allObjs) { // find unchanged ObjectH
-				if(!changedObjs.contains(obj)&&obj.isNonNullObject()) {
-					ObjectH cpy=new ObjectH(obj.getClassH(),null);
-					objSrcMap.put(cpy, obj);
-					rvsobjSrcMap.put(obj, cpy);
+				if(!changedObjs.contains(obj)) {
+					if(obj.isNonNullObject()) {
+						ObjectH cpy=new ObjectH(obj.getClassH(),null);
+						objSrcMap.put(cpy, obj);
+						rvsobjSrcMap.put(obj, cpy);
+					}
 				}
 			}
+			
+			Map<ObjectH,ObjectH> ucaccObjs=new HashMap<>();
 			
 			for(Entry<ObjectH,ObjectH> entry:objSrcMap.entrySet()) { //copy unchanged ObjectH
 				ObjectH key=entry.getKey();
@@ -601,8 +606,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 						}
 						field2val.put(finField, var);
 						varExprMap.put(var.getVariable(), val.getVariable());
-						if(initHeap.getAccessibleObjects().contains(val))
+						if(initHeap.getAccessibleObjects().contains(val)) {
 							accObjs.add(var);
+							ucaccObjs.put(var,key);
+						}
 					}
 					else {
 						if(val.isNullObject()) {
@@ -681,6 +688,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				e.printStackTrace();
 			}
 			//Value retVal = finHeapJBSE.getReturnValue();
+			boolean retObj=false;
 			Value retVal=state.getStuckReturn();
 			if(retVal==null||retVal.getType()=='0') pd.retVal=null;
 			else if (retVal instanceof ReferenceConcrete) {
@@ -690,8 +698,9 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				if (ho != null) {
 					if(ho.getType().getClassName().equals(Object.class.getName())) {
 						accObjs.add(jhs.getRefObjCon().get(refRetVal));
+						retObj=true;
 					}
-					accObjs.add(finjbseObjMap.get(ho));
+					else accObjs.add(finjbseObjMap.get(ho));
 					pd.retVal=finjbseObjMap.get(ho);
 				} else {
 					// this should never happen
@@ -700,7 +709,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			}
 			else if(retVal instanceof ReferenceSymbolic) {
 				ObjectH ret=jhs.getRefObjSym().get((ReferenceSymbolic)retVal);
-				if (ret==null) rvsobjSrcMap.get(ref2Obj.get(retVal));
+				if (ret==null) ret=rvsobjSrcMap.get(ref2Obj.get(retVal));
+				else retObj=true;
 				if(ret!=null) {
 					pd.retVal=ret;
 					accObjs.add(ret);
@@ -728,8 +738,46 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					}
 				}
 			}
+			
+			Set<ObjectH> aaccObjs=new HashSet<>(accObjs);
+			Map<heapsyn.smtlib.Variable,SMTExpression> avarExprMap=new HashMap<>(varExprMap);
+			for(ObjectH obj:allObjs) {
+				if(isObj(obj)&&(!changedObjs.contains(obj))&&(!avarExprMap.containsValue(obj.getVariable()))) {
+					ObjectH cpy=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
+					avarExprMap.put(cpy.getVariable(), obj.getVariable());
+					if(initHeap.getAccessibleObjects().contains(obj))
+						aaccObjs.add(cpy);
+				}
+			}
+			
 						
 			SymbolicHeap symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
+			
+			boolean allAcc=true;
+			for(ObjectH obj:symHeap.getAllObjects()) {
+				if(isObj(obj)&&(!symHeap.getAccessibleObjects().contains(obj))) {
+					allAcc=false;
+					break;
+				}
+			}
+			
+			if(allAcc==true) {
+				if(retObj==true) {
+					accObjs.remove(pd.retVal);
+					symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
+					if(symHeap.getAllObjects().contains(pd.retVal)) {
+						accObjs.add(pd.retVal);
+					}
+					else pd.retVal=null;
+				}
+				for(Entry<ObjectH,ObjectH> entry: ucaccObjs.entrySet()) {
+					if(!symHeap.getAllObjects().contains(entry.getValue()))
+						accObjs.remove(entry.getKey());
+				}
+				symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
+				
+			}
+			else varExprMap=avarExprMap;
 			
 			boolean issame=true;
 			if(this.isIsomorphic(symHeap, initHeap, objSrcMap)&&this.isIsomorphic(initHeap, symHeap, rvsobjSrcMap)) {
