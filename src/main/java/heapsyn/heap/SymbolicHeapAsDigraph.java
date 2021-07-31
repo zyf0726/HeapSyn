@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,10 +19,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-import heapsyn.smtlib.ApplyExpr;
+import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.ExistExpr;
-import heapsyn.smtlib.IntConst;
-import heapsyn.smtlib.SMTOperator;
 import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
 import heapsyn.util.graph.Edge;
@@ -66,15 +63,11 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 	}
 
 	public SymbolicHeapAsDigraph(ExistExpr constraint) {
-		ObjectH objNull = new ObjectH(ClassH.of(Object.class), Collections.emptyMap());
-		Variable vNull = objNull.getVariable();
-		this.accObjs = ImmutableSet.of(ObjectH.NULL, objNull);
-		this.allObjs = ImmutableSet.of(ObjectH.NULL, objNull);
-		this.vars = ImmutableList.of(vNull);
+		this.accObjs = ImmutableSet.of(ObjectH.NULL);
+		this.setConstraint(constraint);
+		this.allObjs = ImmutableSet.of(ObjectH.NULL);
+		this.vars = ImmutableList.of(new BoolVar());  // a dummy variable, to avoid zero-argument user function
 		this.GA = new GraphAnalyzer<>(this.allObjs, null);
-		this.setConstraint(new ExistExpr(constraint.getBoundVariables(), 
-				new ApplyExpr(SMTOperator.AND, constraint.getBody(),
-						new ApplyExpr(SMTOperator.BIN_EQ, vNull, new IntConst(0)))));
 	}
 	
 	public SymbolicHeapAsDigraph(Collection<ObjectH> accObjs, ExistExpr constraint) {
