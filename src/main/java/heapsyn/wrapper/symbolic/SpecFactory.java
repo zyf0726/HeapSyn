@@ -150,7 +150,7 @@ public class SpecFactory {
 		spec.expcHeap = new SymbolicHeapAsDigraph(this.accRefs, null);
 		List<ObjectH> os = this.refSymTab.values().stream()
 				.filter(o -> o.isVariable()).collect(Collectors.toList());
-		if (os.size() > 1) {
+		if (!os.isEmpty()) {
 			List<SMTExpression> vs = os.stream()
 					.map(o -> o.getVariable()).collect(Collectors.toList());
 			vs.add(new IntConst(0));
