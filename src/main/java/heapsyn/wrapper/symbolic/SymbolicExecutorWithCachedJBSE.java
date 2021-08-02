@@ -583,9 +583,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					}
 				}
 			}
-			
-			Map<ObjectH,ObjectH> ucaccObjs=new HashMap<>();
-			
+						
 			for(Entry<ObjectH,ObjectH> entry:objSrcMap.entrySet()) { //copy unchanged ObjectH
 				ObjectH key=entry.getKey();
 				ObjectH value=entry.getValue();
@@ -608,7 +606,6 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 						varExprMap.put(var.getVariable(), val.getVariable());
 						if(initHeap.getAccessibleObjects().contains(val)) {
 							accObjs.add(var);
-							ucaccObjs.put(var,key);
 						}
 					}
 					else {
@@ -750,8 +747,20 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				}
 			}
 			
+			Set<ObjectH> lObjs=new HashSet<>();
+			Set<ObjectH> rObjs=new HashSet<>();
+			for(ObjectH obj:aaccObjs) {
+				if(isObj(obj)) lObjs.add(obj);
+				else rObjs.add(obj);
+			}
+			
+			SymbolicHeap tmp=new SymbolicHeapAsDigraph(rObjs,null);
+			for(ObjectH obj:lObjs) {
+				if(tmp.getAllObjects().contains(obj)) rObjs.add(obj);
+			}
+			
 						
-			SymbolicHeap symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
+			SymbolicHeap symHeap = new SymbolicHeapAsDigraph(aaccObjs, ExistExpr.ALWAYS_FALSE);
 			
 			boolean allAcc=true;
 			for(ObjectH obj:symHeap.getAllObjects()) {
@@ -763,18 +772,9 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			
 			if(allAcc==true) {
 				if(retObj==true) {
-					accObjs.remove(pd.retVal);
-					symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
-					if(symHeap.getAllObjects().contains(pd.retVal)) {
-						accObjs.add(pd.retVal);
-					}
-					else pd.retVal=null;
+					if(!rObjs.contains(pd.retVal)) pd.retVal=null;
 				}
-				for(Entry<ObjectH,ObjectH> entry: ucaccObjs.entrySet()) {
-					if(!symHeap.getAllObjects().contains(entry.getValue()))
-						accObjs.remove(entry.getKey());
-				}
-				symHeap = new SymbolicHeapAsDigraph(accObjs, ExistExpr.ALWAYS_FALSE);
+				symHeap = new SymbolicHeapAsDigraph(rObjs, ExistExpr.ALWAYS_FALSE);
 				
 			}
 			else varExprMap=avarExprMap;
