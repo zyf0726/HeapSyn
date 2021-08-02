@@ -65,6 +65,7 @@ public class TreeMapLauncher {
 		genTest4$1();
 		genTest4$2();
 		genTest5$1();
+		genTest5$2();
 	}
 	
 	public static void genTest4$1() {
@@ -116,7 +117,7 @@ public class TreeMapLauncher {
 		ObjectH v3 = specFty.mkRefDecl(Object.class, "v3");
 		specFty.addRefSpec("t", "root", "o1");
 		specFty.addRefSpec("o1", "parent", "null", "left", "o2", "right", "o3", "value", "v1");
-		specFty.addRefSpec("o2", "parent", "o1", "left", "o4", "right", "o5", "value", "null");
+		specFty.addRefSpec("o2", "left", "o4", "right", "o5", "value", "null");
 		specFty.addRefSpec("o4", "parent", "o2", "left", "null", "right", "null", "value", "v2");
 		specFty.addRefSpec("o5", "parent", "o2", "value", "v1");
 		specFty.addRefSpec("o3", "left", "null", "right", "null", "value", "v2");
@@ -129,4 +130,26 @@ public class TreeMapLauncher {
 		System.out.println(">> genTest5$1: " + (end - start) + "ms\n");
 	}
 
+	public static void genTest5$2() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
+		ObjectH v0 = specFty.mkRefDecl(Object.class, "v0");
+		specFty.addRefSpec("t", "root", "o1");
+		specFty.addRefSpec("o1", "left", "o2", "right", "o3");
+		specFty.addRefSpec("o2", "left", "o4", "right", "o5", "color", "b2");
+		specFty.addVarSpec("(= b2 false)");  // RED
+		specFty.addRefSpec("o3", "left", "null", "right", "null", "color", "b3");
+		specFty.addVarSpec("(= b3 true)");   // BLACK
+		specFty.addRefSpec("o4", "left", "null", "right", "null");
+		specFty.addRefSpec("o5", "left", "null", "right", "null");
+		specFty.setAccessible("t", "v0");
+		Specification spec = specFty.genSpec();
+		// +50 +30 +70 +80 -80 +10 +40 +20 -20
+		
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, treemap, v0);
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTest5$2: " + (end - start) + "ms\n");
+	}
 }

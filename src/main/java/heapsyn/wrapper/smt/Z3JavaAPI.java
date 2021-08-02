@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.google.common.collect.Sets;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
@@ -20,12 +19,10 @@ import com.microsoft.z3.Sort;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Symbol;
 
-import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.SMTExpression;
-import heapsyn.smtlib.SMTOperator;
 import heapsyn.smtlib.SMTSort;
 import heapsyn.smtlib.UserFunc;
 import heapsyn.smtlib.Variable;
@@ -90,12 +87,10 @@ public class Z3JavaAPI implements SMTSolver {
 			sb.append(uf.getSMTDef() + "\n");
 		}
 		
-		sb.append("(assert " + constraint.toSMTString() + ")\n");
 		if (model != null) {
-			for (Variable v : Sets.intersection(constraint.getFreeVariables(), model.keySet())) {
-				SMTExpression expr = new ApplyExpr(SMTOperator.BIN_EQ, v, model.get(v));
-				sb.append("(assert " + expr.toSMTString() + ")\n");
-			}
+			sb.append("(assert " + constraint.getSubstitution(model).toSMTString() + ")\n");
+		} else {
+			sb.append("(assert " + constraint.toSMTString() + ")\n");
 		}
 		
 		Solver z3Solver = ctx.mkSolver();
