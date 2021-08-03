@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -778,6 +779,11 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				
 			}
 			else varExprMap=avarExprMap;
+			
+			for(Iterator<Entry<ObjectH,ObjectH>> it=objSrcMap.entrySet().iterator();it.hasNext();) {
+				Entry<ObjectH,ObjectH> entry=it.next();
+				if(!symHeap.getAllObjects().contains(entry.getKey())) objSrcMap.remove(entry.getKey());
+			}
 			
 			boolean issame=true;
 			if(this.isIsomorphic(symHeap, initHeap, objSrcMap)&&this.isIsomorphic(initHeap, symHeap, rvsobjSrcMap)) {
