@@ -782,7 +782,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			
 			for(Iterator<Entry<ObjectH,ObjectH>> it=objSrcMap.entrySet().iterator();it.hasNext();) {
 				Entry<ObjectH,ObjectH> entry=it.next();
-				if(!symHeap.getAllObjects().contains(entry.getKey())) objSrcMap.remove(entry.getKey());
+				if(!symHeap.getAllObjects().contains(entry.getKey())) it.remove();
 			}
 			
 			boolean issame=true;
