@@ -202,10 +202,16 @@ public class HeapTransGraphBuilder {
 			if (o.isNonNullObject()) {
 				ClassH cls = o.getClassH();
 				int cnt = countObjs.getOrDefault(cls, 0) + 1;
-				int limit = this.heapScope.getOrDefault(cls, 4);
+				int limit = this.heapScope.getOrDefault(cls, 4); // TODO
 				if (cnt > limit) return true;
 				countObjs.put(o.getClassH(), cnt);
 			}
+		}
+		ClassH clsObject = ClassH.of(Object.class);
+		if (this.heapScope.containsKey(clsObject)) {
+			long cnt = heap.getAllObjects().stream()
+					.filter(o -> o.getClassH() == clsObject).count();
+			return cnt > this.heapScope.get(clsObject);
 		}
 		return false;
 	}

@@ -26,6 +26,7 @@ public class ObjNodeLauncher {
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(ObjNode.class, 3);
+		gb.setHeapScope(Object.class, 4);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/objNode.txt"));
