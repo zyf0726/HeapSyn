@@ -295,6 +295,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			if(obj==null) {
 				throw new UnexpectedInternalException("Object misses reference");
 			}
+			if(obj==ObjectH.NULL) {
+				if(ca instanceof ClauseAssumeNull) continue;
+				return null;
+			}
 //			if(!isObj(obj)) {
 //				return null;
 //				//if(obj!=ObjectH.NULL) System.out.println(obj.toString());
