@@ -142,8 +142,7 @@ public class JBSEHeapTransformer {
 		//Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
 		
 		for (HeapObjekt o : objekts.values()) {
-			if(o.getType().getClassName().equals(Object.class.getName())) {
-				
+			if(o.getOrigin()!=null&&o.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
 				continue;
 			}
 			this.finjbseObjMap.put(o, transHeapObjektToObjectH((ObjektImpl) o));
@@ -172,7 +171,7 @@ public class JBSEHeapTransformer {
 				if (varValue instanceof ReferenceConcrete) {
 					ReferenceConcrete rc = (ReferenceConcrete) varValue;
 					HeapObjekt objekt = objekts.get(rc.getHeapPosition());
-					if(objekt!=null&&objekt.getType().getClassName().equals(Object.class.getName())) {
+					if(objekt!=null&&objekt.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
 						ObjectH value=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
 						fieldValMap.put(field, value);
 						this.ObjRefCon.put(value,rc);
