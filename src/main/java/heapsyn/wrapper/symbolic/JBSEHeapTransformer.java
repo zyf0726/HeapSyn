@@ -127,32 +127,44 @@ public class JBSEHeapTransformer {
     }
 	
 	public boolean transform(State state)  {		
-		//Heap heap=state.__getHeap();
+		finjbseObjMap = new HashMap<>();
+		finjbseVarMap = new HashMap<>();
+		finVarjbseMap = new HashMap<>(); // a Primitive may correspond to more than one ObjectH
+		ObjRefSym = new HashMap<>();
+		ObjRefCon=new HashMap<>();
+		RefObjSym = new HashMap<>();
+		RefObjCon=new HashMap<>();
+		hos=new HashMap<>();
 		PathCondition pathCond=state.__getPathCondition();
 		
-		//Heap delHeap = filterPreObjekt(heap);
-		Set<Map.Entry<Long, Objekt>> entries = null;
-		try {
-			final Set<Long> reachable= new ReachableObjectsCollector().reachable(state, false);
-			entries = state.getHeap().entrySet().stream()
-			        .filter(e -> reachable.contains(e.getKey()))
-			        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), throwingMerger(), TreeMap::new)).entrySet();
-		} catch (FrozenStateException e1) {
-			throw new UnexpectedInternalException(e1);
+		if(this.objects==null) {
+			long stp2T = System.currentTimeMillis();
+			//Heap delHeap = filterPreObjekt(heap);
+			Set<Map.Entry<Long, Objekt>> entries = null;
+			try {
+				final Set<Long> reachable= new ReachableObjectsCollector().reachable(state, false);
+				entries = state.getHeap().entrySet().stream()
+				        .filter(e -> reachable.contains(e.getKey()))
+				        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), throwingMerger(), TreeMap::new)).entrySet();
+			} catch (FrozenStateException e1) {
+				throw new UnexpectedInternalException(e1);
+			}
+			
+			long stp3T = System.currentTimeMillis();
+			System.out.println("step trans "+ (stp3T-stp2T)+" ms");
+	
+			//Map<Long, HeapObjekt> objekts = delHeap.__getObjects();
+			this.objects=new HashMap<>();
+			for(Entry<Long,Objekt> entry: entries) {
+				this.objects.put(entry.getKey(), (HeapObjekt) entry.getValue());
+			}
+			
+			//Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();			
 		}
-
-		//Map<Long, HeapObjekt> objekts = delHeap.__getObjects();
-		Map<Long,HeapObjekt> objekts=new HashMap<>();
-		for(Entry<Long,Objekt> entry: entries) {
-			objekts.put(entry.getKey(), (HeapObjekt) entry.getValue());
-		}
-		this.objects=new HashMap<>(objekts);
-		
-		//Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
 		
 		Set<HeapObjekt> oos=new HashSet<>();
 		
-		for (HeapObjekt o : objekts.values()) {
+		for (HeapObjekt o : this.objects.values()) {
 			if(o.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
 				if(o.getOrigin()==null) oos.add(o);
 				continue;
@@ -183,7 +195,7 @@ public class JBSEHeapTransformer {
 				Value varValue = var.getValue();
 				if (varValue instanceof ReferenceConcrete) {
 					ReferenceConcrete rc = (ReferenceConcrete) varValue;
-					HeapObjekt objekt = objekts.get(rc.getHeapPosition());
+					HeapObjekt objekt = this.objects.get(rc.getHeapPosition());
 					if(objekt!=null&&objekt.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
 						ObjectH value=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
 						fieldValMap.put(field, value);
@@ -215,7 +227,7 @@ public class JBSEHeapTransformer {
 					 		if (pos == jbse.mem.Util.POS_NULL) {
 					 			value = ObjectH.NULL;
 					 		} else {
-					 			HeapObjekt objekt=objekts.get(pos);
+					 			HeapObjekt objekt=this.objects.get(pos);
 					 			value = this.finjbseObjMap.get(objekt);
 					 		}
 				 		}

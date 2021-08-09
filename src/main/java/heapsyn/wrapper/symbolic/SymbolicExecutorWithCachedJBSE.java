@@ -104,16 +104,19 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 
 	private Map<Method,Set<State>> cachedJBSE;
 	private Map<State,List<Clause>> cachedClauses;
+	private Map<State,JBSEHeapTransformer> cachedTrans;
 	
 	public SymbolicExecutorWithCachedJBSE() {
 		this.cachedJBSE=new HashMap<>();
 		this.cachedClauses=new HashMap<>();
+		this.cachedTrans=new HashMap<>();
 		this.fieldFilter=name -> true;
 	}
 	
 	public SymbolicExecutorWithCachedJBSE(Predicate<String> fieldFilter) {
 		this.cachedJBSE=new HashMap<>();
 		this.cachedClauses=new HashMap<>();
+		this.cachedTrans=new HashMap<>();
 		this.fieldFilter=fieldFilter;
 	}
 	
@@ -597,8 +600,16 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			SMTExpression Objcond=this.getObjcond(objclause, Oref2Obj);
 			if(Objcond==null) continue; 
 			
-			
-			JBSEHeapTransformer jhs=new JBSEHeapTransformer(this.fieldFilter);
+			long startT = System.currentTimeMillis();
+
+			JBSEHeapTransformer jhs=null;
+			if(!this.cachedTrans.containsKey(state)) {
+				jhs=new JBSEHeapTransformer(this.fieldFilter);
+				this.cachedTrans.put(state, jhs);
+			}
+			else {
+				jhs=this.cachedTrans.get(state);
+			}
 			if(jhs.transform(state)==false) continue;
 
 			Set<ObjectH> Oobjs=new HashSet<>(jhs.getObjRefSym().keySet());
@@ -724,21 +735,23 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				varExprMap.put(entry.getKey().getVariable(), smt);
 			}
 			
-			SortedMap<Long, Objekt> finHeapJBSE = null;
-			try {
-				finHeapJBSE = state.getHeap();
-			} catch (FrozenStateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			//Value retVal = finHeapJBSE.getReturnValue();
+//			
+//			SortedMap<Long, Objekt> finHeapJBSE = null;
+//			try {
+//				finHeapJBSE = state.getHeap();
+//			} catch (FrozenStateException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+			
+
 			boolean retObj=false;
 			Value retVal=state.getStuckReturn();
 			if(retVal==null||retVal.getType()=='0') pd.retVal=null;
 			else if (retVal instanceof ReferenceConcrete) {
 				ReferenceConcrete refRetVal = (ReferenceConcrete) retVal;
 				Long pos = refRetVal.getHeapPosition();
-				HeapObjekt ho = (HeapObjekt) finHeapJBSE.get(pos);
+				HeapObjekt ho = (HeapObjekt) jhs.getobjects().get(pos);
 				if (ho != null) {
 					if(ho.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
 						if(jhs.getRefObjCon().containsKey(refRetVal)) {
