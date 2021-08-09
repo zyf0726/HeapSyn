@@ -7,7 +7,6 @@ package heapsyn.wrapper.symbolic;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
@@ -23,8 +22,6 @@ import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
 import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.IntVar;
-import jbse.mem.Clause;
-import jbse.mem.ClauseAssumeReferenceSymbolic;
 import jbse.mem.HeapObjekt;
 import jbse.mem.Objekt;
 import jbse.mem.ObjektImpl;
@@ -138,7 +135,7 @@ public class JBSEHeapTransformer {
 		PathCondition pathCond=state.__getPathCondition();
 		
 		if(this.objects==null) {
-			long stp2T = System.currentTimeMillis();
+			// long stp2T = System.currentTimeMillis();
 			//Heap delHeap = filterPreObjekt(heap);
 			Set<Map.Entry<Long, Objekt>> entries = null;
 			try {
@@ -150,8 +147,8 @@ public class JBSEHeapTransformer {
 				throw new UnexpectedInternalException(e1);
 			}
 			
-			long stp3T = System.currentTimeMillis();
-			System.out.println("step trans "+ (stp3T-stp2T)+" ms");
+			// long stp3T = System.currentTimeMillis();
+			// System.out.println("step trans "+ (stp3T-stp2T)+" ms");
 	
 			//Map<Long, HeapObjekt> objekts = delHeap.__getObjects();
 			this.objects=new HashMap<>();

@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.Stack;
 import java.util.function.Predicate;
 
@@ -46,10 +45,8 @@ import jbse.mem.ClauseAssumeAliases;
 import jbse.mem.ClauseAssumeNull;
 import jbse.mem.ClauseAssumeReferenceSymbolic;
 import jbse.mem.HeapObjekt;
-import jbse.mem.Objekt;
 import jbse.mem.PathCondition;
 import jbse.mem.State;
-import jbse.mem.exc.FrozenStateException;
 import jbse.val.Expression;
 import jbse.val.Operator;
 import jbse.val.Primitive;
@@ -600,8 +597,6 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			SMTExpression Objcond=this.getObjcond(objclause, Oref2Obj);
 			if(Objcond==null) continue; 
 			
-			long startT = System.currentTimeMillis();
-
 			JBSEHeapTransformer jhs=null;
 			if(!this.cachedTrans.containsKey(state)) {
 				jhs=new JBSEHeapTransformer(this.fieldFilter);
