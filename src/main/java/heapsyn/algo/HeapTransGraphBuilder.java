@@ -63,6 +63,19 @@ public class HeapTransGraphBuilder {
 	}
 	
 	private boolean addNewHeap(WrappedHeap newHeap) {
+//		long startT = System.currentTimeMillis();
+		boolean isActive = __addNewHeap(newHeap);
+//		long endT = System.currentTimeMillis();
+//		if (isActive) {
+//			System.err.print("INFO: add a new active heap");
+//		} else {
+//			System.err.print("INFO: add an isomorphic heap");
+//		}
+//		System.err.println(", elapsed " + (endT - startT) + "ms");
+		return isActive;
+	}
+	
+	private boolean __addNewHeap(WrappedHeap newHeap) {
 		if (this.isOutOfScope(newHeap.getHeap())) {
 			return false;
 		}
@@ -91,6 +104,12 @@ public class HeapTransGraphBuilder {
 	}
 	
 	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap) {
+		expandHeaps(symHeap);
+		computeConstraints();
+		return ImmutableList.copyOf(this.allHeaps);
+	}
+	
+	public List<WrappedHeap> expandHeaps(SymbolicHeap symHeap) {
 		Deque<WrappedHeap> heapQueue = new ArrayDeque<>();
 		WrappedHeap initHeap = new WrappedHeap(symHeap);
 		heapQueue.add(initHeap);
@@ -103,7 +122,10 @@ public class HeapTransGraphBuilder {
 						heapQueue.addLast(newHeap);
 			}
 		}
-		
+		return ImmutableList.copyOf(this.allHeaps);
+	}
+	
+	private void computeConstraints() {
 		Collection<Edge<WrappedHeap, Integer>> trans = new ArrayList<>();
 		for (WrappedHeap heap : this.allHeaps) {
 			for (BackwardRecord br : heap.getBackwardRecords())
@@ -135,7 +157,6 @@ public class HeapTransGraphBuilder {
 			}
 			sccBegin = sccEnd;
 		}
-		return ImmutableList.copyOf(this.allHeaps);
 	}
 	
 	private Collection<WrappedHeap>

@@ -63,7 +63,7 @@ public class Z3JavaAPI implements SMTSolver {
 		boolean isSat = this.__checkSat(constraint, model);
 		long endT = System.currentTimeMillis();
 		System.err.print("INFO: invoke Z3 Java API to " + (toCheck ? "check" : "solve"));
-		System.err.println(", elapsed " + (endT - startT) + "ms ");
+		System.err.println(", elapsed " + (endT - startT) + "ms");
 		return isSat;
 	}
 	
