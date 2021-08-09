@@ -103,14 +103,17 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	}
 
 	private Map<Method,Set<State>> cachedJBSE;
+	private Map<State,List<Clause>> cachedClauses;
 	
 	public SymbolicExecutorWithCachedJBSE() {
 		this.cachedJBSE=new HashMap<>();
+		this.cachedClauses=new HashMap<>();
 		this.fieldFilter=name -> true;
 	}
 	
 	public SymbolicExecutorWithCachedJBSE(Predicate<String> fieldFilter) {
 		this.cachedJBSE=new HashMap<>();
+		this.cachedClauses=new HashMap<>();
 		this.fieldFilter=fieldFilter;
 	}
 	
@@ -470,13 +473,19 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		ArrayList<SMTExpression> pds=new ArrayList<>();
 		for(Entry<ObjectH,ReferenceConcrete> entry:Nobjs.entrySet()) {
 			heapsyn.smtlib.Variable var=entry.getKey().getVariable();
-			if(!rcs.containsKey(entry.getValue())) {
+			if(entry.getValue()==null) {
 				pds.add(new ApplyExpr(SMTOperator.AND, new ApplyExpr(SMTOperator.BIN_NE,var,new IntConst(0)),
 						forall(SMTOperator.BIN_NE,SMTOperator.AND,var,ovars)));
-				rcs.put(entry.getValue(),entry.getKey());
 			}
 			else {
-				pds.add(new ApplyExpr(SMTOperator.BIN_EQ,var,rcs.get(entry.getValue()).getVariable()));
+				if(!rcs.containsKey(entry.getValue())) {
+					pds.add(new ApplyExpr(SMTOperator.AND, new ApplyExpr(SMTOperator.BIN_NE,var,new IntConst(0)),
+							forall(SMTOperator.BIN_NE,SMTOperator.AND,var,ovars)));
+					rcs.put(entry.getValue(),entry.getKey());
+				}
+				else {
+					pds.add(new ApplyExpr(SMTOperator.BIN_EQ,var,rcs.get(entry.getValue()).getVariable()));
+				}
 			}
 			ovars.add(var);
 		}
@@ -530,10 +539,20 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			ArrayList<Clause> objclause=new ArrayList<>();
 			ArrayList<Clause> allrefclause=new ArrayList<>();
 			
-			PathCondition jbsepd=state.__getPathCondition();
-			List<Clause> clauses=jbsepd.getClauses();
-			for(int i=0;i<clauses.size();++i) {
-				Clause clause=clauses.get(i);
+			List<Clause> clauses=null;
+			if(this.cachedClauses.containsKey(state)) {
+				clauses=this.cachedClauses.get(state);
+			}
+			else {
+				PathCondition jbsepd=state.__getPathCondition();
+				clauses=new ArrayList<>(jbsepd.getClauses());
+			}
+			for(Iterator<Clause> it=clauses.iterator();it.hasNext();) {
+				Clause clause=it.next();
+				if((! (clause instanceof ClauseAssume)) && (!(clause instanceof ClauseAssumeReferenceSymbolic))) {
+					it.remove();
+					continue;
+				}
 				if(clause instanceof ClauseAssume) {
 					//primclause.add(clause);
 					Primitive p= ((ClauseAssume)clause).getCondition();
@@ -544,20 +563,6 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					if(!toIgnore(p)) primclause.add(clause);
 				}
 				else if(clause instanceof ClauseAssumeReferenceSymbolic) {
-//					if(clause instanceof ClauseAssumeAliases) {
-//						HeapObjekt ho=((ClauseAssumeAliases)clause).getObjekt();
-//						if(ho.getType().getClassName().equals(Object.class.getName())) {
-//							objclause.add(clause);
-//							continue;
-//						}
-//					}
-//					else if(clause instanceof ClauseAssumeExpands) {
-//						HeapObjekt ho=((ClauseAssumeExpands)clause).getObjekt();
-//						if(ho.getType().getClassName().equals(Object.class.getName())) {
-//							objclause.add(clause);
-//							continue;
-//						}
-//					}
 					ReferenceSymbolic ref=((ClauseAssumeReferenceSymbolic)clause).getReference();
 					if(ref instanceof ReferenceSymbolicMemberField) {
 						ReferenceSymbolicMemberField memberref=(ReferenceSymbolicMemberField) ref;
@@ -573,6 +578,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					refclause.add(clause);
 				}
 			}
+			this.cachedClauses.put(state, clauses);
 			
 			Map<ReferenceSymbolic,ObjectH> allref2Obj=this.ref2ObjMap(allrefclause, val2Obj); //map between Reference and ObjectH
 			Map<ReferenceSymbolic,ObjectH> ref2Obj=new HashMap<>();
@@ -590,6 +596,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			if(!this.isSat(refclause, ref2Obj)) continue;
 			SMTExpression Objcond=this.getObjcond(objclause, Oref2Obj);
 			if(Objcond==null) continue; 
+			
 			
 			JBSEHeapTransformer jhs=new JBSEHeapTransformer(this.fieldFilter);
 			if(jhs.transform(state)==false) continue;
@@ -733,12 +740,21 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				Long pos = refRetVal.getHeapPosition();
 				HeapObjekt ho = (HeapObjekt) finHeapJBSE.get(pos);
 				if (ho != null) {
-					if(ho.getType().getClassName().equals(Object.class.getName())) {
-						accObjs.add(jhs.getRefObjCon().get(refRetVal));
-						retObj=true;
+					if(ho.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
+						if(jhs.getRefObjCon().containsKey(refRetVal)) {
+							accObjs.add(jhs.getRefObjCon().get(refRetVal));
+							pd.retVal=jhs.getRefObjCon().get(refRetVal);
+						}
+						else {
+							accObjs.add(jhs.gethos().get(ho));
+							pd.retVal=jhs.gethos().get(ho);
+						}
+						//retObj=true;
 					}
-					else accObjs.add(finjbseObjMap.get(ho));
-					pd.retVal=finjbseObjMap.get(ho);
+					else {
+						accObjs.add(finjbseObjMap.get(ho));
+						pd.retVal=finjbseObjMap.get(ho);
+					}
 				} else {
 					// this should never happen
 					throw new UnexpectedInternalException("returned object not in the final heap");
@@ -842,6 +858,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			for(ObjectH obj:symHeap.getAllObjects()) {
 				if(Oobjs.contains(obj)) fOobjs.add(obj);
 				else if(Nobjs.containsKey(obj)) fNobjs.put(obj, Nobjs.get(obj));
+				else if(jhs.gethos().containsValue(obj)) fNobjs.put(obj, null);
 			}
 			
 			boolean issame=true;

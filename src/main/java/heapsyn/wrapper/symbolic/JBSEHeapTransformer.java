@@ -6,6 +6,8 @@ package heapsyn.wrapper.symbolic;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
@@ -21,6 +23,8 @@ import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
 import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.IntVar;
+import jbse.mem.Clause;
+import jbse.mem.ClauseAssumeReferenceSymbolic;
 import jbse.mem.HeapObjekt;
 import jbse.mem.Objekt;
 import jbse.mem.ObjektImpl;
@@ -46,6 +50,7 @@ public class JBSEHeapTransformer {
 	private Map<ObjectH,ReferenceConcrete> ObjRefCon=new HashMap<>();
 	private Map<ReferenceSymbolic,ObjectH> RefObjSym = new HashMap<>();
 	private Map<ReferenceConcrete,ObjectH> RefObjCon=new HashMap<>();
+	private Map<HeapObjekt,ObjectH> hos=new HashMap<>();
 	private Map<Long,HeapObjekt> objects;
 	private Predicate<String> fieldFilter;
 	
@@ -79,6 +84,10 @@ public class JBSEHeapTransformer {
 	
 	public Map<ObjectH,ReferenceConcrete> getObjRefCon() {
 		return this.ObjRefCon;
+	}
+	
+	public Map<HeapObjekt,ObjectH> gethos() {
+		return this.hos;
 	}
 	
 	public Map<Long,HeapObjekt> getobjects() {
@@ -141,12 +150,16 @@ public class JBSEHeapTransformer {
 		
 		//Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();
 		
+		Set<HeapObjekt> oos=new HashSet<>();
+		
 		for (HeapObjekt o : objekts.values()) {
-			if(o.getOrigin()!=null&&o.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
+			if(o.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
+				if(o.getOrigin()==null) oos.add(o);
 				continue;
 			}
 			this.finjbseObjMap.put(o, transHeapObjektToObjectH((ObjektImpl) o));
 		}
+		
 		
 		for (Entry<HeapObjekt, ObjectH> entry : this.finjbseObjMap.entrySet()) {
 			// determine fieldValMap for each ObjectH
@@ -176,6 +189,7 @@ public class JBSEHeapTransformer {
 						fieldValMap.put(field, value);
 						this.ObjRefCon.put(value,rc);
 						this.RefObjCon.put(rc, value);
+						oos.remove(objekt);
 					}
 					else {
 						ObjectH value = this.finjbseObjMap.get(objekt);
@@ -223,6 +237,11 @@ public class JBSEHeapTransformer {
 			}
 			oh.setFieldValueMap(fieldValMap);
 		}
+		
+		for(HeapObjekt o:oos) {
+			hos.put(o,new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>()));
+		}
+		
 		return true;
 						
 	}
