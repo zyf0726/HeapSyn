@@ -27,7 +27,7 @@ public class ObjNodeLauncher {
 		gb.setHeapScope(ObjNode.class, 3);
 		gb.setHeapScope(Object.class, 4);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
-		List<WrappedHeap> heaps = gb.expandHeaps(initHeap);
+		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream(outfile));
 		TestGenerator testgen = new TestGenerator(heaps);
 		System.out.println("number of all heaps = " + heaps.size());
