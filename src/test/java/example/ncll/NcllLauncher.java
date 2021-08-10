@@ -30,7 +30,7 @@ public class NcllLauncher {
 		parms.setShowOnConsole(true);
 		parms.setSettingsPath("HexSettings/ncll.jbse");
 		parms.setHeapScope(NodeCachingLinkedList.class, 1);
-		parms.setHeapScope(NodeCachingLinkedList.LinkedListNode.class, 6);
+		parms.setHeapScope(NodeCachingLinkedList.LinkedListNode.class, 8);
 		parms.setDepthScope(50);
 		parms.setCountScope(600);
 		List<Method> methods = new ArrayList<>();
@@ -47,7 +47,7 @@ public class NcllLauncher {
 				name -> !name.startsWith("_"));
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(NodeCachingLinkedList.class, 1);
-		gb.setHeapScope(NodeCachingLinkedList.LinkedListNode.class, 6);
+		gb.setHeapScope(NodeCachingLinkedList.LinkedListNode.class, 8);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		System.out.println("number of all heaps = " + heaps.size());
@@ -56,8 +56,6 @@ public class NcllLauncher {
 		testGenerator = new TestGenerator(heaps);
 		long end = System.currentTimeMillis();
 		System.out.println(">> buildGraph: " + (end - start) + "ms\n");
-		
-		
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException, NoSuchMethodException {
@@ -76,7 +74,8 @@ public class NcllLauncher {
 				"size", "size", "cacheSize", "cacheSize");
 		specFty.addRefSpec("h1", "next", "h2");
 		specFty.addRefSpec("h2", "next", "h3");
-		specFty.addRefSpec("h3", "next", "h1", "previous","h2");
+		specFty.addRefSpec("h3", "next", "h4");
+		specFty.addRefSpec("h4", "next", "h1");
 		specFty.setAccessible("ncll");
 		Specification spec = specFty.genSpec();
 		
@@ -97,7 +96,8 @@ public class NcllLauncher {
 		specFty.addRefSpec("c1", "next", "c2");
 		specFty.addRefSpec("c2", "next", "c3");
 		specFty.addRefSpec("c3", "next", "c4");
-		specFty.addRefSpec("c4", "next", "null");
+		specFty.addRefSpec("c4", "next", "c5");
+		specFty.addRefSpec("c5", "next", "null");
 		specFty.setAccessible("ncll");
 		Specification spec = specFty.genSpec();
 		

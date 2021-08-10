@@ -11,7 +11,7 @@ public class ObjNode {
 	public static FieldH fNxt, fVal;
 	public static Method mNewAlias, mNewNull, mNewFresh, mGetNext, mGetValue;
 	public static Method mSetValue, mSetFreshValue, mResetValue;
-	public static Method mAddBefore, mAddAfter;
+	public static Method mAddBefore, mAddAfter, mAddAfterFresh;
 	public static Method mSetValueAliasNext, mMakeValueFresh;
 	
 	static {
@@ -29,6 +29,7 @@ public class ObjNode {
 			mResetValue = ObjNode.class.getMethod("resetValue");
 			mAddBefore = ObjNode.class.getMethod("addBefore", Object.class);
 			mAddAfter = ObjNode.class.getMethod("addAfter", Object.class);
+			mAddAfterFresh = ObjNode.class.getMethod("addAfterFresh");
 			mSetValueAliasNext = ObjNode.class.getMethod("setValueAliasNext");
 			mMakeValueFresh = ObjNode.class.getMethod("makeValueFresh", ObjNode.class, ObjNode.class);
 		} catch (Exception e) {
@@ -88,6 +89,11 @@ public class ObjNode {
 	
 	public void addAfter(Object val) {
 		ObjNode next = new ObjNode(null, val);
+		this.nxt = next;
+	}
+	
+	public void addAfterFresh() {
+		ObjNode next = new ObjNode(null, new Object());
 		this.nxt = next;
 	}
 	
