@@ -334,7 +334,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		Set<ObjectH> finacc=finHeap.getAccessibleObjects();
 		Set<ObjectH> initacc=initHeap.getAccessibleObjects();
 		for(ObjectH obj:finacc) {
-			if(obj.isNullObject()||isObj(obj)) continue;
+			if(obj.isNullObject()) continue;
 			if(!initacc.contains(objSrcMap.get(obj)))
 				return false;
 		}
@@ -686,7 +686,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 								ObjectH initval=initObj.getFieldValue(initField);
 								if(isObj(initval)) {
 									ObjectH Obj=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
-									Oobjs.add(obj);
+									Oobjs.add(Obj);
 									obj.setFieldValue(field, Obj);
 									varExprMap.put(Obj.getVariable(), initval.getVariable());
 									if(initHeap.getAccessibleObjects().contains(initval))
