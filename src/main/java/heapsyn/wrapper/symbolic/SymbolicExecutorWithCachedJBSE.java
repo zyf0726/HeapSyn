@@ -716,6 +716,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			
 			
 			accObjs.add(ObjectH.NULL);
+			for(ObjectH obj:jhs.getnullos()) accObjs.add(obj);
 			for(ObjectH obj:initHeap.getAccessibleObjects()) {
 				if(obj.isNonNullObject()) accObjs.add(rvsobjSrcMap.get(obj));
 			}
@@ -913,9 +914,16 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			}
 			
 			SMTExpression Objparams=this.objparams(initHeap, margs);
-
 			
-			pd.pathCond=new ApplyExpr(SMTOperator.AND,this.getPathcond(primclause, ref2Obj,val2Obj),Objparams,Objcond,this.NobjCond(fOobjs, fNobjs));
+			ArrayList<SMTExpression> nullconds=new ArrayList<>();
+			for(ObjectH obj:jhs.getnullos()) {
+				nullconds.add(new ApplyExpr(SMTOperator.BIN_EQ,obj.getVariable(),new IntConst(0)));
+			}
+			SMTExpression nullosCond=null;
+			if(nullconds.isEmpty()) nullosCond=new BoolConst(true);
+			else nullosCond=new ApplyExpr(SMTOperator.AND,nullconds);
+			
+			pd.pathCond=new ApplyExpr(SMTOperator.AND,this.getPathcond(primclause, ref2Obj,val2Obj),Objparams,Objcond,this.NobjCond(fOobjs, fNobjs),nullosCond);
 			
 			pds.add(pd);
 			

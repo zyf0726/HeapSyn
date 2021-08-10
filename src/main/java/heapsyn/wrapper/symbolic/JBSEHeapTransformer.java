@@ -48,6 +48,7 @@ public class JBSEHeapTransformer {
 	private Map<ReferenceSymbolic,ObjectH> RefObjSym = new HashMap<>();
 	private Map<ReferenceConcrete,ObjectH> RefObjCon=new HashMap<>();
 	private Map<HeapObjekt,ObjectH> hos=new HashMap<>();
+	private Set<ObjectH> nullos=new HashSet<>();
 	private Map<Long,HeapObjekt> objects;
 	private Predicate<String> fieldFilter;
 	
@@ -85,6 +86,10 @@ public class JBSEHeapTransformer {
 	
 	public Map<HeapObjekt,ObjectH> gethos() {
 		return this.hos;
+	}
+	
+	public Set<ObjectH> getnullos() {
+		return this.nullos;
 	}
 	
 	public Map<Long,HeapObjekt> getobjects() {
@@ -132,6 +137,7 @@ public class JBSEHeapTransformer {
 		RefObjSym = new HashMap<>();
 		RefObjCon=new HashMap<>();
 		hos=new HashMap<>();
+		nullos=new HashSet<>();
 		PathCondition pathCond=state.__getPathCondition();
 		
 		if(this.objects==null) {
@@ -177,12 +183,13 @@ public class JBSEHeapTransformer {
 			Map<FieldH, ObjectH> fieldValMap = new HashMap<>();
 			for (Variable var : ok.fields().values()) {
 				if(this.fieldFilter.test(var.getName())==false) continue;
+				Field javaField=null;
 				FieldH field = null;
 				String clsName="";
 				try {
 					clsName = ok.getType().getClassName().replace('/', '.');
 					Class<?> javaClass = Class.forName(clsName);
-					Field javaField = javaClass.getDeclaredField(var.getName());
+					javaField = javaClass.getDeclaredField(var.getName());
 					field = FieldH.of(javaField);
 				} catch (NoSuchFieldException | SecurityException | ClassNotFoundException e) {
 					// this should never happen
@@ -193,12 +200,19 @@ public class JBSEHeapTransformer {
 				if (varValue instanceof ReferenceConcrete) {
 					ReferenceConcrete rc = (ReferenceConcrete) varValue;
 					HeapObjekt objekt = this.objects.get(rc.getHeapPosition());
-					if(objekt!=null&&objekt.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
-						ObjectH value=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
-						fieldValMap.put(field, value);
-						this.ObjRefCon.put(value,rc);
-						this.RefObjCon.put(rc, value);
-						oos.remove(objekt);
+					if(javaField.getType()==Object.class) {
+						if(objekt!=null&&objekt.getType().getClassName().replace('/', '.').equals(Object.class.getName())) {
+							ObjectH value=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
+							fieldValMap.put(field, value);
+							this.ObjRefCon.put(value,rc);
+							this.RefObjCon.put(rc, value);
+							oos.remove(objekt);
+						}
+						else {
+							ObjectH value=new ObjectH(ClassH.of(Object.class),new HashMap<FieldH, ObjectH>());
+							fieldValMap.put(field, value);
+							this.nullos.add(value);
+						}
 					}
 					else {
 						ObjectH value = this.finjbseObjMap.get(objekt);
