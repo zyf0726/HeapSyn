@@ -913,17 +913,13 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				if(vars.contains(entry.getKey())) pd.varExprMap.put(entry.getKey(), entry.getValue());
 			}
 			
+			for(ObjectH obj:jhs.getnullos()) {
+				pd.varExprMap.put(obj.getVariable(),new IntConst(0));
+			}
+			
 			SMTExpression Objparams=this.objparams(initHeap, margs);
 			
-			ArrayList<SMTExpression> nullconds=new ArrayList<>();
-			for(ObjectH obj:jhs.getnullos()) {
-				nullconds.add(new ApplyExpr(SMTOperator.BIN_EQ,obj.getVariable(),new IntConst(0)));
-			}
-			SMTExpression nullosCond=null;
-			if(nullconds.isEmpty()) nullosCond=new BoolConst(true);
-			else nullosCond=new ApplyExpr(SMTOperator.AND,nullconds);
-			
-			pd.pathCond=new ApplyExpr(SMTOperator.AND,this.getPathcond(primclause, ref2Obj,val2Obj),Objparams,Objcond,this.NobjCond(fOobjs, fNobjs),nullosCond);
+			pd.pathCond=new ApplyExpr(SMTOperator.AND,this.getPathcond(primclause, ref2Obj,val2Obj),Objparams,Objcond,this.NobjCond(fOobjs, fNobjs));
 			
 			pds.add(pd);
 			
