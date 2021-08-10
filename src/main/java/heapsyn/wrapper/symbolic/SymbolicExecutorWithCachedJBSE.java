@@ -330,12 +330,20 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	}
 	
 	private boolean isIsomorphic(SymbolicHeap finHeap,SymbolicHeap initHeap,
-			Map<ObjectH, ObjectH> objSrcMap) {
+			Map<ObjectH, ObjectH> objSrcMap,Map<heapsyn.smtlib.Variable,SMTExpression> varExprMap) {
 		Set<ObjectH> finacc=finHeap.getAccessibleObjects();
 		Set<ObjectH> initacc=initHeap.getAccessibleObjects();
+		Set<SMTExpression> initvars=new HashSet<>();
+		for(ObjectH obj:initacc) {
+			if(isObj(obj)) initvars.add(obj.getVariable());
+		}
 		for(ObjectH obj:finacc) {
 			if(obj.isNullObject()) continue;
-			if(!initacc.contains(objSrcMap.get(obj)))
+			if(isObj(obj)) {
+				if(!initvars.contains(varExprMap.get(obj.getVariable()))) 
+					return false;
+			}
+			else if(!initacc.contains(objSrcMap.get(obj)))
 				return false;
 		}
 		Set<ObjectH> finobjs=finHeap.getAllObjects();
@@ -871,7 +879,15 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			}
 			
 			boolean issame=true;
-			if(this.isIsomorphic(symHeap, initHeap, objSrcMap)&&this.isIsomorphic(initHeap, symHeap, rvsobjSrcMap)) {
+			
+			Map<heapsyn.smtlib.Variable,SMTExpression> rvsvarExprMap=new HashMap<>();
+			for(Entry<heapsyn.smtlib.Variable,SMTExpression> entry:varExprMap.entrySet()) {
+				if(entry.getValue() instanceof heapsyn.smtlib.Variable)
+					rvsvarExprMap.put((heapsyn.smtlib.Variable) entry.getValue(), entry.getKey());
+			}
+			
+			if(this.isIsomorphic(symHeap, initHeap, objSrcMap,varExprMap)&&
+					this.isIsomorphic(initHeap, symHeap, rvsobjSrcMap,rvsvarExprMap)) {
 				for(ObjectH obj:symHeap.getAllObjects()) {
 					if(obj.isVariable()||obj.isNullObject()) continue;
 					ObjectH finobj=obj;
