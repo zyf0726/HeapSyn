@@ -504,11 +504,11 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 
 	@Override
 	public Collection<PathDescriptor> executeMethod(SymbolicHeap initHeap, MethodInvoke mInvoke) {
-		long startT = System.currentTimeMillis();
+		// long startT = System.currentTimeMillis();
 		Collection<PathDescriptor> pathDescs = __executeMethod(initHeap, mInvoke);
-		long endT = System.currentTimeMillis();
-		System.err.print("INFO: symbolic execution on method " + mInvoke.getJavaMethod().getName());
-		System.err.println(", elapsed " + (endT - startT) + "ms");
+		// long endT = System.currentTimeMillis();
+		// System.err.print("INFO: symbolic execution on method " + mInvoke.getJavaMethod().getName());
+		// System.err.println(", elapsed " + (endT - startT) + "ms");
 		return pathDescs;
 	}
 	
