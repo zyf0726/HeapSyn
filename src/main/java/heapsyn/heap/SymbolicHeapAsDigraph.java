@@ -18,6 +18,7 @@ import java.util.Set;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Streams;
 
 import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.ExistExpr;
@@ -165,8 +166,11 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		
 		Bijection<ObjectH, ObjectH> initMap = new Bijection<>();
 		initMap.putUV(ObjectH.NULL, ObjectH.NULL);
-		boolean isTerminated = searchMapping(0, ImmutableList.copyOf(this.accObjs),
-				other, action, false, initMap);
+		List<ObjectH> sortedAccObjs = Streams.concat(
+				this.accObjs.stream().filter(o -> o.isHeapObject()),
+				this.accObjs.stream().filter(o -> !o.isHeapObject())
+				).collect(Collectors.toList());
+		boolean isTerminated = searchMapping(0, sortedAccObjs, other, action, false, initMap);
 		return isTerminated;
 	}
 	
@@ -178,8 +182,11 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		
 		Bijection<ObjectH, ObjectH> initMap = new Bijection<>();
 		initMap.putUV(ObjectH.NULL, ObjectH.NULL);
-		boolean isTerminated = searchMapping(0, ImmutableList.copyOf(this.accObjs),
-				supHeap, action, true, initMap);
+		List<ObjectH> sortedAccObjs = Streams.concat(
+				this.accObjs.stream().filter(o -> o.isHeapObject()),
+				this.accObjs.stream().filter(o -> !o.isHeapObject())
+				).collect(Collectors.toList());
+		boolean isTerminated = searchMapping(0, sortedAccObjs, supHeap, action, true, initMap);
 		return isTerminated;
 	}
 	
