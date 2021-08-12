@@ -30,7 +30,7 @@ public class NcllLauncher {
 		parms.setShowOnConsole(true);
 		parms.setSettingsPath("HexSettings/ncll.jbse");
 		parms.setHeapScope(NodeCachingLinkedList.class, 1);
-		parms.setHeapScope(NodeCachingLinkedList.LinkedListNode.class, 6);
+		parms.setHeapScope(NodeCachingLinkedList.LinkedListNode.class, 4);
 		parms.setDepthScope(50);
 		parms.setCountScope(600);
 		List<Method> methods = new ArrayList<>();
@@ -47,7 +47,7 @@ public class NcllLauncher {
 				name -> !name.startsWith("_"));
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(NodeCachingLinkedList.class, 1);
-		gb.setHeapScope(NodeCachingLinkedList.LinkedListNode.class, 6);
+		gb.setHeapScope(NodeCachingLinkedList.LinkedListNode.class, 8);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		System.out.println("number of all heaps = " + heaps.size());
@@ -64,8 +64,8 @@ public class NcllLauncher {
 		genTest2();
 		genTest3();
 		genTest4();
-		genTest(2, 2); 
-		genTest(1, 4); 
+		genTest(4, 2); 
+		genTest(1, 6); 
 	}
 	
 	public static void genTest1() {
@@ -100,7 +100,8 @@ public class NcllLauncher {
 		specFty.addRefSpec("c1", "next", "c2");
 		specFty.addRefSpec("c2", "next", "c3");
 		specFty.addRefSpec("c3", "next", "c4");
-		specFty.addRefSpec("c4", "next", "null");
+		specFty.addRefSpec("c4", "next", "c5");
+		specFty.addRefSpec("c5", "next", "null");
 		specFty.setAccessible("ncll");
 		Specification spec = specFty.genSpec();
 		
