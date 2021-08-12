@@ -59,7 +59,6 @@ public class ObjNodeLauncher {
 	}
 	
 	public static void genTest1() throws FileNotFoundException {
-		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH v2 = specFty.mkRefDecl(Object.class, "v2");
@@ -74,6 +73,7 @@ public class ObjNodeLauncher {
 						ObjNode.mAddBefore, ObjNode.mAddAfter, ObjNode.mSetValueAliasNext),
 				null);
 		
+		long start = System.currentTimeMillis();
 		List<Statement> stmts = testgen.generateTestWithSpec(spec, o1, v2);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
@@ -81,7 +81,6 @@ public class ObjNodeLauncher {
 	}
 	
 	public static void genTest2() throws FileNotFoundException {
-		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH o2 = specFty.mkRefDecl(ObjNode.class, "o2");
@@ -100,6 +99,7 @@ public class ObjNodeLauncher {
 						ObjNode.mSetFreshValue, ObjNode.mMakeValueFresh),
 				null);
 		
+		long start = System.currentTimeMillis();
 		List<Statement> stmts = testgen.generateTestWithSpec(spec, o1, v1, o2, v1, o3, v2);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
@@ -107,7 +107,6 @@ public class ObjNodeLauncher {
 	}
 
 	public static void genTest3() throws FileNotFoundException {
-		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH v = specFty.mkRefDecl(Object.class, "v");
@@ -121,6 +120,7 @@ public class ObjNodeLauncher {
 						ObjNode.mGetValue, ObjNode.mSetValueAliasNext),
 				null);
 		
+		long start = System.currentTimeMillis();
 		List<Statement> stmts = testgen.generateTestWithSpec(spec, o1, v);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
@@ -128,7 +128,6 @@ public class ObjNodeLauncher {
 	}
 	
 	public static void genTest4() throws FileNotFoundException {
-		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH o3 = specFty.mkRefDecl(ObjNode.class, "o3");
@@ -143,6 +142,7 @@ public class ObjNodeLauncher {
 						ObjNode.mAddBefore, ObjNode.mAddAfter, ObjNode.mGetValue),
 				null);
 		
+		long start = System.currentTimeMillis();
 		List<Statement> stmts = testgen.generateTestWithSpec(spec, o1, o3);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
