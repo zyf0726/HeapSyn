@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.common.exceptions.UnhandledJBSEPrimitive;
-import heapsyn.heap.ObjectH;
 
 import java.util.Set;
 import java.util.TreeMap;
@@ -141,14 +140,14 @@ public class StateConverger {
 		this.st2infos=new HashMap<>();
 		this.clusters=new HashMap<>();
 		
-		Comparator<ClauseAssumeReferenceSymbolic> comp= new Comparator<ClauseAssumeReferenceSymbolic>() {
+/*		Comparator<ClauseAssumeReferenceSymbolic> comp= new Comparator<ClauseAssumeReferenceSymbolic>() {
 
 			@Override
 			public int compare(ClauseAssumeReferenceSymbolic o1, ClauseAssumeReferenceSymbolic o2) {
 				return o1.getReference().toString().compareTo(o2.getReference().toString());
 			}
 			
-		};
+		}; */
 		for(State state:states) {
 			PathCondition jbsepd=state.__getPathCondition();
 			List<Clause> clauses=new ArrayList<>(jbsepd.getClauses());
@@ -349,8 +348,8 @@ public class StateConverger {
 			}
 		}
 		
-		System.out.println("the size of states "+this.states.size());
-		System.out.println("the size of clusters "+this.clusters.size());
+		// System.out.println("the size of states "+this.states.size());
+		// System.out.println("the size of clusters "+this.clusters.size());
 	}
 	
 	
