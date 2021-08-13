@@ -39,7 +39,7 @@ public class Z3JavaAPI implements SMTSolver {
 		return null;
 	}
 	
-	public static SortedSet<UserFunc> getAllUserFunctions(SMTExpression expr) {
+	private static SortedSet<UserFunc> getAllUserFunctions(SMTExpression expr) {
 		SortedSet<UserFunc> funcs = new TreeSet<>();
 		Deque<UserFunc> funcQueue = new ArrayDeque<>();
 		funcs.addAll(expr.getUserFunctions());
@@ -67,7 +67,11 @@ public class Z3JavaAPI implements SMTSolver {
 		return isSat;
 	}
 	
-	public boolean __checkSat(SMTExpression constraint, Map<Variable, Constant> model) {
+	private boolean __checkSat(SMTExpression constraint, Map<Variable, Constant> model) {
+		if (model != null) {
+			constraint = constraint.getSubstitution(model);
+		}
+		
 		Context ctx = new Context();
 		StringBuilder sb = new StringBuilder();
 		List<Symbol> declNames = new ArrayList<>();
@@ -86,12 +90,7 @@ public class Z3JavaAPI implements SMTSolver {
 			// sb.append(uf.getSMTAssert() + "\n");
 			sb.append(uf.getSMTDef() + "\n");
 		}
-		
-		if (model != null) {
-			sb.append("(assert " + constraint.getSubstitution(model).toSMTString() + ")\n");
-		} else {
-			sb.append("(assert " + constraint.toSMTString() + ")\n");
-		}
+		sb.append("(assert " + constraint.toSMTString() + ")\n");
 		
 		Solver z3Solver = ctx.mkSolver();
 		BoolExpr[] es = ctx.parseSMTLIB2String(sb.toString(), null, null,

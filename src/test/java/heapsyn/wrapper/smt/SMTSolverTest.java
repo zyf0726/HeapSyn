@@ -26,13 +26,14 @@ public class SMTSolverTest {
 	
 	private static final int N = 40;
 	
-	private static SMTSolver z3Java;
+	private static SMTSolver z3Java, z3Ext;
 	private Variable[] iv, bv;
 	private Map<Variable, Constant> model;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		z3Java = new Z3JavaAPI();
+		z3Ext = new ExternalSolver("libs/z3-4.8.10-x64-win/z3", "tmp/temp.z3");
 	}
 
 	@Before
@@ -78,6 +79,11 @@ public class SMTSolverTest {
 		mkTest1(z3Java);
 	}
 	
+	@Test
+	public void testZ3External1() {
+		mkTest1(z3Ext);
+	}
+	
 	private void mkTest2(SMTSolver z3) {
 		SMTExpression e1 = new ApplyExpr(SMTOperator.BIN_NE, bv[0], bv[1]);
 		SMTExpression e2 = new ApplyExpr(SMTOperator.BIN_NE, bv[1], bv[2]);
@@ -93,6 +99,11 @@ public class SMTSolverTest {
 	@Test
 	public void testZ3JavaAPI2() {
 		mkTest2(z3Java);
+	}
+	
+	@Test
+	public void testZ3External2() {
+		mkTest2(z3Ext);
 	}
 	
 	private void mkTest3(SMTSolver z3) {
@@ -129,6 +140,11 @@ public class SMTSolverTest {
 		mkTest3(z3Java);
 	}
 	
+	@Test
+	public void testZ3External3() {
+		mkTest3(z3Ext);
+	}
+	
 	private void mkTest4(SMTSolver z3) {
 		UserFunc f = new UserFunc(Arrays.asList(bv[0], iv[0]), SMTSort.BOOL, BoolConst.DEFAULT);
 		SMTExpression e = new ApplyExpr(SMTOperator.OR, bv[0],
@@ -139,6 +155,11 @@ public class SMTSolverTest {
 	@Test
 	public void testZ3JavaAPI4() {
 		mkTest4(z3Java);
+	}
+	
+	@Test
+	public void testZ3External4() {
+		mkTest4(z3Ext);
 	}
 	
 	private void mkTest5(SMTSolver z3) {
@@ -176,6 +197,11 @@ public class SMTSolverTest {
 	@Test
 	public void testZ3JavaAPI5() {
 		mkTest5(z3Java);
+	}
+	
+	@Test
+	public void testZ3External5() {
+		mkTest5(z3Ext);
 	}
 
 }

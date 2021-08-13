@@ -1,5 +1,6 @@
 package heapsyn.common.settings;
 
+import heapsyn.wrapper.smt.ExternalSolver;
 import heapsyn.wrapper.smt.SMTSolver;
 import heapsyn.wrapper.smt.Z3JavaAPI;
 
@@ -8,7 +9,11 @@ public class Options {
 	private static Options INSTANCE = null;
 	
 	private Options() {
-		this.smtSolver = new Z3JavaAPI();
+		if (this.useExternalSolver) {
+			this.smtSolver = new ExternalSolver(solverExecPath, solverOutPath);
+		} else {
+			this.smtSolver = new Z3JavaAPI();
+		}
 	}
 	
 	public static Options I() {
@@ -18,9 +23,16 @@ public class Options {
 		return INSTANCE;
 	}
 	
-	// smt solver - z3
+	// smt solver configurations
+	private String solverExecPath = "libs/z3-4.8.10-x64-win/z3";
+	private String solverOutPath = "tmp/temp.z3";
+	private boolean useExternalSolver = false;
 	private SMTSolver smtSolver;
-
+	
+	public void setUseExternalSolver(boolean useExternalSolver) {
+		this.useExternalSolver = useExternalSolver;
+	}
+	
 	public SMTSolver getSMTSolver() {
 		return this.smtSolver;
 	}
