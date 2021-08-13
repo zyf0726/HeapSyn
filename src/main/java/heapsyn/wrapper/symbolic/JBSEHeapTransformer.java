@@ -9,11 +9,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.Set;
-import java.util.TreeMap;
 
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.common.exceptions.UnhandledJBSEValue;
@@ -23,13 +20,10 @@ import heapsyn.heap.ObjectH;
 import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.IntVar;
 import jbse.mem.HeapObjekt;
-import jbse.mem.Objekt;
 import jbse.mem.ObjektImpl;
 import jbse.mem.PathCondition;
-import jbse.mem.ReachableObjectsCollector;
 import jbse.mem.State;
 import jbse.mem.Variable;
-import jbse.mem.exc.FrozenStateException;
 import jbse.val.Primitive;
 import jbse.val.ReferenceConcrete;
 import jbse.val.ReferenceSymbolic;
@@ -52,7 +46,8 @@ public class JBSEHeapTransformer {
 	private Map<Long,HeapObjekt> objects;
 	private Predicate<String> fieldFilter;
 	
-	public JBSEHeapTransformer(Predicate<String> fieldFilter) {
+	public JBSEHeapTransformer(Map<Long,HeapObjekt> objects,Predicate<String> fieldFilter) {
+		this.objects=new HashMap<>(objects);
 		this.fieldFilter=fieldFilter;
 	}
 	
@@ -96,20 +91,6 @@ public class JBSEHeapTransformer {
 		return this.objects;
 	}
 
-	// keep only the useful HeapObjekts in Heap
-//	private static Heap filterPreObjekt(Heap heap) { 
-//		Heap ret = new Heap(MAX_HEAP_SIZE_JBSE);
-//		for (Entry<Long, HeapObjekt> entry : heap.__getObjects().entrySet()) {
-//			if (entry.getKey() >= heap.getStartPosition()) {
-//				HeapObjekt o=entry.getValue();
-//				if(o instanceof InstanceWrapper_DEFAULT) {
-//					((InstanceWrapper_DEFAULT) o).possiblyCloneDelegate();
-//				}
-//				ret.__getObjects().put(entry.getKey(), entry.getValue());
-//			}
-//		}
-//		return ret;
-//	}
 	
 	// transform a HeapObjekt to an ObjectH (with fieldValueMap undetermined)
 	private static ObjectH transHeapObjektToObjectH(ObjektImpl o) {
@@ -123,11 +104,6 @@ public class JBSEHeapTransformer {
 		}
 	}
 	
-    //copied from java.util.stream.Collectors
-    private static <T> BinaryOperator<T> throwingMerger() {
-        return (u,v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); };
-    }
-	
 	public boolean transform(State state)  {		
 		finjbseObjMap = new HashMap<>();
 		finjbseVarMap = new HashMap<>();
@@ -139,31 +115,6 @@ public class JBSEHeapTransformer {
 		hos=new HashMap<>();
 		nullos=new HashSet<>();
 		PathCondition pathCond=state.__getPathCondition();
-		
-		if(this.objects==null) {
-			// long stp2T = System.currentTimeMillis();
-			//Heap delHeap = filterPreObjekt(heap);
-			Set<Map.Entry<Long, Objekt>> entries = null;
-			try {
-				final Set<Long> reachable= new ReachableObjectsCollector().reachable(state, false);
-				entries = state.getHeap().entrySet().stream()
-				        .filter(e -> reachable.contains(e.getKey()))
-				        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), throwingMerger(), TreeMap::new)).entrySet();
-			} catch (FrozenStateException e1) {
-				throw new UnexpectedInternalException(e1);
-			}
-			
-			// long stp3T = System.currentTimeMillis();
-			// System.out.println("step trans "+ (stp3T-stp2T)+" ms");
-	
-			//Map<Long, HeapObjekt> objekts = delHeap.__getObjects();
-			this.objects=new HashMap<>();
-			for(Entry<Long,Objekt> entry: entries) {
-				this.objects.put(entry.getKey(), (HeapObjekt) entry.getValue());
-			}
-			
-			//Map<HeapObjekt, ObjectH> finjbseObjMap = new HashMap<>();			
-		}
 		
 		Set<HeapObjekt> oos=new HashSet<>();
 		

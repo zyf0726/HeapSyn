@@ -37,6 +37,7 @@ import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.IntVar;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.SMTOperator;
+import heapsyn.wrapper.symbolic.StateConverger.StateInfos;
 import jbse.apps.run.Run;
 import jbse.apps.run.RunParameters;
 import jbse.mem.Clause;
@@ -45,7 +46,6 @@ import jbse.mem.ClauseAssumeAliases;
 import jbse.mem.ClauseAssumeNull;
 import jbse.mem.ClauseAssumeReferenceSymbolic;
 import jbse.mem.HeapObjekt;
-import jbse.mem.PathCondition;
 import jbse.mem.State;
 import jbse.val.Expression;
 import jbse.val.Operator;
@@ -99,33 +99,26 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		return parms.getRunParameters();
 	}
 
-	private Map<Method,Set<State>> cachedJBSE;
-	private Map<State,List<Clause>> cachedClauses;
+	//private Map<Method,Set<State>> cachedJBSE;
+	private Map<Method,StateConverger> cachedStates;
 	private Map<State,JBSEHeapTransformer> cachedTrans;
 	
 	public SymbolicExecutorWithCachedJBSE() {
-		this.cachedJBSE=new HashMap<>();
-		this.cachedClauses=new HashMap<>();
+		//this.cachedJBSE=new HashMap<>();
+		this.cachedStates=new HashMap<>();
 		this.cachedTrans=new HashMap<>();
 		this.fieldFilter=name -> true;
 	}
 	
 	public SymbolicExecutorWithCachedJBSE(Predicate<String> fieldFilter) {
-		this.cachedJBSE=new HashMap<>();
-		this.cachedClauses=new HashMap<>();
+		//this.cachedJBSE=new HashMap<>();
+		this.cachedStates=new HashMap<>();
 		this.cachedTrans=new HashMap<>();
 		this.fieldFilter=fieldFilter;
 	}
 	
-	private Map<ReferenceSymbolic,ObjectH> ref2ObjMap(ArrayList<Clause> refclause,Map<Value,ObjectH> val2Obj) {
+	private Map<ReferenceSymbolic,ObjectH> ref2ObjMap(ArrayList<ReferenceSymbolic> resolved,Map<Value,ObjectH> val2Obj) {
 		Map<ReferenceSymbolic,ObjectH> ref2Obj=new HashMap<>();
-		
-		Set<ReferenceSymbolic> resolved=new HashSet<>();
-		for(int i=0;i<refclause.size();++i) {
-			ClauseAssumeReferenceSymbolic clause=(ClauseAssumeReferenceSymbolic) refclause.get(i);
-			ReferenceSymbolic ref=clause.getReference();
-			resolved.add(ref);
-		}
 		
 		for(Entry<Value,ObjectH> entry:val2Obj.entrySet()) {
 			if((entry.getKey() instanceof ReferenceSymbolic) && resolved.contains(entry.getKey()) ) {
@@ -133,9 +126,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			}
 		}
 		
-		for(int i=0;i<refclause.size();++i) {
-			ClauseAssumeReferenceSymbolic clause=(ClauseAssumeReferenceSymbolic) refclause.get(i);
-			ReferenceSymbolic ref=clause.getReference();
+		for(int i=0;i<resolved.size();++i) {
+			ReferenceSymbolic ref=resolved.get(i);
 			Stack<ReferenceSymbolic> stack=new Stack<>();
 			ReferenceSymbolic localref=ref;
 			while(!ref2Obj.containsKey(localref)) {
@@ -160,10 +152,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		return ref2Obj;
 	}
 	
-	private boolean isSat(ArrayList<Clause> refclause,Map<ReferenceSymbolic,ObjectH> ref2Obj) {
+	private boolean isSat(ArrayList<ClauseAssumeReferenceSymbolic> refclause,Map<ReferenceSymbolic,ObjectH> ref2Obj) {
 		if(ref2Obj==null) return false;
 		for(int i=0;i<refclause.size();++i) {
-			ClauseAssumeReferenceSymbolic clause=(ClauseAssumeReferenceSymbolic) refclause.get(i);
+			ClauseAssumeReferenceSymbolic clause=refclause.get(i);
 			ReferenceSymbolic ref=clause.getReference();
 			ObjectH obj=ref2Obj.get(ref);
 			if(clause instanceof ClauseAssumeNull) {
@@ -298,10 +290,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			if(obj==null) {
 				throw new UnexpectedInternalException("Object misses reference");
 			}
-			if(obj==ObjectH.NULL) {
-				if(ca instanceof ClauseAssumeNull) continue;
-				return null;
-			}
+//			if(obj==ObjectH.NULL) {
+//				if(ca instanceof ClauseAssumeNull) continue;
+//				return null;
+//			}
 //			if(!isObj(obj)) {
 //				return null;
 //				//if(obj!=ObjectH.NULL) System.out.println(obj.toString());
@@ -313,10 +305,10 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				HeapObjekt heapObj=((ClauseAssumeAliases) ca).getObjekt();
 				ReferenceSymbolic oriref=heapObj.getOrigin();
 				ObjectH oriObj=ref2Obj.get(oriref);
-				if(oriObj==null) {
-					return null;
-					//throw new UnexpectedInternalException("Object misses reference");
-				}
+//				if(oriObj==null) {
+//					return null;
+//					//throw new UnexpectedInternalException("Object misses reference");
+//				}
 				pds.add(new ApplyExpr(SMTOperator.BIN_EQ,obj.getVariable(),oriObj.getVariable()));
 			}
 			else {
@@ -360,74 +352,6 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			}
 		}
 		return true;
-	}
-	
-	private boolean toIgnore(Primitive p) {
-		if(p instanceof PrimitiveSymbolicLocalVariable) {
-			return false;
-		}
-		if(p instanceof PrimitiveSymbolicMemberField) {
-			PrimitiveSymbolicMemberField pfield=(PrimitiveSymbolicMemberField)p;
-			if(this.fieldFilter.test(pfield.getFieldName())==false) {
-			//if(pfield.getFieldName().charAt(0)=='_') {
-				return true;
-			}
-			else return false;
-		}
-		else if(p instanceof Simplex) {
-			return false;
-		}
-		else if(p instanceof Expression) {
-			Expression expr=(Expression) p;
-			Primitive fst=expr.getFirstOperand();
-			Primitive snd=expr.getSecondOperand();
-			if(expr.isUnary()) {
-				return toIgnore(snd);
-			}
-			else {
-				return toIgnore(fst)||toIgnore(snd);
-			}
-		}
-		else if(p instanceof WideningConversion) {
-			return toIgnore(((WideningConversion)p).getArg());
-		}
-		else {
-			throw new UnhandledJBSEPrimitive(p.getClass().getName());
-		}
-	}
-	
-	private boolean check(Primitive p) {
-		if(p instanceof PrimitiveSymbolicLocalVariable) {
-			return false;
-		}
-		if(p instanceof PrimitiveSymbolicMemberField) {
-			PrimitiveSymbolicMemberField pfield=(PrimitiveSymbolicMemberField)p;
-			if(this.fieldFilter.test(pfield.getFieldName())==true) {
-			//if(pfield.getFieldName().charAt(0)!='_') {
-				return true;
-			}
-			else return false;
-		}
-		else if(p instanceof Simplex) {
-			return false;
-		}
-		else if(p instanceof Expression) {
-			Expression expr=(Expression) p;
-			Primitive fst=expr.getFirstOperand();
-			Primitive snd=expr.getSecondOperand();
-			if(expr.isUnary()) {
-				return check(snd);
-			}
-			else {
-				return check(fst)||check(snd);
-			}
-		}
-		else if(p instanceof WideningConversion) {
-			return check(((WideningConversion)p).getArg());
-		}
-		else {
-			throw new UnhandledJBSEPrimitive(p.getClass().getName());
-		}
 	}
 	
 	private boolean isObj(ObjectH obj) {
@@ -518,7 +442,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		if(!Modifier.isStatic(mInvoke.getJavaMethod().getModifiers())&&mInvoke.getInvokeArguments().get(0).isNullObject()) return pds;
 		
 		Method method=mInvoke.getJavaMethod();
-		if(!this.cachedJBSE.containsKey(method)) {
+		if(!this.cachedStates.containsKey(method)) {
 			RunParameters p = getRunParameters(mInvoke);
 			// TODO remove magic numbers
 //			p.setDepthScope(500);
@@ -526,12 +450,21 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			Run r=new Run(p);
 			r.run();
 			HashSet<State> executed = r.getExecuted();
-			this.cachedJBSE.put(method, executed);
+			//this.cachedJBSE.put(method, executed);
+			StateConverger sc=new StateConverger(executed,this.fieldFilter);
+			sc.converge();
+			this.cachedStates.put(method, sc);
 		}
 		
-		Set<State> states=this.cachedJBSE.get(method);
+		//Set<State> states=this.cachedJBSE.get(method);
+		StateConverger sc=this.cachedStates.get(method);
+		Set<State> states=sc.getclusters().keySet();
+		
 		
 		for(State state:states) {
+			StateInfos si=sc.getst2infos().get(state);
+			Set<State> sameStates=sc.getclusters().get(state);
+			
 			PathDescriptor pd=new PathDescriptor();
 			
 			Value[] vargs=state.getVargs();
@@ -542,53 +475,13 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 				val2Obj.put(vargs[i], margs.get(i));
 			}
 			
-			ArrayList<Clause> refclause=new ArrayList<>(); // clauses about reference
-			ArrayList<Clause> primclause=new ArrayList<>(); // clauses about primitive
-			ArrayList<Clause> objclause=new ArrayList<>();
-			ArrayList<Clause> allrefclause=new ArrayList<>();
+			ArrayList<ClauseAssumeReferenceSymbolic> refclause=si.refcls; // clauses about reference
+			//ArrayList<Clause> primclause=new ArrayList<>(); // clauses about primitive
+			//ArrayList<Clause> objclause=new ArrayList<>();
+			ArrayList<ReferenceSymbolic> refs=si.refs;
+			for(ReferenceSymbolic ref:si.objrefs) refs.add(ref);
 			
-			List<Clause> clauses=null;
-			if(this.cachedClauses.containsKey(state)) {
-				clauses=this.cachedClauses.get(state);
-			}
-			else {
-				PathCondition jbsepd=state.__getPathCondition();
-				clauses=new ArrayList<>(jbsepd.getClauses());
-			}
-			for(Iterator<Clause> it=clauses.iterator();it.hasNext();) {
-				Clause clause=it.next();
-				if((! (clause instanceof ClauseAssume)) && (!(clause instanceof ClauseAssumeReferenceSymbolic))) {
-					it.remove();
-					continue;
-				}
-				if(clause instanceof ClauseAssume) {
-					//primclause.add(clause);
-					Primitive p= ((ClauseAssume)clause).getCondition();
-					if(toIgnore(p)&&check(p)) {
-						// this should never happen
-						throw new UnexpectedInternalException("a pathcondition contains both filtered vars and remained vars");
-					}
-					if(!toIgnore(p)) primclause.add(clause);
-				}
-				else if(clause instanceof ClauseAssumeReferenceSymbolic) {
-					ReferenceSymbolic ref=((ClauseAssumeReferenceSymbolic)clause).getReference();
-					if(ref instanceof ReferenceSymbolicMemberField) {
-						ReferenceSymbolicMemberField memberref=(ReferenceSymbolicMemberField) ref;
-						String fieldname=memberref.getFieldName();
-						if(this.fieldFilter.test(fieldname)==false) continue;
-						//if(fieldname.charAt(0)=='_') continue;
-					}
-					allrefclause.add(clause);
-					if(ref.getStaticType().equals("Ljava/lang/Object;")) {
-						objclause.add(clause);
-						continue;
-					}
-					refclause.add(clause);
-				}
-			}
-			this.cachedClauses.put(state, clauses);
-			
-			Map<ReferenceSymbolic,ObjectH> allref2Obj=this.ref2ObjMap(allrefclause, val2Obj); //map between Reference and ObjectH
+			Map<ReferenceSymbolic,ObjectH> allref2Obj=this.ref2ObjMap(refs, val2Obj); //map between Reference and ObjectH
 			Map<ReferenceSymbolic,ObjectH> ref2Obj=new HashMap<>();
 			Map<ReferenceSymbolic,ObjectH> Oref2Obj=new HashMap<>();
 			
@@ -602,12 +495,24 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			}
 			
 			if(!this.isSat(refclause, ref2Obj)) continue;
-			SMTExpression Objcond=this.getObjcond(objclause, Oref2Obj);
-			if(Objcond==null) continue; 
+			
+			ArrayList<SMTExpression> conds=new ArrayList<>();
+			
+			for(State sstate:sameStates) {
+				SMTExpression cond=this.getPathcond(sc.getst2infos().get(sstate).primcls, ref2Obj, val2Obj);
+				SMTExpression Objcond=this.getObjcond(sc.getst2infos().get(sstate).objcls, Oref2Obj);
+				conds.add(new ApplyExpr(SMTOperator.AND,cond,Objcond));
+			}
+			
+			SMTExpression pathcond=null;
+			if(conds.isEmpty()) pathcond=new BoolConst(true);
+			else pathcond=new ApplyExpr(SMTOperator.OR,conds);
+			
+			//if(Objcond==null) continue; 
 			
 			JBSEHeapTransformer jhs=null;
 			if(!this.cachedTrans.containsKey(state)) {
-				jhs=new JBSEHeapTransformer(this.fieldFilter);
+				jhs=new JBSEHeapTransformer(si.objects,this.fieldFilter);
 				this.cachedTrans.put(state, jhs);
 			}
 			else {
@@ -935,7 +840,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			
 			SMTExpression Objparams=this.objparams(initHeap, margs);
 			
-			pd.pathCond=new ApplyExpr(SMTOperator.AND,this.getPathcond(primclause, ref2Obj,val2Obj),Objparams,Objcond,this.NobjCond(fOobjs, fNobjs));
+			pd.pathCond=new ApplyExpr(SMTOperator.AND,pathcond,Objparams,this.NobjCond(fOobjs, fNobjs));
 			
 			pds.add(pd);
 			
