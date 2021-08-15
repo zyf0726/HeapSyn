@@ -10,7 +10,7 @@ public class Options {
 	
 	private Options() {
 		if (this.useExternalSolver) {
-			this.smtSolver = new ExternalSolver(solverExecPath, solverOutPath);
+			this.smtSolver = new ExternalSolver(solverExecPath, solverTmpDir);
 		} else {
 			this.smtSolver = new Z3JavaAPI();
 		}
@@ -25,7 +25,7 @@ public class Options {
 	
 	// smt solver configurations
 	private String solverExecPath = "libs/z3-4.8.10-x64-win/z3";
-	private String solverOutPath = "tmp/temp.z3";
+	private String solverTmpDir = "tmp/";
 	private boolean useExternalSolver = false;
 	private SMTSolver smtSolver;
 	

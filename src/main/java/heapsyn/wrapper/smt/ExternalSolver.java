@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -27,11 +29,14 @@ import heapsyn.smtlib.Variable;
 
 public class ExternalSolver implements SMTSolver {
 	
-	private File execFile, tmpFile;
+	private File execFile;
+	private Path tmpDirPath;
+	private int counter;
 	
-	public ExternalSolver(String execPath, String tmpPath) {
+	public ExternalSolver(String execPath, String tmpDirPath) {
 		this.execFile = new File(execPath);
-		this.tmpFile = new File(tmpPath);
+		this.tmpDirPath = Paths.get(tmpDirPath);
+		this.counter = 0;
 	}
 	
 	private static SortedSet<UserFunc> getAllUserFunctions(SMTExpression expr) {
@@ -55,15 +60,18 @@ public class ExternalSolver implements SMTSolver {
 	@Override
 	public boolean checkSat(SMTExpression constraint, Map<Variable, Constant> model) {
 		boolean toCheck = (model != null) && (!model.isEmpty());
+		File tmpFile = this.tmpDirPath.resolve(Integer.toHexString(constraint.hashCode())
+				+ "@" + (this.counter++) + ".z3").toFile();
 		long startT = System.currentTimeMillis();
-		boolean isSat = this.__checkSat(constraint, model);
+		boolean isSat = this.__checkSat(constraint, model, tmpFile);
 		long endT = System.currentTimeMillis();
+		tmpFile.delete();
 		System.err.print("INFO: invoke external SMT solver to " + (toCheck ? "check" : "solve"));
 		System.err.println(", elapsed " + (endT - startT) + "ms");
 		return isSat;
 	}
 	
-	private boolean __checkSat(SMTExpression constraint, Map<Variable, Constant> model) {
+	private boolean __checkSat(SMTExpression constraint, Map<Variable, Constant> model, File tmpFile) {
 		if (model != null) {
 			constraint = constraint.getSubstitution(model);
 		}

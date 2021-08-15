@@ -33,7 +33,7 @@ public class SMTSolverTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		z3Java = new Z3JavaAPI();
-		z3Ext = new ExternalSolver("libs/z3-4.8.10-x64-win/z3", "tmp/temp.z3");
+		z3Ext = new ExternalSolver("libs/z3-4.8.10-x64-win/z3", "tmp/");
 	}
 
 	@Before
