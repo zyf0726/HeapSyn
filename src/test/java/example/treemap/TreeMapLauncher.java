@@ -62,11 +62,28 @@ public class TreeMapLauncher {
 	
 	public static void main(String[] args) throws FileNotFoundException, NoSuchMethodException {
 		buildGraph();
+		genTest1();
 		genTest4$1();
 		genTest4$2();
 		genTest5$1();
 		genTest6$1();
 		genTest6$2();
+	}
+	
+	public static void genTest1() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
+		specFty.addRefSpec("t", "root", "null", "size", "size");
+		specFty.addVarSpec("(>= size 0)");
+		
+		specFty.setAccessible("t");
+		Specification spec = specFty.genSpec();
+		
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, treemap);
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTest1: " + (end - start) + "ms\n");
 	}
 	
 	public static void genTest4$1() {
