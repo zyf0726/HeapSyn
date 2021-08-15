@@ -461,7 +461,8 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		Set<State> states=sc.getclusters().keySet();
 		
 		
-		for(State state:states) {
+		for(Iterator<State> sit=states.iterator();sit.hasNext();) {
+			State state=sit.next();
 			StateInfos si=sc.getst2infos().get(state);
 			Set<State> sameStates=sc.getclusters().get(state);
 			
@@ -819,7 +820,11 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					}
 					if(issame==false) break;
 				}
-				if(issame==true) continue; 
+				if(issame==true) {
+					if(pd.retVal==null||(pd.retVal.isVariable()&&!isObj(pd.retVal)))
+							sit.remove();
+					continue; 
+				}
 			}
 			pd.finHeap = symHeap;
 			pd.objSrcMap=objSrcMap;
