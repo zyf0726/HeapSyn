@@ -1,4 +1,4 @@
-package example.bst;
+package example.kiasan.bst;
 
 
 // Basic node stored in unbalanced binary search trees

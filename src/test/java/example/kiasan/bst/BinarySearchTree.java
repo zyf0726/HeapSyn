@@ -1,4 +1,4 @@
-package example.bst;
+package example.kiasan.bst;
 
 import jbse.meta.Analysis;
 
