@@ -22,10 +22,10 @@ import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 
 public class NcllLauncher {
-	private static TestGenerator testGenerator;
-	public List<Statement> stmts;
 	
-	public static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
+	private static TestGenerator testGenerator;
+	
+	private static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
 		parms.setSettingsPath("HexSettings/ncll.jbse");
@@ -68,7 +68,7 @@ public class NcllLauncher {
 		genTest(1, 6); 
 	}
 	
-	public static void genTest1() {
+	private static void genTest1() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH ncll = specFty.mkRefDecl(NodeCachingLinkedList.class, "ncll");
@@ -89,7 +89,7 @@ public class NcllLauncher {
 		System.out.println(">> genTest1: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest2() {
+	private static void genTest2() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH ncll = specFty.mkRefDecl(NodeCachingLinkedList.class, "ncll");
@@ -111,7 +111,7 @@ public class NcllLauncher {
 		System.out.println(">> genTest2: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest3() {
+	private static void genTest3() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH ncll = specFty.mkRefDecl(NodeCachingLinkedList.class, "ncll");
@@ -133,7 +133,7 @@ public class NcllLauncher {
 		System.out.println(">> genTest3: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest4() {
+	private static void genTest4() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH ncll = specFty.mkRefDecl(NodeCachingLinkedList.class, "ncll");
@@ -155,7 +155,7 @@ public class NcllLauncher {
 		System.out.println(">> genTest4: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest(int expcSize, int expcCacheSize) {
+	private static void genTest(int expcSize, int expcCacheSize) {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH ncll = specFty.mkRefDecl(NodeCachingLinkedList.class, "ncll");

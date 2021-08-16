@@ -15,6 +15,7 @@ import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ExistExpr;
+import heapsyn.smtlib.SMTSort;
 import heapsyn.wrapper.symbolic.SpecFactory;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
@@ -24,7 +25,7 @@ public class TreeMapLauncher {
 	
 	private static TestGenerator testGenerator;
 	
-	public static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
+	private static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
 		parms.setSettingsPath("HexSettings/treemap.jbse");
@@ -62,7 +63,7 @@ public class TreeMapLauncher {
 	
 	public static void main(String[] args) throws FileNotFoundException, NoSuchMethodException {
 		buildGraph();
-		genTest1();
+		genTest0();
 		genTest4$1();
 		genTest4$2();
 		genTest5$1();
@@ -70,23 +71,23 @@ public class TreeMapLauncher {
 		genTest6$2();
 	}
 	
-	public static void genTest1() {
+	private static void genTest0() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
+		ObjectH size = specFty.mkVarDecl(SMTSort.INT, "size");
 		specFty.addRefSpec("t", "root", "null", "size", "size");
 		specFty.addVarSpec("(>= size 0)");
-		
 		specFty.setAccessible("t");
 		Specification spec = specFty.genSpec();
 		
-		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, treemap);
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, treemap, size);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
-		System.out.println(">> genTest1: " + (end - start) + "ms\n");
+		System.out.println(">> genTest0: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest4$1() {
+	private static void genTest4$1() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
@@ -107,7 +108,7 @@ public class TreeMapLauncher {
 		System.out.println(">> genTest4$1: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest4$2() {
+	private static void genTest4$2() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
@@ -127,7 +128,7 @@ public class TreeMapLauncher {
 		System.out.println(">> genTest4$2: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest5$1() {
+	private static void genTest5$1() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
@@ -148,7 +149,7 @@ public class TreeMapLauncher {
 		System.out.println(">> genTest5$1: " + (end - start) + "ms\n");
 	}
 
-	public static void genTest6$1() {
+	private static void genTest6$1() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");
@@ -171,7 +172,7 @@ public class TreeMapLauncher {
 		System.out.println(">> genTest6$1: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest6$2() {
+	private static void genTest6$2() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
 		ObjectH treemap = specFty.mkRefDecl(TreeMap.class, "t");

@@ -58,7 +58,7 @@ public class ObjNodeLauncher {
 		genTest4();
 	}
 	
-	public static void genTest1() throws FileNotFoundException {
+	private static void genTest1() throws FileNotFoundException {
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH v2 = specFty.mkRefDecl(Object.class, "v2");
@@ -80,7 +80,7 @@ public class ObjNodeLauncher {
 		System.out.println(">> genTest1: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest2() throws FileNotFoundException {
+	private static void genTest2() throws FileNotFoundException {
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH o2 = specFty.mkRefDecl(ObjNode.class, "o2");
@@ -106,7 +106,7 @@ public class ObjNodeLauncher {
 		System.out.println(">> genTest2: " + (end - start) + "ms\n");
 	}
 
-	public static void genTest3() throws FileNotFoundException {
+	private static void genTest3() throws FileNotFoundException {
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH v = specFty.mkRefDecl(Object.class, "v");
@@ -127,7 +127,7 @@ public class ObjNodeLauncher {
 		System.out.println(">> genTest3: " + (end - start) + "ms\n");
 	}
 	
-	public static void genTest4() throws FileNotFoundException {
+	private static void genTest4() throws FileNotFoundException {
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH o3 = specFty.mkRefDecl(ObjNode.class, "o3");
