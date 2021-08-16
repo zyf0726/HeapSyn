@@ -15,6 +15,7 @@ import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ExistExpr;
+import heapsyn.smtlib.SMTSort;
 import heapsyn.wrapper.symbolic.SpecFactory;
 import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
@@ -29,8 +30,6 @@ public class BstLauncher {
 		parms.setShowOnConsole(true);
 		parms.setHeapScope(BinarySearchTree.class, 1);
 		parms.setHeapScope(BinaryNode.class, 5);
-		parms.setDepthScope(50);
-		parms.setCountScope(600);
 		List<Method> methods = new ArrayList<>();
 		methods.add(BinarySearchTree.class.getMethod("__new__"));
 		methods.add(BinarySearchTree.class.getMethod("insert", int.class));
@@ -59,19 +58,60 @@ public class BstLauncher {
 	public static void main(String[] args) throws FileNotFoundException, NoSuchMethodException {
 		buildGraph();
 		genTest0();
+		genTest3();
+		genTest5();
 	}
 	
 	private static void genTest0() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
-		ObjectH treemap = specFty.mkRefDecl(BinarySearchTree.class, "t");
+		ObjectH bst = specFty.mkRefDecl(BinarySearchTree.class, "t");
 		specFty.addRefSpec("t", "root", "null");
 		specFty.setAccessible("t");
 		Specification spec = specFty.genSpec();
 		
-		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, treemap);
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, bst);
 		Statement.printStatements(stmts, System.out);
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTest0: " + (end - start) + "ms\n");
+	}
+	
+	private static void genTest3() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH bst = specFty.mkRefDecl(BinarySearchTree.class, "t");
+		ObjectH v2 = specFty.mkVarDecl(SMTSort.INT, "v2");
+		ObjectH v3 = specFty.mkVarDecl(SMTSort.INT, "v3");
+		specFty.addRefSpec("t", "root", "o1");
+		specFty.addRefSpec("o1", "left", "o2", "right", "o3");
+		specFty.addRefSpec("o2", "element", "v2");
+		specFty.addRefSpec("o3", "element", "v3");
+		specFty.setAccessible("t");
+		Specification spec = specFty.genSpec();
+		
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, bst, v2, v3);
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTest3: " + (end - start) + "ms\n");
+	}
+	
+	private static void genTest5() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH bst = specFty.mkRefDecl(BinarySearchTree.class, "t");
+		specFty.addRefSpec("t", "root", "o1");
+		specFty.addRefSpec("o1", "left", "o2", "right", "o3");
+		specFty.addRefSpec("o2", "left", "o4", "right", "null", "element", "v2");
+		specFty.addRefSpec("o3", "element", "v3");
+		specFty.addRefSpec("o4", "left", "o5");
+		specFty.addRefSpec("o5", "left", "null", "right", "null");
+		specFty.addVarSpec("(= 2021 (+ v2 v3))");
+		specFty.setAccessible("t");
+		Specification spec = specFty.genSpec();
+		
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, bst);
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTest5: " + (end - start) + "ms\n");
 	}
 }

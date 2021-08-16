@@ -1,4 +1,7 @@
 package example.bst;
+
+import jbse.meta.Analysis;
+
 /*
  * Range
  *
@@ -42,11 +45,11 @@ public class Range {
         return ret;
     }
     Range setLower(int l) {
-        assert isNegativeInfinity || (l>lower);
+    	Analysis.ass3rt(isNegativeInfinity || (l>lower));
         return new Range(upper,l,isPositiveInfinity,false);
     }
     Range setUpper(int u) {
-        assert isPositiveInfinity || (u<upper);
+        Analysis.ass3rt(isPositiveInfinity || (u<upper));
         return new Range(u,lower,false,isNegativeInfinity);
     }
 }
