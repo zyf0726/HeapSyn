@@ -13,12 +13,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Streams;
 
 import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.ExistExpr;
@@ -166,7 +166,7 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		
 		Bijection<ObjectH, ObjectH> initMap = new Bijection<>();
 		initMap.putUV(ObjectH.NULL, ObjectH.NULL);
-		List<ObjectH> sortedAccObjs = Streams.concat(
+		List<ObjectH> sortedAccObjs = Stream.concat(
 				this.accObjs.stream().filter(o -> o.isHeapObject()),
 				this.accObjs.stream().filter(o -> !o.isHeapObject())
 				).collect(Collectors.toList());
@@ -182,7 +182,7 @@ public class SymbolicHeapAsDigraph implements SymbolicHeap {
 		
 		Bijection<ObjectH, ObjectH> initMap = new Bijection<>();
 		initMap.putUV(ObjectH.NULL, ObjectH.NULL);
-		List<ObjectH> sortedAccObjs = Streams.concat(
+		List<ObjectH> sortedAccObjs = Stream.concat(
 				this.accObjs.stream().filter(o -> o.isHeapObject()),
 				this.accObjs.stream().filter(o -> !o.isHeapObject())
 				).collect(Collectors.toList());
