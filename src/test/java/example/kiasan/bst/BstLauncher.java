@@ -28,17 +28,18 @@ public class BstLauncher {
 	private static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
+		parms.setSettingsPath("HexSettings/kiasan.jbse");
 		parms.setHeapScope(BinarySearchTree.class, 1);
 		parms.setHeapScope(BinaryNode.class, 5);
 		List<Method> methods = new ArrayList<>();
 		methods.add(BinarySearchTree.class.getMethod("__new__"));
-		methods.add(BinarySearchTree.class.getMethod("insert", int.class));
-		methods.add(BinarySearchTree.class.getMethod("remove", int.class));
-		methods.add(BinarySearchTree.class.getMethod("findMin"));
-		methods.add(BinarySearchTree.class.getMethod("findMax"));
 		methods.add(BinarySearchTree.class.getMethod("find", int.class));
-		methods.add(BinarySearchTree.class.getMethod("makeEmpty"));
+		methods.add(BinarySearchTree.class.getMethod("findMax"));
+		methods.add(BinarySearchTree.class.getMethod("findMin"));
+		methods.add(BinarySearchTree.class.getMethod("insert", int.class));
 		methods.add(BinarySearchTree.class.getMethod("isEmpty"));
+		methods.add(BinarySearchTree.class.getMethod("makeEmpty"));
+		methods.add(BinarySearchTree.class.getMethod("remove", int.class));
 
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();

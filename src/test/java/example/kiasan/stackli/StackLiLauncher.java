@@ -27,18 +27,18 @@ public class StackLiLauncher {
 	private static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
+		parms.setSettingsPath("HexSettings/kiasan.jbse");
 		parms.setHeapScope(StackLi.class, 1);
 		parms.setHeapScope(ListNode.class, 6);
 		List<Method> methods = new ArrayList<>();
 		methods.add(StackLi.class.getMethod("__new__"));
-		methods.add(StackLi.class.getMethod("isFull"));
 		methods.add(StackLi.class.getMethod("isEmpty"));
+		methods.add(StackLi.class.getMethod("isFull"));
 		methods.add(StackLi.class.getMethod("makeEmpty"));
-		methods.add(StackLi.class.getMethod("isAcyclic"));
-		methods.add(StackLi.class.getMethod("top"));
 		methods.add(StackLi.class.getMethod("pop"));
-		methods.add(StackLi.class.getMethod("topAndPop"));
 		methods.add(StackLi.class.getMethod("push", Object.class));
+		methods.add(StackLi.class.getMethod("top"));
+		methods.add(StackLi.class.getMethod("topAndPop"));
 
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();

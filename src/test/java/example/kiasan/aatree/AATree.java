@@ -1,6 +1,7 @@
 package example.kiasan.aatree;
 
-import jbse.meta.Analysis;
+import example.kiasan.common.Range;
+import example.kiasan.common.Underflow;
 
 // AATree class
 //
@@ -24,7 +25,7 @@ import jbse.meta.Analysis;
  * @author Mark Allen Weiss
  */
 public class AATree {
-   static class AANode {
+  static class AANode {
     int element; // The data in the node
 
     AANode left; // Left child
@@ -111,8 +112,6 @@ public class AATree {
   //@ requires this.wellFormed();
   //@ ensures this.wellFormed();
   public boolean contains(final int x) {
-	Analysis.assume(wellFormed());
-	
     AANode current = this.root;
     this.nullNode.element = x;
 
@@ -139,8 +138,6 @@ public class AATree {
   //@ requires this.wellFormed();
   //@ ensures this.wellFormed();
   public int findMax() {
-	Analysis.assume(wellFormed());
-	
     if (isEmpty()) {
       throw new Underflow();
     }
@@ -162,8 +159,6 @@ public class AATree {
   //@ requires this.wellFormed();
   //@ ensures this.wellFormed();
   public int findMin() {
-	Analysis.assume(wellFormed());
-	
     if (isEmpty()) {
       throw new Underflow();
     }
@@ -186,8 +181,6 @@ public class AATree {
   //@ requires this.wellFormed();
   //@ ensures (this.root != this.nullNode) && this.wellFormed();
   public void insert(final int x) {
-	Analysis.assume(wellFormed());
-	
     this.root = insert(x, this.root);
   }
 
@@ -264,8 +257,6 @@ public class AATree {
   //@ requires (this.lastNode == null) && (this.deletedNode == null) && this.wellFormed();
   //@ ensures this.wellFormed();
   public void remove(final int x) {
-	Analysis.assume(wellFormed());
-	
     this.deletedNode = this.nullNode;
     this.root = remove(x, this.root);
   }

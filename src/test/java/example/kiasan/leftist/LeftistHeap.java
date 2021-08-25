@@ -2,7 +2,7 @@ package example.kiasan.leftist;
 
 import java.util.LinkedList;
 
-import jbse.meta.Analysis;
+import example.kiasan.common.Underflow;
 
 // LeftistHeap class
 //
@@ -99,8 +99,6 @@ public class LeftistHeap {
   //@ requires this.wellFormed();
   //@ ensures this.wellFormed();
   public int deleteMin() {
-	Analysis.assume(wellFormed());
-	
     if (isEmpty()) {
       throw new Underflow();
     }
@@ -134,8 +132,6 @@ public class LeftistHeap {
   //@ requires this.wellFormed();
   //@ ensures (this.root != null) && this.wellFormed();
   public void insert(final int x) {
-	Analysis.assume(wellFormed());
-	
     this.root = merge(new LeftistNode(x), this.root);
   }
 
@@ -206,8 +202,6 @@ public class LeftistHeap {
   //@ requires this.merge_preCondition(rhs);
   //@ ensures this.wellFormed();
   public void merge(final LeftistHeap rhs) {
-	Analysis.assume(merge_preCondition(rhs));
-	
     if (this == rhs) {
       return;
     }
@@ -234,7 +228,8 @@ public class LeftistHeap {
     }
   }
 
-  boolean merge_preCondition(final LeftistHeap rhs) {
+/*
+  private boolean merge_preCondition(final LeftistHeap rhs) {
     if (rhs == null) {
       return false;
     }
@@ -257,6 +252,7 @@ public class LeftistHeap {
     }
     return true;
   }
+*/
 
   /**
    * Internal method to merge two roots. Assumes trees are not empty, and h1's

@@ -28,6 +28,7 @@ public class LeftistLauncher {
 	private static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
+		parms.setSettingsPath("HexSettings/kiasan.jbse");
 		parms.setHeapScope(LeftistHeap.class, 2);
 		parms.setHeapScope(LeftistHeap.LeftistNode.class, 6);
 		List<Method> methods = new ArrayList<>();

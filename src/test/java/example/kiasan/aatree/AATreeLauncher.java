@@ -28,8 +28,9 @@ public class AATreeLauncher {
 	private static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
+		parms.setSettingsPath("HexSettings/kiasan.jbse");
 		parms.setHeapScope(AATree.class, 1);
-		parms.setHeapScope(AATree.AANode.class, 6);
+		parms.setHeapScope(AATree.AANode.class, 4);
 		List<Method> methods = new ArrayList<>();
 		methods.add(AATree.class.getMethod("__new__"));
 		methods.add(AATree.class.getMethod("contains", int.class));
@@ -44,7 +45,7 @@ public class AATreeLauncher {
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(AATree.class, 1);
-		gb.setHeapScope(AATree.AANode.class, 6);
+		gb.setHeapScope(AATree.AANode.class, 4);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
 		System.out.println("number of all heaps = " + heaps.size());
@@ -58,7 +59,8 @@ public class AATreeLauncher {
 	public static void main(String[] args) throws FileNotFoundException, NoSuchMethodException {
 		buildGraph();
 		genTestEasy();
-		genTestHard();
+		genTestMedium();
+		// genTestHard();
 	}
 	
 	private static void genTestEasy() {
@@ -79,6 +81,33 @@ public class AATreeLauncher {
 		System.out.println(">> genTestEasy: " + (end - start) + "ms\n");
 	}
 	
+	private static void genTestMedium() {
+		long start = System.currentTimeMillis();
+		SpecFactory specFty = new SpecFactory();
+		ObjectH aatree = specFty.mkRefDecl(AATree.class, "t");
+		ObjectH l0 = specFty.mkVarDecl(SMTSort.INT, "l0");
+		ObjectH l1 = specFty.mkVarDecl(SMTSort.INT, "l1");
+		ObjectH l2 = specFty.mkVarDecl(SMTSort.INT, "l2");
+		ObjectH v0 = specFty.mkVarDecl(SMTSort.INT, "v0");
+		ObjectH v1 = specFty.mkVarDecl(SMTSort.INT, "v1");
+		ObjectH v2 = specFty.mkVarDecl(SMTSort.INT, "v2");
+		specFty.addRefSpec("t", "root", "o0", "nullNode", "onull");
+		specFty.addRefSpec("o0", "left", "o1", "right", "o2", "level", "l0", "element", "v0");
+		specFty.addRefSpec("o1", "level", "l1", "element", "v1");
+		specFty.addRefSpec("o2", "level", "l2", "element", "v2");
+		specFty.addRefSpec("onull", "left", "onull", "right", "onull");
+		specFty.addVarSpec("(>= (+ v0 v2) 25)");
+		specFty.setAccessible("t");
+		Specification spec = specFty.genSpec();
+		
+		List<Statement> stmts = testGenerator.generateTestWithSpec(spec, aatree,
+				v0, v1, v2, l0, l1, l2);
+		Statement.printStatements(stmts, System.out);
+		long end = System.currentTimeMillis();
+		System.out.println(">> genTestMedium: " + (end - start) + "ms\n");
+	}
+	
+	/*
 	private static void genTestHard() {
 		long start = System.currentTimeMillis();
 		SpecFactory specFty = new SpecFactory();
@@ -112,5 +141,6 @@ public class AATreeLauncher {
 		long end = System.currentTimeMillis();
 		System.out.println(">> genTestHard: " + (end - start) + "ms\n");
 	}
+	*/
 	
 }
