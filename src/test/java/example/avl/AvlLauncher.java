@@ -33,7 +33,7 @@ public class AvlLauncher {
 		gb.setHeapScope(AvlTree.class, 1);
 		gb.setHeapScope(AvlNode.class, 6);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
-		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
+		List<WrappedHeap> heaps = gb.buildGraph(initHeap, true);
 		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/avl.txt"));
 		testGenerator = new TestGenerator(heaps);
 		long end = System.currentTimeMillis();
@@ -43,7 +43,8 @@ public class AvlLauncher {
 	public static void main(String[] args) throws FileNotFoundException, NoSuchMethodException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
-		parms.setSettingsPath("HEXsettings/avltree.jbse");
+		parms.setSettingsPath("HEXsettings/avltree-partial.jbse");
+		// parms.setSettingsPath("HEXsettings/avltree-accurate.jbse");
 		parms.setHeapScope(AvlTree.class, 1);
 		parms.setHeapScope(AvlNode.class, 6);
 		List<Method> methods = new ArrayList<>();

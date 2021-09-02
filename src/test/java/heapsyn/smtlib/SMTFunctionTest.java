@@ -27,7 +27,7 @@ public class SMTFunctionTest {
 		bv2 = new BoolVar("bv2");
 		iv3 = new IntVar("iv3");
 		// uf0(iv1, iv3) := false
-		uf0 = new UserFunc("UF0", Arrays.asList(iv1, iv3), SMTSort.BOOL, BoolConst.DEFAULT);
+		uf0 = new UserFunc("UF0", Arrays.asList(iv1, iv3), SMTSort.BOOL, BoolConst.FALSE);
 		// e1 := (iv1 * iv1) != (-iv3)
 		e1 = new ApplyExpr(SMTOperator.BIN_NE,
 				new ApplyExpr(SMTOperator.MUL, iv1, iv1),

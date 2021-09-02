@@ -18,6 +18,7 @@ import com.google.common.collect.Lists;
 
 import heapsyn.algo.WrappedHeap.BackwardRecord;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
+import heapsyn.common.settings.Options;
 import heapsyn.heap.ActionIfFound;
 import heapsyn.heap.ClassH;
 import heapsyn.heap.ObjectH;
@@ -27,6 +28,7 @@ import heapsyn.smtlib.IntVar;
 import heapsyn.util.Bijection;
 import heapsyn.util.graph.Edge;
 import heapsyn.util.graph.GraphAnalyzer;
+import heapsyn.wrapper.smt.SMTSolver;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 
@@ -103,9 +105,13 @@ public class HeapTransGraphBuilder {
 		return newHeap.isActive();
 	}
 	
-	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap) {
+	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap, boolean simplify) {
 		expandHeaps(symHeap);
-		computeConstraints();
+		if (simplify) {
+			computeConstraints(Options.I().getSMTSolver());
+		} else {
+			computeConstraints(null);
+		}
 		return ImmutableList.copyOf(this.allHeaps);
 	}
 	
@@ -125,10 +131,10 @@ public class HeapTransGraphBuilder {
 		return ImmutableList.copyOf(this.allHeaps);
 	}
 	
-	private void computeConstraintsInSCC(List<WrappedHeap> sccHeaps) {
+	private void computeConstraintsInSCC(List<WrappedHeap> sccHeaps, SMTSolver checker) {
 		if (sccHeaps.size() <= 1) {
 			for (WrappedHeap heap : sccHeaps)
-				heap.recomputeConstraint();
+				heap.recomputeConstraint(checker);
 		} else {
 			final int NROUND = 2;  // TODO 
 			for (int round = 0; round < NROUND; ++round) {
@@ -136,15 +142,15 @@ public class HeapTransGraphBuilder {
 					if (!heap.isActive()) continue;
 					for (BackwardRecord br : heap.getBackwardRecords()) {
 						if (br.oriHeap.isSubsumed())
-							br.oriHeap.recomputeConstraint();
+							br.oriHeap.recomputeConstraint(checker);
 					}
-					heap.recomputeConstraint();
+					heap.recomputeConstraint(checker);
 				}
 			}
 		}
 	}
 	
-	private void computeConstraints() {
+	private void computeConstraints(SMTSolver checker) {
 		Collection<Edge<WrappedHeap, Integer>> trans = new ArrayList<>();
 		for (WrappedHeap heap : this.allHeaps) {
 			for (BackwardRecord br : heap.getBackwardRecords())
@@ -162,7 +168,7 @@ public class HeapTransGraphBuilder {
 					this.GA.getSCCIdentifier(this.allHeaps.get(sccEnd)) == sccID) {
 				++sccEnd;
 			}
-			computeConstraintsInSCC(this.allHeaps.subList(sccBegin, sccEnd));
+			computeConstraintsInSCC(this.allHeaps.subList(sccBegin, sccEnd), checker);
 			sccBegin = sccEnd;
 		}
 	}

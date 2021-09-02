@@ -47,7 +47,7 @@ public class BstLauncher {
 		gb.setHeapScope(BinarySearchTree.class, 1);
 		gb.setHeapScope(BinaryNode.class, 5);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
-		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
+		List<WrappedHeap> heaps = gb.buildGraph(initHeap, true);
 		System.out.println("number of all heaps = " + heaps.size());
 		System.out.println("number of symbolic execution = " + executor.getExecutionCount());
 		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/bst.txt"));

@@ -41,15 +41,19 @@ public class SMTExpressionTest {
 
 	@Test
 	public void testConstant() {
-		Constant bcFalse = BoolConst.DEFAULT;
+		Constant bcFalse = BoolConst.FALSE;
+		Constant bcTrue = BoolConst.TRUE;
+		Constant bcDefault = BoolConst.DEFAULT;
 		Constant icZero = IntConst.DEFAULT;
 		Constant icNeg = new IntConst(-7);
-		assertEquals(Collections.emptySet(), bcFalse.getFreeVariables());
+		assertEquals(Collections.emptySet(), bcTrue.getFreeVariables());
 		assertEquals(Collections.emptySet(), icZero.getUserFunctions());
 		assertEquals(icNeg, icNeg.getSubstitution(Collections.emptyMap()));
 		assertEquals(SMTSort.BOOL, bcFalse.getSMTSort());
 		assertEquals(SMTSort.INT, icZero.getSMTSort());
 		assertEquals("false", bcFalse.toSMTString());
+		assertEquals("true", bcTrue.toSMTString());
+		assertEquals("false", bcDefault.toSMTString());
 		assertEquals("0", icZero.toSMTString());
 		assertEquals("-7", icNeg.toSMTString());
 	}

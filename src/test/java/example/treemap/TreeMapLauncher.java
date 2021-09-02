@@ -52,7 +52,7 @@ public class TreeMapLauncher {
 		gb.setHeapScope(TreeMap.class, 1);
 		gb.setHeapScope(TreeMap.Entry.class, 6);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
-		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
+		List<WrappedHeap> heaps = gb.buildGraph(initHeap, true);
 		System.out.println("number of all heaps = " + heaps.size());
 		System.out.println("number of symbolic execution = " + executor.getExecutionCount());
 		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/treemap.txt"));

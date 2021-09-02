@@ -263,6 +263,9 @@ public class WrappedHeap {
 
 	// recompute the constraint of this heap
 	public void recomputeConstraint() {
+		recomputeConstraint(null);
+	}
+	public void recomputeConstraint(SMTSolver checker) {
 		if (this.rcdBackwards.isEmpty())
 			return;
 		
@@ -290,11 +293,15 @@ public class WrappedHeap {
 			}
 			ExistExpr guardCond = new ExistExpr(boundVars,
 					new ApplyExpr(SMTOperator.AND, andClauses));
-			br.guardCondList.add(guardCond);
 			assert(Sets.difference(
 					guardCond.getBody().getFreeVariables(),
 					guardCond.getBoundVariables())
 					.immutableCopy().equals(ImmutableSet.copyOf(this.heap.getVariables())));
+			if (checker == null || checker.checkSat(guardCond.getBody(), null)) {
+				br.guardCondList.add(guardCond);
+			} else {
+				br.guardCondList.add(new ExistExpr(boundVars, BoolConst.FALSE));
+			}
 		}
 		
 		Map<Variable, Variable> newRenameMap = new HashMap<>();

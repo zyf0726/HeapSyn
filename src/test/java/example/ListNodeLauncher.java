@@ -29,7 +29,7 @@ public class ListNodeLauncher {
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(ListNode.class, 5);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
-		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
+		List<WrappedHeap> heaps = gb.buildGraph(initHeap, false);
 		testGenerator = new TestGenerator(heaps);
 		System.out.println("number of all heaps = " + heaps.size());
 		System.out.println("number of symbolic execution = " + executor.getExecutionCount());

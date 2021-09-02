@@ -146,7 +146,7 @@ public class SMTSolverTest {
 	}
 	
 	private void mkTest4(SMTSolver z3) {
-		UserFunc f = new UserFunc(Arrays.asList(bv[0], iv[0]), SMTSort.BOOL, BoolConst.DEFAULT);
+		UserFunc f = new UserFunc(Arrays.asList(bv[0], iv[0]), SMTSort.BOOL, BoolConst.FALSE);
 		SMTExpression e = new ApplyExpr(SMTOperator.OR, bv[0],
 				new ApplyExpr(f, bv[1], iv[0]));
 		assertTrue(z3.checkSat(e, model));

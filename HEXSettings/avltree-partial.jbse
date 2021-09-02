@@ -1,0 +1,13 @@
+resolve begin
+
+-- root/left/right entries expand or are null
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)* instanceof example/avl/AvlNode aliases nothing;
+
+-- wellConnected
+{R_ANY}.example/avl/AvlTree:root.example/avl/AvlNode:parent instanceof example/avl/AvlNode expands to nothing;
+{R_ANY}.example/avl/AvlTree:root.example/avl/AvlNode:parent instanceof example/avl/AvlNode aliases nothing;
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)+.example/avl/AvlNode:parent instanceof example/avl/AvlNode not null;
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)+.example/avl/AvlNode:parent instanceof example/avl/AvlNode expands to nothing;
+{R_ANY}.example/avl/AvlTree:root(.example/avl/AvlNode:left|.example/avl/AvlNode:right)+.example/avl/AvlNode:parent instanceof example/avl/AvlNode aliases target {$REF}.{UP}.{UP};
+
+resolve end

@@ -31,7 +31,7 @@ public class ObjNodeLauncher {
 		gb.setHeapScope(ObjNode.class, 3);
 		gb.setHeapScope(Object.class, 5);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
-		List<WrappedHeap> heaps = gb.buildGraph(initHeap);
+		List<WrappedHeap> heaps = gb.buildGraph(initHeap, false);
 		if (outfile != null) {
 			HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream(outfile));
 		}

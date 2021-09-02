@@ -207,7 +207,7 @@ public class TestGeneratorTest {
 				)
 		);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
-		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap);
+		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap, false);
 		TestGenerator testgen = new TestGenerator(genHeaps);
 		
 		IntVar y = new IntVar();
