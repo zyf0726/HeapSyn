@@ -28,7 +28,8 @@ public class NcllLauncher {
 	private static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
-		parms.setSettingsPath("HexSettings/ncll.jbse");
+		parms.setSettingsPath("HexSettings/ncll-partial.jbse");
+		// parms.setSettingsPath("HexSettings/ncll-accurate.jbse");
 		parms.setHeapScope(NodeCachingLinkedList.class, 1);
 		parms.setHeapScope(NodeCachingLinkedList.LinkedListNode.class, 4);
 		parms.setDepthScope(50);

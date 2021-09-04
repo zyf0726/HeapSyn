@@ -1,0 +1,46 @@
+resolve begin
+
+------------------------------------------------- 
+-- representation invariants for this.l
+
+-- for all the linked list nodes e, e.value is not a linked list node
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next|.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)+.example/ncll/NodeCachingLinkedList$LinkedListNode:value instanceof java/lang/Object aliases target {ROOT}:(?!{°}*example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next|.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)*{EOL}){°}*;
+
+-- defines the NodeCachingLinkedList._owner instrumentation field necessary to triggers
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next|.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)*.example/ncll/NodeCachingLinkedList$LinkedListNode:_owner instanceof example/ncll/NodeCachingLinkedList not null;
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next|.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)*.example/ncll/NodeCachingLinkedList$LinkedListNode:_owner instanceof example/ncll/NodeCachingLinkedList expands to nothing;
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next|.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)*.example/ncll/NodeCachingLinkedList$LinkedListNode:_owner instanceof example/ncll/NodeCachingLinkedList aliases target {$R_ANY};
+
+-- list header must exist and be distinct from other nodes
+{R_ANY}.example/ncll/NodeCachingLinkedList:header instanceof example/ncll/NodeCachingLinkedList$LinkedListNode not null;
+{R_ANY}.example/ncll/NodeCachingLinkedList:header instanceof example/ncll/NodeCachingLinkedList$LinkedListNode aliases nothing;
+
+-- list header stores no data
+{R_ANY}.example/ncll/NodeCachingLinkedList:header.example/ncll/NodeCachingLinkedList$LinkedListNode:value instanceof java/lang/Object expands to nothing;
+{R_ANY}.example/ncll/NodeCachingLinkedList:header.example/ncll/NodeCachingLinkedList$LinkedListNode:value instanceof java/lang/Object aliases nothing;
+
+-- all the noncached nodes must have a next and a previous
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next|.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)* instanceof example/ncll/NodeCachingLinkedList$LinkedListNode not null;
+
+-- the size of a list must be greater than the number of noncached nodes (by trigger)
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next)+ instanceof example/ncll/NodeCachingLinkedList$LinkedListNode expands to instanceof example/ncll/NodeCachingLinkedList$LinkedListNode triggers example/ncll/NodeCachingLinkedList$LinkedListNode:(Lexample/ncll/NodeCachingLinkedList$LinkedListNode;)V:_got_LinkedListNode_nonroot:{$REF};
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)+ instanceof example/ncll/NodeCachingLinkedList$LinkedListNode expands to instanceof example/ncll/NodeCachingLinkedList$LinkedListNode triggers example/ncll/NodeCachingLinkedList$LinkedListNode:(Lexample/ncll/NodeCachingLinkedList$LinkedListNode;)V:_got_LinkedListNode_nonroot:{$REF};
+
+-- the rightmost noncached node can be resolved by alias to the leftmost one and vice versa;
+-- in this case the size of the list is exactly the number of noncached nodes (by trigger)
+-- (note that these rules include the degenerate empty list case header.next == header.prev == header);
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next)* instanceof example/ncll/NodeCachingLinkedList$LinkedListNode aliases target {MAX}{$R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)* triggers example/ncll/NodeCachingLinkedList$LinkedListNode:(Lexample/ncll/NodeCachingLinkedList$LinkedListNode;)V:_handleListClosure:{$REF};
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)* instanceof example/ncll/NodeCachingLinkedList$LinkedListNode aliases target {MAX}{$R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next)* triggers example/ncll/NodeCachingLinkedList$LinkedListNode:(Lexample/ncll/NodeCachingLinkedList$LinkedListNode;)V:_handleListClosure:{$REF};
+
+-- for all the noncached nodes e it must be e.next.previous == e and e.previous.next == e
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next)+.example/ncll/NodeCachingLinkedList$LinkedListNode:previous instanceof example/ncll/NodeCachingLinkedList$LinkedListNode expands to nothing;
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:next)+.example/ncll/NodeCachingLinkedList$LinkedListNode:previous instanceof example/ncll/NodeCachingLinkedList$LinkedListNode aliases target {$REF}.{UP}.{UP};
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)+.example/ncll/NodeCachingLinkedList$LinkedListNode:next instanceof example/ncll/NodeCachingLinkedList$LinkedListNode expands to nothing;
+{R_ANY}.example/ncll/NodeCachingLinkedList:header(.example/ncll/NodeCachingLinkedList$LinkedListNode:previous)+.example/ncll/NodeCachingLinkedList$LinkedListNode:next instanceof example/ncll/NodeCachingLinkedList$LinkedListNode aliases target {$REF}.{UP}.{UP};
+
+resolve end
+
+trigger begin
+-- list initialization trigger
+instanceof example/ncll/NodeCachingLinkedList expands to instanceof example/ncll/NodeCachingLinkedList triggers example/ncll/NodeCachingLinkedList$HEXTriggers:(Lexample/ncll/NodeCachingLinkedList;)V:_got_NodeCachingLinkedList_noinv:{$REF};
+trigger end
