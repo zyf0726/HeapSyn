@@ -132,20 +132,15 @@ public class HeapTransGraphBuilder {
 	}
 	
 	private void computeConstraintsInSCC(List<WrappedHeap> sccHeaps, SMTSolver checker) {
-		if (sccHeaps.size() <= 1) {
-			for (WrappedHeap heap : sccHeaps)
-				heap.recomputeConstraint(checker);
-		} else {
-			final int NROUND = 2;  // TODO 
-			for (int round = 0; round < NROUND; ++round) {
-				for (WrappedHeap heap : sccHeaps) {
-					if (!heap.isActive()) continue;
-					for (BackwardRecord br : heap.getBackwardRecords()) {
-						if (br.oriHeap.isSubsumed())
-							br.oriHeap.recomputeConstraint(checker);
-					}
-					heap.recomputeConstraint(checker);
+		final int NROUND = (sccHeaps.size() > 1) ? 2 : 1;  // TODO 
+		for (int round = 0; round < NROUND; ++round) {
+			for (WrappedHeap heap : sccHeaps) {
+				if (!heap.isActive()) continue;
+				for (BackwardRecord br : heap.getBackwardRecords()) {
+					if (br.oriHeap.isSubsumed())
+						br.oriHeap.recomputeConstraint();
 				}
+				heap.recomputeConstraint(checker);
 			}
 		}
 	}
