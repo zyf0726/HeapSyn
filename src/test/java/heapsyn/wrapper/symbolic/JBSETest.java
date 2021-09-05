@@ -84,7 +84,7 @@ public class JBSETest {
     	final String METHOD_CLASS		= "example/ListNode"; 
     	final String METHOD_DESCRIPTOR	= "(I)Z"; 
     	final String METHOD_NAME		= "setElem";
-    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-ListNode.txt";
+    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-ListNode.out";
     	
 		makeTest(METHOD_CLASS, METHOD_DESCRIPTOR, METHOD_NAME,
 				OUTPUT_FILE_PATH, null, null);
@@ -95,7 +95,7 @@ public class JBSETest {
     	final String METHOD_CLASS		= "example/kiasan/aatree/AATree"; 
     	final String METHOD_DESCRIPTOR	= "(I)V"; 
     	final String METHOD_NAME		= "remove";
-    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-AATree.txt";
+    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-AATree.out";
     	final String SETTINGS_FILE		= "HEXsettings/kiasan.jbse";
     	
 		makeTest(METHOD_CLASS, METHOD_DESCRIPTOR, METHOD_NAME,
@@ -108,7 +108,7 @@ public class JBSETest {
     	final String METHOD_CLASS		= "example/kiasan/bst/BinarySearchTree"; 
     	final String METHOD_DESCRIPTOR	= "(I)V"; 
     	final String METHOD_NAME		= "remove";
-    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-BST.txt";
+    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-BST.out";
     	final String SETTINGS_FILE		= "HEXsettings/kiasan.jbse";
     	
     	makeTest(METHOD_CLASS, METHOD_DESCRIPTOR, METHOD_NAME,
@@ -121,7 +121,7 @@ public class JBSETest {
     	final String METHOD_CLASS		= "example/kiasan/leftist/LeftistHeap"; 
     	final String METHOD_DESCRIPTOR	= "(Lexample/kiasan/leftist/LeftistHeap;)V"; 
     	final String METHOD_NAME		= "merge";
-    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-Leftist.txt";
+    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-Leftist.out";
     	final String SETTINGS_FILE		= "HEXsettings/kiasan.jbse";
     	
 		makeTest(METHOD_CLASS, METHOD_DESCRIPTOR, METHOD_NAME,
@@ -134,7 +134,7 @@ public class JBSETest {
     	final String METHOD_CLASS		= "example/kiasan/stackli/StackLi"; 
     	final String METHOD_DESCRIPTOR	= "()Ljava/lang/Object;"; 
     	final String METHOD_NAME		= "topAndPop";
-    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-StackLi.txt";
+    	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-StackLi.out";
     	final String SETTINGS_FILE		= "HEXsettings/kiasan.jbse";
     	
 		makeTest(METHOD_CLASS, METHOD_DESCRIPTOR, METHOD_NAME,
