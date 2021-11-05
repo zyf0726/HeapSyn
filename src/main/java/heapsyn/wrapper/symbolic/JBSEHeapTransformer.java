@@ -5,8 +5,11 @@ package heapsyn.wrapper.symbolic;
  */
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
@@ -132,21 +135,45 @@ public class JBSEHeapTransformer {
 			HeapObjekt ok = entry.getKey();
 			ObjectH oh = entry.getValue();
 			Map<FieldH, ObjectH> fieldValMap = new HashMap<>();
+			String clsName = ok.getType().getClassName().replace('/', '.');
+			Class<?> javaClass = null;
+			try {
+				javaClass = Class.forName(clsName);
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			List<Field> fieldList = new ArrayList<>() ;
+			Class<?> tempClass = javaClass;
+			while (tempClass != null) {
+			      fieldList.addAll(Arrays.asList(tempClass .getDeclaredFields()));
+			      tempClass = tempClass.getSuperclass();
+			}
 			for (Variable var : ok.fields().values()) {
 				if(this.fieldFilter.test(var.getName())==false) continue;
 				Field javaField=null;
 				FieldH field = null;
-				String clsName="";
 				try {
-					clsName = ok.getType().getClassName().replace('/', '.');
-					Class<?> javaClass = Class.forName(clsName);
-					javaField = javaClass.getDeclaredField(var.getName());
+					for(Field f:fieldList) {
+						if(f.getName().equals(var.getName())) {
+							javaField=f;
+							break;
+						}
+					}
+					if(javaField==null) throw new NoSuchFieldException();
 					field = FieldH.of(javaField);
-				} catch (NoSuchFieldException | SecurityException | ClassNotFoundException e) {
-					// this should never happen
+				} catch (NoSuchFieldException e) {
+					//System.out.println(clsName);
 					return false;
-					//throw new UnexpectedInternalException(e);
 				}
+//				try {
+//					javaField = javaClass.getDeclaredField(var.getName());
+//					field = FieldH.of(javaField);
+//				} catch (NoSuchFieldException | SecurityException | ClassNotFoundException e) {
+//					// this should never happen
+//					return false;
+//					//throw new UnexpectedInternalException(e);
+//				}
 				Value varValue = var.getValue();
 				if (varValue instanceof ReferenceConcrete) {
 					ReferenceConcrete rc = (ReferenceConcrete) varValue;
