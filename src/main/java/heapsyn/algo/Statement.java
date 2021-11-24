@@ -142,7 +142,7 @@ public class Statement {
 				stmt.objArgs.remove(0);
 			}
 			else {
-				Class clz=method.getDeclaringClass();
+				Class<?> clz=method.getDeclaringClass();
 				sb.append(clz.getName()+ ".");
 			}
 			sb.append(method.getName() + "(");

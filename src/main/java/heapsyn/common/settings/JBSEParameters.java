@@ -17,12 +17,12 @@ import jbse.apps.settings.SettingsReader;
 
 public class JBSEParameters {
 	
-//	private static final String Z3_PATH			=	"libs/z3-4.8.10-x64-win/z3.exe";
-//	private static final String JBSE_HOME		=	"jbse/";
-//	private static final String JBSE_CLASSPATH	= 	JBSE_HOME + "build/classes/java/main";
-	private static final String Z3_PATH			=	"C:/junior(1)/HeapSyn/libs/z3-4.8.10-x64-win/z3.exe";
-	private static final String JBSE_HOME		=	"C:/junior(1)/HeapSyn/jbse/";
-	private static final String JBSE_CLASSPATH = "C:\\junior(1)\\HeapSyn\\build\\libs\\HeapSyn-0.10.0-SNAPSHOT-all.jar";
+	private static final String Z3_PATH			=	"libs/z3-4.8.10-x64-win/z3.exe";
+	private static final String JBSE_HOME		=	"jbse/";
+	private static final String JBSE_CLASSPATH	= 	JBSE_HOME + "build/classes/java/main";
+//	private static final String Z3_PATH			=	"C:/junior(1)/HeapSyn/libs/z3-4.8.10-x64-win/z3.exe";
+//	private static final String JBSE_HOME		=	"C:/junior(1)/HeapSyn/jbse/";
+//	private static final String JBSE_CLASSPATH = "C:\\junior(1)\\HeapSyn\\build\\libs\\HeapSyn-0.10.0-SNAPSHOT-all.jar";
 	private static final String JBSE_SOURCEPATH	=	JBSE_HOME + "src/main/java/";
 	private static final String JRE_SOURCEPATH	=	System.getProperty("java.home", "") + "src.zip";
 	
