@@ -117,7 +117,7 @@ public class JBSEHeapTransformer {
 		RefObjCon=new HashMap<>();
 		hos=new HashMap<>();
 		nullos=new HashSet<>();
-		PathCondition pathCond=state.__getPathCondition();
+		PathCondition pathCond=state.getRawPathCondition();
 		
 		Set<HeapObjekt> oos=new HashSet<>();
 		

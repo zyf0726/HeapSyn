@@ -449,7 +449,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 //			p.setCountScope(6000);
 			Run r=new Run(p);
 			r.run();
-			HashSet<State> executed = r.getExecuted();
+			HashSet<State> executed = r.getPathsExecuted();
 			//this.cachedJBSE.put(method, executed);
 			StateConverger sc=new StateConverger(executed,this.fieldFilter);
 			sc.converge();
@@ -468,7 +468,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			
 			PathDescriptor pd=new PathDescriptor();
 			
-			Value[] vargs=state.getVargs();
+			Value[] vargs=state.getValueArgs();
 			ArrayList<ObjectH> margs=mInvoke.getInvokeArguments();
 			
 			Map<Value,ObjectH> val2Obj=new HashMap<>();

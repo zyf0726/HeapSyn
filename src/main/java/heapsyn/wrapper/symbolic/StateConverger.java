@@ -149,7 +149,7 @@ public class StateConverger {
 			
 		}; */
 		for(State state:states) {
-			PathCondition jbsepd=state.__getPathCondition();
+			PathCondition jbsepd=state.getRawPathCondition();
 			List<Clause> clauses=new ArrayList<>(jbsepd.getClauses());
 			
 			ArrayList<ClauseAssumeReferenceSymbolic> refclause=new ArrayList<>(); // clauses about reference

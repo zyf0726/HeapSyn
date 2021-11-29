@@ -9,7 +9,7 @@
 plugins {
     // Apply the java-library plugin to add support for Java Library
     id 'java-library'
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 def javaVersion = JavaLanguageVersion.of(8)
@@ -47,5 +47,4 @@ version = '0.10.0-SNAPSHOT'
 
 shadowJar {
 	relocate 'jbse', 'heapSyn.jbse'
-	
 }
