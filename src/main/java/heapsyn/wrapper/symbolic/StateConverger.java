@@ -42,6 +42,8 @@ import jbse.val.ReferenceSymbolicMemberField;
 import jbse.val.Simplex;
 import jbse.val.WideningConversion;
 
+// TODO refactor
+
 public class StateConverger {
 	
 	static class StateInfos {

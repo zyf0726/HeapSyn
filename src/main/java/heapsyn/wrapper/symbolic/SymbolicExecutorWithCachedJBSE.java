@@ -59,6 +59,8 @@ import jbse.val.Simplex;
 import jbse.val.Value;
 import jbse.val.WideningConversion;
 
+// TODO refactor
+
 public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	
 	private static Map<Operator,SMTOperator> opMap=new HashMap<>();

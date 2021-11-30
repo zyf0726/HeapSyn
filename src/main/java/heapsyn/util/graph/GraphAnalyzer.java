@@ -12,6 +12,8 @@ import java.util.TreeMap;
 
 import com.google.common.base.Preconditions;
 
+// TODO refactor using ValueGraph
+
 public class GraphAnalyzer<N, L extends Comparable<L>> {
 	
 	private ArrayList<N> allNodes;

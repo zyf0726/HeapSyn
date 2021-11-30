@@ -13,5 +13,4 @@ public interface SymbolicExecutor {
 	
 	public Collection<PathDescriptor> executeMethodUnderTest(MethodInvoke mInvoke);
 
-	
 }

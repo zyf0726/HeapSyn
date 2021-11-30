@@ -32,6 +32,8 @@ import jbse.val.ReferenceConcrete;
 import jbse.val.ReferenceSymbolic;
 import jbse.val.Value;
 
+// TODO refactor
+
 public class JBSEHeapTransformer {
 	
 	public static ObjectH BLANK_OBJ = new ObjectH(ClassH.of(JBSEHeapTransformer.class), null);

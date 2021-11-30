@@ -6,6 +6,8 @@ import java.util.Map;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
+// FIXME replace this class by BiMap
+
 public class Bijection<U, V> {
 	
 	private Map<U, V> mapU2V;
