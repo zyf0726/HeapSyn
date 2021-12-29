@@ -2,5 +2,6 @@ package heapsyn.algo;
 
 public enum HeapStatus {
 	ACTIVE,
-	SUBSUMED
+	SUBSUMED,
+	UNSAT
 }

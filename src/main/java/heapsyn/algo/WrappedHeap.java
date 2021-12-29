@@ -62,6 +62,14 @@ public class WrappedHeap {
 		}
 	}
 	
+	public int __debugGetID() {
+		return this.__heapID;
+	}
+	
+	public String __debugGetName() {
+		return this.__heapName;
+	}
+	
 	public void __debugPrintOut(PrintStream ps) {
 		ps.print(">> Heap " + __heapName + ": " + status + ", ");
 		if (heap.getConstraint() != null) {
@@ -150,22 +158,26 @@ public class WrappedHeap {
 			}
 		}
 		for (ForwardRecord fr : rcdForwards) {
-			ps.print("generate " + fr.finHeap.__heapName + " by invoking ");
-			ps.print(fr.mInvoke.getJavaMethod().getName() + "(");
-			StringBuilder sb = new StringBuilder();
-			for (ObjectH arg : fr.mInvoke.getInvokeArguments()) {
-				if (arg.isHeapObject()) {
-					sb.append(__objNameMap.get(arg) + ", ");
-				} else {
-					sb.append(arg.getVariable().toSMTString() + ", ");
-				}
-			}
-			sb.delete(Math.max(0, sb.length() - 2), sb.length());
-			ps.print(sb.toString() + "), ");
-			if (fr.pathCond != null) {
-				ps.println("path condition is " + fr.pathCond.toSMTString());
+			if (fr.mInvoke == null) {
+				ps.println("isomorphic to " + fr.finHeap.__heapName);
 			} else {
-				ps.println("path condition is true");
+				ps.print("generate " + fr.finHeap.__heapName + " by invoking ");
+				ps.print(fr.mInvoke.getJavaMethod().getName() + "(");
+				StringBuilder sb = new StringBuilder();
+				for (ObjectH arg : fr.mInvoke.getInvokeArguments()) {
+					if (arg.isHeapObject()) {
+						sb.append(__objNameMap.get(arg) + ", ");
+					} else {
+						sb.append(arg.getVariable().toSMTString() + ", ");
+					}
+				}
+				sb.delete(Math.max(0, sb.length() - 2), sb.length());
+				ps.print(sb.toString() + "), ");
+				if (fr.pathCond != null) {
+					ps.println("path condition is " + fr.pathCond.toSMTString());
+				} else {
+					ps.println("path condition is true");
+				}
 			}
 		}
 		ps.println();
@@ -204,6 +216,12 @@ public class WrappedHeap {
 		br.objSrcMap = ImmutableMap.copyOf(objSrcMap);
 		br.varExprMap = ImmutableMap.copyOf(varExprMap);
 		br.guardCondList = new ArrayList<>();
+		if (!this.rcdBackwards.isEmpty()) {
+			int maxVersion = this.rcdBackwards.stream()
+				.mapToInt(o -> o.guardCondList.size()).max().getAsInt();
+			for (int i = 0; i < maxVersion; ++i)
+				br.guardCondList.add(ExistExpr.ALWAYS_FALSE);
+		}
 		this.rcdBackwards.add(br);
 	}
 
@@ -258,6 +276,7 @@ public class WrappedHeap {
 				varExprMap.put(o.getVariable(), isoMap.getU(o).getVariable());
 		}
 		this.addBackwardRecord(otherHeap, null, null, null, isoMap.getMapV2U(), varExprMap);
+		otherHeap.addForwardRecord(this, null, null);
 		otherHeap.status = HeapStatus.SUBSUMED;
 	}
 
@@ -400,12 +419,28 @@ public class WrappedHeap {
 		return null;
 	}
 	
+	public void setUnsat() {
+		this.status = HeapStatus.UNSAT;
+	}
+	
+	public void setActive() {
+		this.status = HeapStatus.ACTIVE;
+	}
+	
+	public boolean isUnsat() {
+		return this.status.equals(HeapStatus.UNSAT);
+	}
+	
 	public boolean isActive() {
 		return this.status.equals(HeapStatus.ACTIVE);
 	}
 	
 	public boolean isSubsumed() {
 		return this.status.equals(HeapStatus.SUBSUMED);
+	}
+	
+	public List<ForwardRecord> getForwardRecords() {
+		return ImmutableList.copyOf(this.rcdForwards);
 	}
 	
 	public List<BackwardRecord> getBackwardRecords() {
