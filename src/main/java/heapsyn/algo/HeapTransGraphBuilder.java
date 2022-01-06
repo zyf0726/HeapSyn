@@ -78,9 +78,7 @@ public class HeapTransGraphBuilder {
 	}
 	
 	private boolean __addNewHeap(WrappedHeap newHeap) {
-		if (this.isOutOfScope(newHeap.getHeap())) {
-			return false;
-		}
+		assert(!this.isOutOfScope(newHeap.getHeap()));
 		this.allHeaps.add(newHeap);
 		SymbolicHeap newSymHeap = newHeap.getHeap();
 		long code = newSymHeap.getFeatureCode();
@@ -179,8 +177,10 @@ public class HeapTransGraphBuilder {
 		Collection<WrappedHeap> finHeaps = new ArrayList<>();
 		for (ArrayList<ObjectH> invokeArgSeq : invokeArgSeqs) {
 			MethodInvoke mInvoke = new MethodInvoke(method, invokeArgSeq);
-			for (PathDescriptor pd : this.executor.executeMethod(oriHeap.getHeap(), mInvoke))
-				finHeaps.add(new WrappedHeap(oriHeap, mInvoke, pd));
+			for (PathDescriptor pd : this.executor.executeMethod(oriHeap.getHeap(), mInvoke)) {
+				if (!this.isOutOfScope(pd.finHeap))
+					finHeaps.add(new WrappedHeap(oriHeap, mInvoke, pd));
+			}
 		}
 		return finHeaps;
 	}

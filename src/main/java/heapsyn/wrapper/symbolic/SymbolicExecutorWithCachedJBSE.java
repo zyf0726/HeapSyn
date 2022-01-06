@@ -23,7 +23,6 @@ import heapsyn.common.exceptions.UnhandledJBSEPrimitive;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
 import heapsyn.common.exceptions.UnsupportedSMTOperator;
 import heapsyn.common.settings.JBSEParameters;
-import heapsyn.common.settings.Options;
 import heapsyn.heap.ClassH;
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
@@ -94,9 +93,6 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	
 	private static RunParameters getRunParameters(MethodInvoke mInvoke) {
 		JBSEParameters parms = JBSEParameters.I(); 
-		Options options = Options.I();
-		parms.setTargetClassPath(options.getTargetClassPath());
-		parms.setTargetSourcePath(options.getTargetSourcePath());
 		parms.setTargetMethod(mInvoke.getJavaMethod());
 		return parms.getRunParameters();
 	}

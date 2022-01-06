@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -17,41 +19,68 @@ import jbse.apps.settings.SettingsReader;
 
 public class JBSEParameters {
 	
-	private static final String Z3_PATH			=	"libs/z3-4.8.10-x64-win/z3.exe";
-	private static final String JBSE_HOME		=	"jbse/";
-	private static final String JBSE_CLASSPATH	= 	JBSE_HOME + "build/classes/java/main";
-//	private static final String Z3_PATH			=	"C:/junior(1)/HeapSyn/libs/z3-4.8.10-x64-win/z3.exe";
-//	private static final String JBSE_HOME		=	"C:/junior(1)/HeapSyn/jbse/";
-//	private static final String JBSE_CLASSPATH = "C:\\junior(1)\\HeapSyn\\build\\libs\\HeapSyn-0.10.0-SNAPSHOT-all.jar";
-	private static final String JBSE_SOURCEPATH	=	JBSE_HOME + "src/main/java/";
-	private static final String JRE_SOURCEPATH	=	System.getProperty("java.home", "") + "src.zip";
+	private static final String JRE_SOURCEPATH = System.getProperty("java.home", "") + "src.zip";
+	
+	// JBSE home directory
+	private Path jbseHomeDir = Options.I().getHomeDirectory().resolve("jbse");
+	
+	public void setJBSEHomeDir(String jbseHomeDir) {
+		this.jbseHomeDir = Paths.get(jbseHomeDir);
+	}
+	
+	public String getJBSEClassPath() {
+		return this.jbseHomeDir.resolve("build/classes/java/main").toAbsolutePath().toString();
+	}
+	
+	public String getJBSESourcePath() {
+		return this.jbseHomeDir.resolve("src/main/java").toAbsolutePath().toString();
+	}
+	
+	// target class path
+	private Path targetClassPath = Options.I().getHomeDirectory().resolve("bin/test");
+	
+	public String getTargetClassPath() {
+		return this.targetClassPath.toAbsolutePath().toString();
+	}
+	
+	public void setTargetClassPath(String tcp) {
+		this.targetClassPath = Paths.get(tcp);
+	}
+	
+	// target source path
+	private Path targetSrcPath = Options.I().getHomeDirectory().resolve("src/test/java");
+	
+	public String getTargetSourcePath() {
+		return this.targetSrcPath.toAbsolutePath().toString();
+	}
+	
+	public void setTargetSourcePath(String tsp) {
+		this.targetSrcPath = Paths.get(tsp);
+	}
+	
+	// target method
+	private Method targetMethod;
+	
+	public void setTargetMethod(Method targetMethod) {
+		this.targetMethod = targetMethod;
+	}
+	
 	
 	private boolean doSignAnalysis			=	true;
 	private boolean doEqualityAnalysis		=	true;
 	private StateFormatMode stateFormatMode	=	StateFormatMode.PATH;
 	private StepShowMode stepShowMode		=	StepShowMode.LEAVES;
-	
 	private boolean showOnConsole	=	false;
 	private String outFilePath		=	null;
 	private String settingsPath		=	null;
 	
-	private HashMap<String, Integer> heapScope = new HashMap<>();
-	
-	private Method targetMethod;
-	private String targetClassPath;
-	private String targetSourcePath;
-	
-	private int depthScope;
-	private int countScope;
-	
-	public void setFormatMode(StateFormatMode sfm) {
-		this.stateFormatMode=sfm;
+	public void setFormatMode(StateFormatMode stateFormatMode) {
+		this.stateFormatMode = stateFormatMode;
 	}
 	
-	public void setShowMode(StepShowMode ssm) {
-		this.stepShowMode=ssm;
+	public void setShowMode(StepShowMode stepShowMode) {
+		this.stepShowMode = stepShowMode;
 	}
-	
 	
 	public void setShowOnConsole(boolean onConsole) {
 		this.showOnConsole = onConsole;
@@ -65,6 +94,11 @@ public class JBSEParameters {
 		this.settingsPath = settingsPath;
 	}
 	
+	
+	private HashMap<String, Integer> heapScope = new HashMap<>();
+	private int depthScope;
+	private int countScope;
+	
 	public void setHeapScope(String className, int heapScope) {
 		this.heapScope.put(className, heapScope);
 	}
@@ -73,24 +107,12 @@ public class JBSEParameters {
 		this.heapScope.put(javaClass.getName().replace('.', '/'), heapScope);
 	}
 	
-	public void setTargetMethod(Method targetMethod) {
-		this.targetMethod = targetMethod;
+	public void setDepthScope(int depthScope) {
+		this.depthScope = depthScope;
 	}
 	
-	public void setTargetClassPath(String targetClassPath) {
-		this.targetClassPath = targetClassPath;
-	}
-	
-	public void setTargetSourcePath(String targetSourcePath) {
-		this.targetSourcePath = targetSourcePath;
-	}
-	
-	public void setDepthScope(int ds) {
-		this.depthScope=ds;
-	}
-	
-	public void setCountScope(int cs) {
-		this.countScope=cs;
+	public void setCountScope(int countScope) {
+		this.countScope = countScope;
 	}
 	
 	
@@ -107,16 +129,16 @@ public class JBSEParameters {
 	
 	public RunParameters getRunParameters() {
 		RunParameters rp = new RunParameters();
-		rp.setJBSELibPath(JBSE_CLASSPATH);
-		rp.addUserClasspath(this.targetClassPath);
-		rp.addSourcePath(JBSE_SOURCEPATH, JRE_SOURCEPATH, this.targetSourcePath);
+		rp.setJBSELibPath(this.getJBSEClassPath());
+		rp.addUserClasspath(this.getTargetClassPath());
+		rp.addSourcePath(this.getJBSESourcePath(), this.getTargetSourcePath(), JRE_SOURCEPATH);
 		rp.setMethodSignature(
 				this.targetMethod.getDeclaringClass().getName().replace('.', '/'),
 				getMethodSignature(this.targetMethod).replace('.', '/'),
 				this.targetMethod.getName()
 		);
 		rp.setDecisionProcedureType(DecisionProcedureType.Z3);
-		rp.setExternalDecisionProcedurePath(Z3_PATH);
+		rp.setExternalDecisionProcedurePath(Options.I().getSolverExecPath());
 		rp.setDoSignAnalysis(this.doSignAnalysis);
 		rp.setDoEqualityAnalysis(this.doEqualityAnalysis);
 		rp.setStateFormatMode(this.stateFormatMode);
@@ -149,32 +171,16 @@ public class JBSEParameters {
 	
 	// https://stackoverflow.com/questions/45072268/how-can-i-get-the-signature-field-of-java-reflection-method-object
 	private static String getMethodSignature(Method m) {
-		String sig;
-//		try {
-//			Field gSig = Method.class.getDeclaredField("signature");
-//			gSig.setAccessible(true);
-//			sig = (String) gSig.get(m);
-//			if (sig != null) {
-//				int i=sig.indexOf(')');
-//				if(sig.substring(i+1)=="TV") sig
-//				return sig;
-//				
-//			}
-//		} catch (IllegalAccessException | NoSuchFieldException e) {
-//			// this should never happen
-//			throw new UnexpectedInternalException(e);
-//		}
-
 		StringBuilder sb = new StringBuilder("(");
 		for (Class<?> c : m.getParameterTypes()) {
-			sig = Array.newInstance(c, 0).toString();
+			String sig = Array.newInstance(c, 0).toString();
 			sb.append(sig.substring(1, sig.indexOf('@')));
 		}
 		sb.append(")");
 		if (m.getReturnType() == void.class) {
 			sb.append("V");
 		} else {
-			sig = Array.newInstance(m.getReturnType(), 0).toString();
+			String sig = Array.newInstance(m.getReturnType(), 0).toString();
 			sb.append(sig.substring(1, sig.indexOf('@')));
 		}
 		return sb.toString();
