@@ -16,10 +16,17 @@ public class Options {
 	
 	private Options() {
 		try {
-			/* file = $HOME/bin/main/heapsyn/common/settings */
+			/* (1) $HOME/bin/main/heapsyn/common/settings
+			 * (2) $HOME/build/classes/java/main/heapsyn/common/settings
+			 */
 			File file = new File(Options.class.getResource("").toURI());
-			for (int jump = 0; jump < 5; ++jump)
-				file = file.getParentFile();
+			if (file.getAbsolutePath().contains("build")) {
+				for (int jump = 0; jump < 7; ++jump)
+					file = file.getParentFile();
+			} else {
+				for (int jump = 0; jump < 5; ++jump)
+					file = file.getParentFile();
+			}
 			this.homeDirPath = Paths.get(file.getAbsolutePath());
 		} catch (URISyntaxException e) {
 			throw new UnexpectedInternalException(e);
