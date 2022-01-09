@@ -28,12 +28,32 @@ public class JBSEParameters {
 		this.jbseHomeDir = Paths.get(jbseHomeDir);
 	}
 	
+	// JBSE class path & source path
+	private Path jbseClassPath = null;
+	private Path jbseSourcePath = null;
+	
+	public void setJBSEClassPath(String jbseClassPath) {
+		this.jbseClassPath = Paths.get(jbseClassPath);
+	}
+	
+	public void setJBSESourcePath(String jbseSourcePath) {
+		this.jbseSourcePath = Paths.get(jbseSourcePath);
+	}
+	
 	public String getJBSEClassPath() {
-		return this.jbseHomeDir.resolve("build/classes/java/main").toAbsolutePath().toString();
+		if (this.jbseClassPath != null) {
+			return this.jbseClassPath.toAbsolutePath().toString();
+		} else {
+			return this.jbseHomeDir.resolve("build/classes/java/main").toAbsolutePath().toString();
+		}
 	}
 	
 	public String getJBSESourcePath() {
-		return this.jbseHomeDir.resolve("src/main/java").toAbsolutePath().toString();
+		if (this.jbseSourcePath != null) {
+			return this.jbseSourcePath.toAbsolutePath().toString();
+		} else {
+			return this.jbseHomeDir.resolve("src/main/java").toAbsolutePath().toString();
+		}
 	}
 	
 	// target class path
