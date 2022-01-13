@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,7 @@ import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
+import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.SMTOperator;
 import heapsyn.smtlib.SMTSort;
@@ -38,7 +40,7 @@ import heapsyn.wrapper.symbolic.Specification;
 
 public class WrappedHeap {
 	
-	// only for debugging
+	/*============== debugging information ******************/
 	private static int __countHeapGenerated = 0;
 	private int __heapID;
 	private String __heapName;
@@ -98,6 +100,17 @@ public class WrappedHeap {
 					ps.print("<" + __objNameMap.get(o) + "> ");
 			}
 			ps.println();
+		}
+		if (!sampleModels.isEmpty()) {
+			ps.println("sample models:");
+			for (Map<Variable, Constant> sampleModel : sampleModels) {
+				ps.print("   { ");
+				for (Entry<Variable, Constant> entry : sampleModel.entrySet()) {
+					ps.print(entry.getKey().toSMTString() + ":");
+					ps.print(entry.getValue().toSMTString() + ", ");
+				}
+				ps.println("}");
+			}
 		}
 		if (!renameMapList.isEmpty()) {
 			ps.println("variable renaming map list:");
@@ -182,10 +195,14 @@ public class WrappedHeap {
 		}
 		ps.println();
 	}
+	/*====================== debugging information ====================*/
 	
 	
 	// symbolic heap
 	private SymbolicHeap heap;
+	
+	// sample models
+	private List<Map<Variable, Constant>> sampleModels = new ArrayList<>();
 	
 	// status while building heap transformation graph
 	private HeapStatus status;
@@ -229,16 +246,18 @@ public class WrappedHeap {
 	// record for forward traversal
 	static class ForwardRecord {
 		WrappedHeap finHeap;
+		Map<ObjectH, ObjectH> mapping;
 		MethodInvoke mInvoke;
 		SMTExpression pathCond;
 	}
 	
 	private ArrayList<ForwardRecord> rcdForwards;
 	
-	private void addForwardRecord(WrappedHeap finHeap,	MethodInvoke mInvoke,
-			SMTExpression pathCond) {
+	private void addForwardRecord(WrappedHeap finHeap, Map<ObjectH, ObjectH> mapping, 
+			MethodInvoke mInvoke, SMTExpression pathCond) {
 		ForwardRecord fr = new ForwardRecord();
 		fr.finHeap = finHeap;
+		fr.mapping = mapping;
 		fr.mInvoke = mInvoke;
 		fr.pathCond = pathCond;
 		this.rcdForwards.add(fr);
@@ -260,7 +279,7 @@ public class WrappedHeap {
 		this(pd.finHeap);
 		this.addBackwardRecord(oriHeap, mInvoke, pd.pathCond, pd.retVal,
 				pd.objSrcMap, pd.varExprMap);
-		oriHeap.addForwardRecord(this, mInvoke, pd.pathCond);
+		oriHeap.addForwardRecord(this, null, mInvoke, pd.pathCond);
 	}
 	
 	// subsume an isomorphic heap
@@ -276,7 +295,7 @@ public class WrappedHeap {
 				varExprMap.put(o.getVariable(), isoMap.getU(o).getVariable());
 		}
 		this.addBackwardRecord(otherHeap, null, null, null, isoMap.getMapV2U(), varExprMap);
-		otherHeap.addForwardRecord(this, null, null);
+		otherHeap.addForwardRecord(this, isoMap.getMapU2V(), null, null);
 		otherHeap.status = HeapStatus.SUBSUMED;
 	}
 
@@ -427,12 +446,20 @@ public class WrappedHeap {
 		this.status = HeapStatus.ACTIVE;
 	}
 	
+	public void setRedundant() {
+		this.status = HeapStatus.REDUNDANT;
+	}
+	
 	public boolean isUnsat() {
 		return this.status.equals(HeapStatus.UNSAT);
 	}
 	
 	public boolean isActive() {
 		return this.status.equals(HeapStatus.ACTIVE);
+	}
+	
+	public boolean isRedundant() {
+		return this.status.equals(HeapStatus.REDUNDANT);
 	}
 	
 	public boolean isSubsumed() {
@@ -453,6 +480,70 @@ public class WrappedHeap {
 	
 	ArrayList<Map<Variable, Variable>> getRenameMapList() {
 		return this.renameMapList;
+	}
+	
+	private Random rng = new Random(this.__heapID);
+	
+	void addSampleModel(Map<Variable, Constant> solverModel) {
+		Map<Variable, Constant> vModel = new HashMap<>(); 
+		for (Variable v : this.heap.getVariables()) {
+			if (solverModel.containsKey(v)) {
+				vModel.put(v, solverModel.get(v));
+			} else {
+				switch (v.getSMTSort()) {
+				case INT:
+					vModel.put(v, new IntConst(rng.nextInt())); break;
+				case BOOL:
+					vModel.put(v, new BoolConst(rng.nextBoolean())); break;
+				}
+			}
+		}
+		for (Map<Variable, Constant> sampleModel : this.sampleModels) {
+			boolean diff = false;
+			for (Variable v : this.heap.getVariables()) {
+				if (!sampleModel.get(v).toSMTString().equals(vModel.get(v).toSMTString())) {
+					diff = true;
+					break;
+				}
+			}
+			if (!diff) return;
+		}
+		this.sampleModels.add(vModel);
+	}
+	
+	boolean likelyEntails(WrappedHeap other, Bijection<ObjectH, ObjectH> mapping, SMTSolver solver) {
+		Map<Variable, Variable> renameMap = deriveVariableMapping(mapping.getMapV2U()); 
+		List<Variable> Xs = this.heap.getVariables();
+		assert(Xs.containsAll(renameMap.values()));
+		Set<Variable> As = this.heap.getConstraint().getBoundVariables();
+		Set<Variable> Bs = other.heap.getConstraint().getBoundVariables();
+		assert(Sets.intersection(As, Bs).isEmpty());
+//		SMTExpression p = this.heap.getConstraint().getBody();
+		SMTExpression q = other.heap.getConstraint().getBody().getSubstitution(renameMap);
+		// forall Xs, forall As, exists Bs, p(Xs, As) -> q(Xs, Bs)
+		// -->
+		// (exists Bs, q(X1, Bs)) /\ ... /\ (exists Bs, q(Xm, Bs)),
+		// where X1, X2, ..., Xm are samples satisfying "exists As, p(Xi, As)"
+		for (Map<Variable, Constant> sampleModel : this.sampleModels) {
+			if (!solver.checkSat(q.getSubstitution(sampleModel), null))
+				return false;
+		}
+		System.err.println(this.__debugGetName() + " --> " + other.__debugGetName());
+		return true;
+	}
+	
+	/*===== auxiliary information for graph building algorithm =====*/
+	boolean isEverExpanded = false;
+	int curLength = -1;
+	
+	public static Map<Variable, Variable>
+	deriveVariableMapping(Map<ObjectH, ObjectH> mapping) {
+		Map<Variable, Variable> varMapping = new HashMap<>();
+		for (Entry<ObjectH, ObjectH> entry : mapping.entrySet()) {
+			if (entry.getKey().isVariable())
+				varMapping.put(entry.getKey().getVariable(), entry.getValue().getVariable());
+		}
+		return varMapping;
 	}
 	
 }

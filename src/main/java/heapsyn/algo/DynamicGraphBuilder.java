@@ -8,14 +8,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
+import heapsyn.algo.WrappedHeap.BackwardRecord;
 import heapsyn.algo.WrappedHeap.ForwardRecord;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
 import heapsyn.common.settings.Options;
@@ -25,16 +25,20 @@ import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.BoolVar;
+import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.IntVar;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.SMTOperator;
+import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
 import heapsyn.util.UniqueQueue;
 import heapsyn.wrapper.smt.SMTSolver;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 
-public class HeapTransGraphBuilderIncr {
+import static heapsyn.algo.WrappedHeap.deriveVariableMapping;
+
+public class DynamicGraphBuilder {
 	
 	private SMTSolver solver;
 	private SymbolicExecutor executor;
@@ -42,22 +46,18 @@ public class HeapTransGraphBuilderIncr {
 	private Map<ClassH, Integer> heapScope;
 	
 	private ArrayList<WrappedHeap> allHeaps;
-	private Map<Long, List<WrappedHeap>> reprHeapsByCode;
+	private Map<Long, List<WrappedHeap>> activeHeapsByCode;
 	
 	private UniqueQueue<WrappedHeap> heapsToExpand;
-	private Set<WrappedHeap> heapsEverExpanded;
-	private Map<WrappedHeap, Integer> seqLenByHeap;
 	
-	public HeapTransGraphBuilderIncr(SymbolicExecutor executor, Collection<Method> methods) {
+	public DynamicGraphBuilder(SymbolicExecutor executor, Collection<Method> methods) {
 		this.solver = Options.I().getSMTSolver();
 		this.executor = executor;
 		this.methods = ImmutableList.copyOf(methods);
 		this.heapScope = new HashMap<>();
 		this.allHeaps = new ArrayList<>();
-		this.reprHeapsByCode = new HashMap<>();
+		this.activeHeapsByCode = new HashMap<>();
 		this.heapsToExpand = new UniqueQueue<>();
-		this.heapsEverExpanded = new HashSet<>();
-		this.seqLenByHeap = new HashMap<>();
 	}
 	
 	public void setHeapScope(Class<?> javaClass, int scope) {
@@ -73,107 +73,120 @@ public class HeapTransGraphBuilderIncr {
 		}
 	}
 	
-	private WrappedHeap addNewHeap(WrappedHeap newHeap) {
+	private void addNewHeap(WrappedHeap newHeap) {
 		assert(!this.isOutOfScope(newHeap.getHeap()));
-		this.allHeaps.add(newHeap);
+		assert(newHeap.isActive());
 		SymbolicHeap newSymHeap = newHeap.getHeap();
 		long code = newSymHeap.getFeatureCode();
-		List<WrappedHeap> reprHeaps = this.reprHeapsByCode.get(code);
-		if (reprHeaps == null) {
-			this.reprHeapsByCode.put(code, Lists.newArrayList(newHeap));
+		List<WrappedHeap> activeHeaps = this.activeHeapsByCode.get(code);
+		if (activeHeaps == null) {
+			this.activeHeapsByCode.put(code, Lists.newArrayList(newHeap));
 		} else {
-			for (WrappedHeap reprHeap : reprHeaps) {
-				SymbolicHeap reprSymHeap = reprHeap.getHeap();
-				if (!newSymHeap.maybeIsomorphicWith(reprSymHeap))
+			boolean subsumed = false;
+			for (WrappedHeap activeHeap : activeHeaps) {
+				SymbolicHeap activeSymHeap = activeHeap.getHeap();
+				if (!newSymHeap.maybeIsomorphicWith(activeSymHeap))
 					continue;
 				FindOneMapping action = new FindOneMapping();
-				if (!newSymHeap.findIsomorphicMappingTo(reprSymHeap, action))
+				if (!newSymHeap.findIsomorphicMappingTo(activeSymHeap, action))
 					continue;
-				reprHeap.subsumeHeap(newHeap, action.mapping);
-				return reprHeap;
+				if (newHeap.likelyEntails(activeHeap, action.mapping, this.solver)) {
+					newHeap.setRedundant();
+					return;
+				} else {
+					subsumed = true;
+					activeHeap.subsumeHeap(newHeap, action.mapping);
+				}
 			}
-			reprHeaps.add(newHeap);
+			if (!subsumed) activeHeaps.add(newHeap);
 		}
-		return newHeap;
+		this.allHeaps.add(newHeap);
 	}
 	
-	private void expandHeaps(int maxSeqLen) {
-		System.err.println(">> maxSeqLen = " + maxSeqLen);
+	private void expandHeaps(int maxLength) {
+		System.err.println(">> maxLength = " + maxLength);
 		while (!this.heapsToExpand.isEmpty()) {
 			WrappedHeap curHeap = this.heapsToExpand.element();
-			int curLen = this.seqLenByHeap.get(curHeap);
-			if (curLen >= maxSeqLen) break;
-			System.err.println(curHeap.__debugGetName() + " " + curLen);
+			assert(curHeap.isActive());
+			int curLength = curHeap.curLength;
+			if (curLength >= maxLength) break;
+			System.err.println(curHeap.__debugGetName() + " " + curLength);
 			this.heapsToExpand.remove();
-			this.seqLenByHeap.remove(curHeap);
 			curHeap.recomputeConstraint();
-			if (this.heapsEverExpanded.contains(curHeap)) {
-				for (ForwardRecord fr : curHeap.getForwardRecords()) {
-					if (fr.pathCond != null) {
-						SMTExpression cond = new ApplyExpr(SMTOperator.AND,
-								curHeap.getHeap().getConstraint().getBody(), fr.pathCond);
-						if (!this.solver.checkSat(cond, null)) {
-							assert(fr.finHeap.isUnsat());
-							continue;
-						}
-					}
-					if (fr.finHeap.isSubsumed()) {
-						fr.finHeap.recomputeConstraint();
-						assert(fr.finHeap.getForwardRecords().size() == 1);
-						WrappedHeap isoHeap = fr.finHeap.getForwardRecords().get(0).finHeap;
-						this.heapsToExpand.add(isoHeap);
-						this.seqLenByHeap.putIfAbsent(isoHeap, curLen + 1);
-					} else if (fr.finHeap.isUnsat()) {
-						fr.finHeap.setActive();
-						WrappedHeap reprHeap = this.addNewHeap(fr.finHeap);
-						if (reprHeap != fr.finHeap) {
-							fr.finHeap.recomputeConstraint();
-						}
-						this.heapsToExpand.add(reprHeap);
-						this.seqLenByHeap.putIfAbsent(reprHeap, curLen + 1);
-					} else {
-						this.heapsToExpand.add(fr.finHeap);
-						this.seqLenByHeap.putIfAbsent(fr.finHeap, curLen + 1);
-					}
-				}
+			List<WrappedHeap> finHeaps = new ArrayList<>();
+			if (curHeap.isEverExpanded) {
+				curHeap.getForwardRecords().forEach(fr -> finHeaps.add(fr.finHeap));
 			} else {
 				for (Method method : this.methods) {
 					for (WrappedHeap newHeap : this.tryInvokeMethod(curHeap, method)) {
-						assert(newHeap.getBackwardRecords().size() == 1);
-						boolean isSat = true;
-						if (newHeap.getBackwardRecords().get(0).pathCond != null) {
-							SMTExpression cond = new ApplyExpr(SMTOperator.AND,
-									curHeap.getHeap().getConstraint().getBody(),
-									newHeap.getBackwardRecords().get(0).pathCond);
-							isSat = this.solver.checkSat(cond, null);
-						}
-						if (isSat) {
-							WrappedHeap reprHeap = this.addNewHeap(newHeap);
-							if (reprHeap != newHeap) {
-								newHeap.recomputeConstraint();
-							}
-							this.heapsToExpand.add(reprHeap);
-							this.seqLenByHeap.putIfAbsent(reprHeap, curLen + 1);
-						} else {
-							newHeap.setUnsat();
-						}
+						newHeap.setUnsat();
+						finHeaps.add(newHeap);
 					}
 				}
-				heapsEverExpanded.add(curHeap);
 			}
+			for (WrappedHeap finHeap : finHeaps) {
+				BackwardRecord br = finHeap.getBackwardRecords().stream()
+						.filter(r -> r.oriHeap == curHeap).findAny().get();
+				List<SMTExpression> clauses = new ArrayList<>();
+				clauses.add(curHeap.getHeap().getConstraint().getBody());
+				if (br.pathCond != null) {
+					clauses.add(br.pathCond);
+				}
+				for (Variable var : finHeap.getHeap().getVariables()) {
+					if (br.varExprMap.containsKey(var)) {
+						SMTExpression clause = new ApplyExpr(SMTOperator.BIN_EQ,
+								var, br.varExprMap.get(var));
+						clauses.add(clause);
+					}
+				}
+				SMTExpression cond = new ApplyExpr(SMTOperator.AND, clauses);
+				Map<Variable, Constant> solverModel = new HashMap<>();
+				if (!this.solver.checkSat(cond, solverModel)) {
+					assert(finHeap.isUnsat());
+					continue;
+				}
+				finHeap.addSampleModel(solverModel);
+				if (finHeap.isUnsat() || finHeap.isRedundant()) {
+					finHeap.setActive();
+					this.addNewHeap(finHeap);
+				}
+				if (finHeap.isRedundant()) continue;
+				WrappedHeap succHeap = null;
+				if (finHeap.isSubsumed()) {
+					finHeap.recomputeConstraint();
+					ForwardRecord fr = finHeap.getForwardRecords().get(0);
+					succHeap = fr.finHeap;
+					Map<Variable, Variable> varMapping = deriveVariableMapping(fr.mapping);
+					for (Entry<Variable, Variable> entry : varMapping.entrySet()) {
+						if (solverModel.containsKey(entry.getKey())) {
+							solverModel.put(entry.getValue(), solverModel.get(entry.getKey()));
+						}
+					}
+					succHeap.addSampleModel(solverModel);
+				} else {
+					assert(finHeap.isActive());
+					succHeap = finHeap;
+				}
+				if (!heapsToExpand.contains(succHeap)) {
+					assert(this.heapsToExpand.add(succHeap));
+					succHeap.curLength = curLength + 1;
+				}
+			}
+			curHeap.isEverExpanded = true;
 		}
+		System.err.println("-----------------");
 		for (WrappedHeap heap : this.heapsToExpand) {
-			System.err.println(heap.__debugGetName() + " " + this.seqLenByHeap.get(heap));
-			if (this.seqLenByHeap.get(heap) == maxSeqLen)
+			System.err.println(heap.__debugGetName() + " " + heap.curLength);
+			if (heap.curLength == maxLength)
 				heap.recomputeConstraint();
 		}
 	}
-	
+
 	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap, int maxSeqLen) {
 		WrappedHeap initHeap = new WrappedHeap(symHeap);
 		this.heapsToExpand.add(initHeap);
-		this.seqLenByHeap.put(initHeap, 0);
 		this.addNewHeap(initHeap);
+		initHeap.curLength = 0;
 		this.expandHeaps(maxSeqLen);
 		return ImmutableList.copyOf(this.allHeaps);
 	}
