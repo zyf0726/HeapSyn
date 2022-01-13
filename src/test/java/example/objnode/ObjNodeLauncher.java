@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import heapsyn.algo.DynamicGraphBuilder;
 import heapsyn.algo.HeapTransGraphBuilder;
 import heapsyn.algo.Statement;
 import heapsyn.algo.TestGenerator;
@@ -23,7 +24,7 @@ import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 
 public class ObjNodeLauncher {
 	
-	private static TestGenerator buildGraph(Collection<Method> methods, String outfile)
+	private static TestGenerator buildGraphStatic(Collection<Method> methods, String outfile)
 			throws FileNotFoundException {
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
@@ -39,8 +40,37 @@ public class ObjNodeLauncher {
 		System.out.println("number of all heaps = " + heaps.size());
 		System.out.println("number of symbolic execution = " + executor.getExecutionCount());
 		long end = System.currentTimeMillis();
-		System.out.println(">> buildGraph: " + (end - start) + "ms\n");
+		System.out.println(">> buildGraph (static): " + (end - start) + "ms\n");
 		return testgen;
+	}
+	
+	private static TestGenerator buildGraphDynamic(Collection<Method> methods, String outfile)
+			throws FileNotFoundException {
+		long start = System.currentTimeMillis();
+		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
+		DynamicGraphBuilder gb = new DynamicGraphBuilder(executor, methods);
+		gb.setHeapScope(ObjNode.class, 3);
+		gb.setHeapScope(Object.class, 5);
+		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
+		List<WrappedHeap> heaps = gb.buildGraph(initHeap, 8);
+		if (outfile != null) {
+			HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream(outfile));
+		}
+		TestGenerator testgen = new TestGenerator(heaps);
+		System.out.println("number of all heaps = " + heaps.size());
+		System.out.println("number of symbolic execution = " + executor.getExecutionCount());
+		long end = System.currentTimeMillis();
+		System.out.println(">> buildGraph (dynamic): " + (end - start) + "ms\n");
+		return testgen;
+	}
+	
+	private static TestGenerator buildGraph(boolean useDynamicAlgorithm,
+			Collection<Method> methods, String outfile) throws FileNotFoundException {
+		if (useDynamicAlgorithm) {
+			return buildGraphDynamic(methods, outfile);
+		} else {
+			return buildGraphStatic(methods, outfile);
+		}
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException {
@@ -51,14 +81,15 @@ public class ObjNodeLauncher {
 				ObjNode.mAddBefore, ObjNode.mAddAfter, ObjNode.mAddAfterFresh,
 				ObjNode.mSetValueAliasNext, ObjNode.mMakeValueFresh
 		);
-		buildGraph(allMethods, "tmp/objnode.txt");
-		genTest1();
-		genTest2();
-		genTest3();
-		genTest4();
+		final boolean useDynamicAlgorithm = true;
+		buildGraph(useDynamicAlgorithm, allMethods, "tmp/objnode.txt");
+		genTest1(useDynamicAlgorithm);
+		genTest2(useDynamicAlgorithm);
+		genTest3(useDynamicAlgorithm);
+		genTest4(useDynamicAlgorithm);
 	}
 	
-	private static void genTest1() throws FileNotFoundException {
+	private static void genTest1(boolean useDynamicAlgorithm) throws FileNotFoundException {
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH v2 = specFty.mkRefDecl(Object.class, "v2");
@@ -67,7 +98,7 @@ public class ObjNodeLauncher {
 		specFty.addRefSpec("o3", "nxt", "null", "val", "v2");
 		specFty.setAccessible("o1", "v2");
 		Specification spec = specFty.genSpec();
-		TestGenerator testgen = buildGraph(
+		TestGenerator testgen = buildGraph(useDynamicAlgorithm,
 				Lists.newArrayList(
 						ObjNode.mNewAlias, ObjNode.mNewNull, ObjNode.mNewFresh,
 						ObjNode.mAddBefore, ObjNode.mAddAfter, ObjNode.mSetValueAliasNext),
@@ -80,7 +111,7 @@ public class ObjNodeLauncher {
 		System.out.println(">> genTest1: " + (end - start) + "ms\n");
 	}
 	
-	private static void genTest2() throws FileNotFoundException {
+	private static void genTest2(boolean useDynamicAlgorithm) throws FileNotFoundException {
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH o2 = specFty.mkRefDecl(ObjNode.class, "o2");
@@ -92,7 +123,7 @@ public class ObjNodeLauncher {
 		specFty.addRefSpec("o3", "nxt", "null", "val", "v2");
 		specFty.setAccessible("o1", "o2", "o3", "v1", "v2");
 		Specification spec = specFty.genSpec();
-		TestGenerator testgen = buildGraph(
+		TestGenerator testgen = buildGraph(useDynamicAlgorithm,
 				Lists.newArrayList(
 						ObjNode.mNewNull, ObjNode.mAddAfterFresh,
 						ObjNode.mGetNext, ObjNode.mGetValue,
@@ -106,7 +137,7 @@ public class ObjNodeLauncher {
 		System.out.println(">> genTest2: " + (end - start) + "ms\n");
 	}
 
-	private static void genTest3() throws FileNotFoundException {
+	private static void genTest3(boolean useDynamicAlgorithm) throws FileNotFoundException {
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH v = specFty.mkRefDecl(Object.class, "v");
@@ -114,7 +145,7 @@ public class ObjNodeLauncher {
 		specFty.addRefSpec("o2", "nxt", "null", "val", "v");
 		specFty.setAccessible("o1", "v");
 		Specification spec = specFty.genSpec();
-		TestGenerator testgen = buildGraph(
+		TestGenerator testgen = buildGraph(useDynamicAlgorithm,
 				Lists.newArrayList(
 						ObjNode.mNewFresh, ObjNode.mAddAfterFresh,
 						ObjNode.mGetValue, ObjNode.mSetValueAliasNext),
@@ -127,7 +158,7 @@ public class ObjNodeLauncher {
 		System.out.println(">> genTest3: " + (end - start) + "ms\n");
 	}
 	
-	private static void genTest4() throws FileNotFoundException {
+	private static void genTest4(boolean useDynamicAlgorithm) throws FileNotFoundException {
 		SpecFactory specFty = new SpecFactory();
 		ObjectH o1 = specFty.mkRefDecl(ObjNode.class, "o1");
 		ObjectH o3 = specFty.mkRefDecl(ObjNode.class, "o3");
@@ -136,7 +167,7 @@ public class ObjNodeLauncher {
 		specFty.addRefSpec("o3", "nxt", "null", "val", "null");
 		specFty.setAccessible("o1", "o3", "v");
 		Specification spec = specFty.genSpec();
-		TestGenerator testgen = buildGraph(
+		TestGenerator testgen = buildGraph(useDynamicAlgorithm,
 				Lists.newArrayList(
 						ObjNode.mNewFresh, ObjNode.mResetValue,
 						ObjNode.mAddBefore, ObjNode.mAddAfter, ObjNode.mGetValue),
