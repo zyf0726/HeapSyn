@@ -168,7 +168,7 @@ public class DynamicGraphBuilder {
 					succHeap = finHeap;
 				}
 				if (!heapsToExpand.contains(succHeap)) {
-					assert(this.heapsToExpand.add(succHeap));
+					this.heapsToExpand.add(succHeap);
 					succHeap.curLength = curLength + 1;
 				}
 			}
