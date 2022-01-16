@@ -216,6 +216,7 @@ public class StateConverger {
 			} catch (FrozenStateException e1) {
 				throw new UnexpectedInternalException(e1);
 			}
+			state.cleanHeap();
 			
 			Long numOfobj=(long) 0;
 			Map<Long,HeapObjekt> objects=new HashMap<>();
