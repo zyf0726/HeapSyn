@@ -2,21 +2,17 @@ package heapsyn.algo;
 
 import static org.junit.Assert.*;
 
-import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 
-import example.ListNode;
-import example.ManualExecutor;
 import heapsyn.heap.ClassH;
 import heapsyn.heap.FieldH;
 import heapsyn.heap.ObjectH;
@@ -33,10 +29,8 @@ import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.Specification;
-import heapsyn.wrapper.symbolic.SymbolicExecutor;
-import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 
-public class TestGeneratorTest {
+public class TestGeneratorTest1 {
 	
 	@SuppressWarnings("unused")
 	static class BinInteger {
@@ -66,12 +60,8 @@ public class TestGeneratorTest {
 		oNull = ObjectH.NULL;
 	}
 
-	@Before
-	public void setUp() throws Exception {
-	}
-
 	@Test
-	public void test1() {
+	public void test() {
 		BoolVar enable1 = new BoolVar(), enable2 = new BoolVar();
 		IntVar x1 = new IntVar(), x2 = new IntVar();
 		IntVar x3 = new IntVar(), x4 = new IntVar();
@@ -197,51 +187,4 @@ public class TestGeneratorTest {
 		System.out.flush();
 	}
 	
-	private void makeTest(SymbolicExecutor executor, PrintStream ps) throws Exception {
-		HeapTransGraphBuilder gb  = new HeapTransGraphBuilder(
-				executor,
-				Arrays.asList(
-						ListNode.mNew, ListNode.mGetNext,
-						ListNode.mSetElem, ListNode.mGetElem,
-						ListNode.mAddBefore, ListNode.mAddAfter
-				)
-		);
-		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
-		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap, false);
-		TestGenerator testgen = new TestGenerator(genHeaps);
-		
-		IntVar y = new IntVar();
-		IntVar x1 = new IntVar(), x2 = new IntVar();
-		IntVar x3 = new IntVar(), x4 = new IntVar();
-		ObjectH o1 = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(x1), ListNode.fNext, ObjectH.NULL));
-		ObjectH o2 = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(x2), ListNode.fNext, o1));
-		ObjectH o3 = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(x3), ListNode.fNext, o2));
-		ObjectH o4 = new ObjectH(ListNode.classH,
-				ImmutableMap.of(ListNode.fElem, new ObjectH(x4), ListNode.fNext, o2));
-		Specification spec = new Specification();
-		spec.expcHeap = new SymbolicHeapAsDigraph(
-				Arrays.asList(o3, o4, o1, ObjectH.NULL), null);
-		spec.condition = new ApplyExpr(SMTOperator.AND,
-				new ApplyExpr(SMTOperator.BIN_EQ, x1, y),
-				new ApplyExpr(SMTOperator.BIN_NE, x3, y),
-				new ApplyExpr(SMTOperator.BIN_NE, x4, y));
-		
-		List<Statement> stmts = testgen.generateTestWithSpec(spec, o3, o4, o1, new ObjectH(y));
-		Statement.printStatements(stmts, ps);
-		ps.flush();
-	}
-	
-	@Test
-	public void test2() throws Exception {
-		makeTest(ManualExecutor.I(), new PrintStream("build/ManualTestgen.txt"));
-	}
-	
-	@Test
-	public void test3() throws Exception {
-		makeTest(new SymbolicExecutorWithCachedJBSE(), new PrintStream("build/CachedJBSETestgen.txt"));
-	}
-
 }

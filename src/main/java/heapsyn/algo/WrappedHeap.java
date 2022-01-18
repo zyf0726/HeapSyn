@@ -1,6 +1,8 @@
 package heapsyn.algo;
 
+import java.io.ObjectStreamException;
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +40,15 @@ import heapsyn.wrapper.smt.SMTSolver;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.Specification;
 
-public class WrappedHeap {
+public class WrappedHeap implements Serializable {
+	
+	private static final long serialVersionUID = 3749580422241371835L;
+	
+	private Object readResolve() throws ObjectStreamException {
+		this.rng = new Random(this.__heapID);
+		return this;
+	}
+	
 	
 	/*============== debugging information ******************/
 	private static int __countHeapGenerated = 0;
@@ -208,7 +218,8 @@ public class WrappedHeap {
 	private HeapStatus status;
 	
 	// record for backtracking
-	static class BackwardRecord {
+	static class BackwardRecord implements Serializable {
+		private static final long serialVersionUID = -333529127300593092L;
 		WrappedHeap oriHeap;
 		MethodInvoke mInvoke;
 		SMTExpression pathCond;
@@ -244,7 +255,8 @@ public class WrappedHeap {
 
 	
 	// record for forward traversal
-	static class ForwardRecord {
+	static class ForwardRecord implements Serializable {
+		private static final long serialVersionUID = 5004804424170987685L;
 		WrappedHeap finHeap;
 		Map<ObjectH, ObjectH> mapping;
 		MethodInvoke mInvoke;
@@ -482,7 +494,7 @@ public class WrappedHeap {
 		return this.renameMapList;
 	}
 	
-	private Random rng = new Random(this.__heapID);
+	transient private Random rng = new Random(this.__heapID);
 	
 	void addSampleModel(Map<Variable, Constant> solverModel) {
 		Map<Variable, Constant> vModel = new HashMap<>(); 
@@ -533,8 +545,8 @@ public class WrappedHeap {
 	}
 	
 	/*===== auxiliary information for graph building algorithm =====*/
-	boolean isEverExpanded = false;
-	int curLength = -1;
+	transient boolean isEverExpanded = false;
+	transient int curLength = -1;
 	
 	public static Map<Variable, Variable>
 	deriveVariableMapping(Map<ObjectH, ObjectH> mapping) {
