@@ -1,5 +1,10 @@
 package heapsyn.algo;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.io.PrintStream;
 import java.io.Serializable;
@@ -27,9 +32,11 @@ import heapsyn.heap.SymbolicHeap;
 import heapsyn.heap.SymbolicHeapAsDigraph;
 import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.BoolConst;
+import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.IntConst;
+import heapsyn.smtlib.IntVar;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.SMTOperator;
 import heapsyn.smtlib.SMTSort;
@@ -548,6 +555,7 @@ public class WrappedHeap implements Serializable {
 	transient boolean isEverExpanded = false;
 	transient int curLength = -1;
 	
+	
 	public static Map<Variable, Variable>
 	deriveVariableMapping(Map<ObjectH, ObjectH> mapping) {
 		Map<Variable, Variable> varMapping = new HashMap<>();
@@ -556,6 +564,33 @@ public class WrappedHeap implements Serializable {
 				varMapping.put(entry.getKey().getVariable(), entry.getValue().getVariable());
 		}
 		return varMapping;
+	}
+	
+	public static void exportHeapsTo(List<WrappedHeap> heaps, String filename)
+			throws IOException {
+		FileOutputStream fos = new FileOutputStream(filename);
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(heaps);
+		// DO NOT forget to write static fields!!!
+		oos.writeInt(IntVar.getCounter());
+		oos.writeInt(BoolVar.getCounter());
+		oos.writeInt(UserFunc.getCounter());
+		oos.close();
+		fos.close();
+	}
+	
+	public static List<WrappedHeap> importHeapsFrom(String filename)
+			throws IOException, ClassNotFoundException {
+		FileInputStream fis = new FileInputStream(filename);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		List<WrappedHeap> heaps = ((List<?>) ois.readObject()).stream()
+				.map(o -> (WrappedHeap) o).collect(Collectors.toList());
+		IntVar.resetCounter(ois.readInt());
+		BoolVar.resetCounter(ois.readInt());
+		UserFunc.resetCounter(ois.readInt());
+		ois.close();
+		fis.close();
+		return heaps;
 	}
 	
 }

@@ -1,13 +1,8 @@
 package heapsyn.algo;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -29,7 +24,7 @@ import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 public class TestGeneratorTest2 {
 
 	private void buildGraphForListNode(SymbolicExecutor executor,
-			PrintStream ps, ObjectOutputStream oos) throws Exception {
+			String logFileName, String objFileName) throws Exception {
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(
 				executor,
 				Arrays.asList(
@@ -40,26 +35,21 @@ public class TestGeneratorTest2 {
 		);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap, false);
+		PrintStream ps = new PrintStream(logFileName);
 		HeapTransGraphBuilder.__debugPrintOut(genHeaps, executor, ps);
-		oos.writeObject(genHeaps);
+		ps.close();
+		WrappedHeap.exportHeapsTo(genHeaps, objFileName);
 	}
 	
 	private List<WrappedHeap> buildWithManual() throws Exception {
+		final String logFileNamePre = "build/testListNode-Manual-pre.log";
+		final String logFileNamePost = "build/testListNode-Manual-post.log";
+		final String objFileName = "build/testListNode-Manual.javaobj";
 		SymbolicExecutor executor = ManualExecutor.I();
+		buildGraphForListNode(executor, logFileNamePre, objFileName);
+		List<WrappedHeap> genHeaps = WrappedHeap.importHeapsFrom(objFileName);
 		
-		PrintStream psPre = new PrintStream("build/testListNode-Manual-pre.log");
-		FileOutputStream fos = new FileOutputStream("build/testListNode-Manual.javaobj");
-		ObjectOutputStream oos = new ObjectOutputStream(fos);
-		buildGraphForListNode(executor, psPre, oos);
-		psPre.close(); fos.close(); oos.close();
-		
-		FileInputStream fis = new FileInputStream("build/testListNode-Manual.javaobj");
-		ObjectInputStream ois = new ObjectInputStream(fis);
-		List<WrappedHeap> genHeaps = ((List<?>) ois.readObject()).stream()
-				.map(o -> (WrappedHeap) o).collect(Collectors.toList());
-		fis.close(); ois.close();
-		
-		PrintStream psPost = new PrintStream("build/testListNode-Manual-post.log");
+		PrintStream psPost = new PrintStream(logFileNamePost);
 		HeapTransGraphBuilder.__debugPrintOut(genHeaps, executor, psPost);
 		psPost.close();
 		
@@ -67,21 +57,14 @@ public class TestGeneratorTest2 {
 	}
 	
 	private List<WrappedHeap> buildWithJBSE() throws Exception {
+		final String logFileNamePre = "build/testListNode-CachedJBSE-pre.log";
+		final String logFileNamePost = "build/testListNode-CachedJBSE-post.log";
+		final String objFileName = "build/testListNode-CachedJBSE.javaobj";
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
+		buildGraphForListNode(executor, logFileNamePre, objFileName);
+		List<WrappedHeap> genHeaps = WrappedHeap.importHeapsFrom(objFileName);
 		
-		PrintStream psPre = new PrintStream("build/testListNode-CachedJBSE-pre.log");
-		FileOutputStream fos = new FileOutputStream("build/testListNode-CachedJBSE.javaobj");
-		ObjectOutputStream oos = new ObjectOutputStream(fos);
-		buildGraphForListNode(executor, psPre, oos);
-		psPre.close(); fos.close(); oos.close();
-		
-		FileInputStream fis = new FileInputStream("build/testListNode-CachedJBSE.javaobj");
-		ObjectInputStream ois = new ObjectInputStream(fis);
-		List<WrappedHeap> genHeaps = ((List<?>) ois.readObject()).stream()
-				.map(o -> (WrappedHeap) o).collect(Collectors.toList());
-		fis.close(); ois.close();
-		
-		PrintStream psPost = new PrintStream("build/testListNode-CachedJBSE-post.log");
+		PrintStream psPost = new PrintStream(logFileNamePost);
 		HeapTransGraphBuilder.__debugPrintOut(genHeaps, executor, psPost);
 		psPost.close();
 		
