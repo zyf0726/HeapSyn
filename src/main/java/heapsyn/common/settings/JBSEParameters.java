@@ -22,7 +22,14 @@ public class JBSEParameters {
 	private static final String JRE_SOURCEPATH = System.getProperty("java.home", "") + "src.zip";
 	
 	// JBSE home directory
-	private Path jbseHomeDir = Options.I().getHomeDirectory().resolve("jbse");
+	private Path jbseHomeDir = null;
+	
+	private Path getJBSEHomeDir() {
+		if (this.jbseHomeDir == null) {
+			this.jbseHomeDir = Options.I().getHomeDirectory().resolve("jbse");
+		}
+		return this.jbseHomeDir;
+	}
 	
 	public void setJBSEHomeDir(String jbseHomeDir) {
 		this.jbseHomeDir = Paths.get(jbseHomeDir);
@@ -44,7 +51,7 @@ public class JBSEParameters {
 		if (this.jbseClassPath != null) {
 			return this.jbseClassPath.toAbsolutePath().toString();
 		} else {
-			return this.jbseHomeDir.resolve("build/classes/java/main").toAbsolutePath().toString();
+			return this.getJBSEHomeDir().resolve("build/classes/java/main").toAbsolutePath().toString();
 		}
 	}
 	
@@ -52,7 +59,7 @@ public class JBSEParameters {
 		if (this.jbseSourcePath != null) {
 			return this.jbseSourcePath.toAbsolutePath().toString();
 		} else {
-			return this.jbseHomeDir.resolve("src/main/java").toAbsolutePath().toString();
+			return this.getJBSEHomeDir().resolve("src/main/java").toAbsolutePath().toString();
 		}
 	}
 	
