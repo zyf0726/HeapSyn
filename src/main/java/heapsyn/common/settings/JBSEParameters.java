@@ -64,9 +64,12 @@ public class JBSEParameters {
 	}
 	
 	// target class path
-	private Path targetClassPath = Options.I().getHomeDirectory().resolve("bin/test");
+	private Path targetClassPath = null;
 	
 	public String getTargetClassPath() {
+		if (this.targetClassPath == null) {
+			this.targetClassPath = Options.I().getHomeDirectory().resolve("bin/test");
+		}
 		return this.targetClassPath.toAbsolutePath().toString();
 	}
 	
@@ -75,9 +78,12 @@ public class JBSEParameters {
 	}
 	
 	// target source path
-	private Path targetSrcPath = Options.I().getHomeDirectory().resolve("src/test/java");
+	private Path targetSrcPath = null;
 	
 	public String getTargetSourcePath() {
+		if (this.targetSrcPath == null) {
+			this.targetSrcPath = Options.I().getHomeDirectory().resolve("src/test/java");
+		}
 		return this.targetSrcPath.toAbsolutePath().toString();
 	}
 	
