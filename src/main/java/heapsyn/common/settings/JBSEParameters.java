@@ -86,8 +86,8 @@ public class JBSEParameters {
 	}
 	
 	
-	private boolean doSignAnalysis			=	true;
-	private boolean doEqualityAnalysis		=	true;
+	private boolean doSignAnalysis			=	false;
+	private boolean doEqualityAnalysis		=	false;
 	private StateFormatMode stateFormatMode	=	StateFormatMode.PATH;
 	private StepShowMode stepShowMode		=	StepShowMode.LEAVES;
 	private boolean showOnConsole	=	false;
