@@ -129,8 +129,8 @@ public class JBSEParameters {
 	
 	
 	private HashMap<String, Integer> heapScope = new HashMap<>();
-	private int depthScope;
-	private int countScope;
+	private int depthScope = 0; // 0 means unlimited
+	private int countScope = 0; // 0 means unlimited
 	
 	public void setHeapScope(String className, int heapScope) {
 		this.heapScope.put(className, heapScope);
@@ -146,6 +146,12 @@ public class JBSEParameters {
 	
 	public void setCountScope(int countScope) {
 		this.countScope = countScope;
+	}
+	
+	public void resetAllScope() {
+		this.heapScope.clear();
+		this.depthScope = 0;
+		this.countScope = 0;
 	}
 	
 	
