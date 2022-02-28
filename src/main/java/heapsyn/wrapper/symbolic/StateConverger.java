@@ -135,7 +135,11 @@ public class StateConverger {
 		return this.st2infos;
 	}
 	
-	public StateConverger(Set<State> states,Predicate<String> fieldFilter) {
+	public StateConverger(Set<State> states) {
+		this(states, null);
+	}
+	
+	private StateConverger(Set<State> states,Predicate<String> fieldFilter) {
 		if(fieldFilter==null) this.fieldFilter=name -> true;
 		else this.fieldFilter=fieldFilter;
 		this.states=new HashSet<>();

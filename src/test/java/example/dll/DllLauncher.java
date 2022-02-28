@@ -42,7 +42,7 @@ public class DllLauncher {
 
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE(
-				name -> !name.startsWith("_"));
+				name -> !name.startsWith("_") || name.equals("_owner"));
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(LinkedList.class, 1);
 		gb.setHeapScope(LinkedList.Entry.class, 4);

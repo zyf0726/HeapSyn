@@ -449,7 +449,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			r.run();
 			HashSet<State> executed = r.getPathsExecuted();
 			//this.cachedJBSE.put(method, executed);
-			StateConverger sc=new StateConverger(executed,this.fieldFilter);
+			StateConverger sc=new StateConverger(executed);
 			sc.converge();
 			this.cachedStates.put(method, sc);
 		}

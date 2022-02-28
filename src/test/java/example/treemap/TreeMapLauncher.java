@@ -47,7 +47,7 @@ public class TreeMapLauncher {
 
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE(
-				name -> !name.startsWith("_"));
+				name -> !name.startsWith("_") || name.equals("_blackHeight") || name.equals("_owner"));
 		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
 		gb.setHeapScope(TreeMap.class, 1);
 		gb.setHeapScope(TreeMap.Entry.class, 6);
