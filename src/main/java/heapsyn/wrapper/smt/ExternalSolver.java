@@ -22,12 +22,13 @@ import com.google.common.base.Preconditions;
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.Constant;
+import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.UserFunc;
 import heapsyn.smtlib.Variable;
 
-public class ExternalSolver implements SMTSolver {
+public class ExternalSolver implements IncrSMTSolver {
 	
 	private File execFile;
 	private Path tmpDirPath;
@@ -176,6 +177,42 @@ public class ExternalSolver implements SMTSolver {
 			}
 			model.put(var, new IntConst(v));
 		}
+	}
+	
+	@Override
+	public boolean checkSat$pAndNotq(SMTExpression p, ExistExpr q) {
+		throw new UnexpectedInternalException("unimplemented api");
+	}
+	
+	@Override
+	public boolean checkSatIncr(SMTExpression p) {
+		throw new UnexpectedInternalException("unimplemented api");
+	}
+	
+	@Override
+	public void closeIncrSolver() {
+		throw new UnexpectedInternalException("unimplemented api");
+	}
+	
+	@Override
+	public void endPushAssert() {
+		throw new UnexpectedInternalException("unimplemented api");
+	}
+	
+	@Override
+	public void initIncrSolver() {
+		throw new UnexpectedInternalException("unimplemented api");
+	}
+	
+	@Override
+	public void pushAssert(SMTExpression p) {
+		throw new UnexpectedInternalException("unimplemented api");
+		
+	}
+	
+	@Override
+	public void pushAssertNot(ExistExpr p) {
+		throw new UnexpectedInternalException("unimplemented api");
 	}
 	
 }

@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.wrapper.smt.ExternalSolver;
-import heapsyn.wrapper.smt.SMTSolver;
+import heapsyn.wrapper.smt.IncrSMTSolver;
 import heapsyn.wrapper.smt.Z3JavaAPI;
 
 public class Options {
@@ -52,7 +52,7 @@ public class Options {
 	private Path solverExecPath = null;
 	private Path solverTmpDir = null;
 	private boolean useExternalSolver = false;
-	private SMTSolver smtSolver = null;
+	private IncrSMTSolver smtSolver = null;
 	
 	public void setSolverExecPath(String solverExecPath) {
 		this.solverExecPath = Paths.get(solverExecPath);
@@ -80,7 +80,7 @@ public class Options {
 		this.useExternalSolver = useExternalSolver;
 	}
 	
-	public SMTSolver getSMTSolver() {
+	public IncrSMTSolver getSMTSolver() {
 		if (this.smtSolver == null) {
 			if (this.useExternalSolver) {
 				this.smtSolver = new ExternalSolver(this.getSolverExecPath(), this.getSolverTmpDir());

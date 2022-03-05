@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.ObjectStreamException;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -13,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,7 +33,6 @@ import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
-import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.IntVar;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.SMTOperator;
@@ -50,11 +47,6 @@ import heapsyn.wrapper.symbolic.Specification;
 public class WrappedHeap implements Serializable {
 	
 	private static final long serialVersionUID = 3749580422241371835L;
-	
-	private Object readResolve() throws ObjectStreamException {
-		this.rng = new Random(this.__heapID);
-		return this;
-	}
 	
 	
 	/*============== debugging information ******************/
@@ -117,17 +109,6 @@ public class WrappedHeap implements Serializable {
 					ps.print("<" + __objNameMap.get(o) + "> ");
 			}
 			ps.println();
-		}
-		if (!sampleModels.isEmpty()) {
-			ps.println("sample models:");
-			for (Map<Variable, Constant> sampleModel : sampleModels) {
-				ps.print("   { ");
-				for (Entry<Variable, Constant> entry : sampleModel.entrySet()) {
-					ps.print(entry.getKey().toSMTString() + ":");
-					ps.print(entry.getValue().toSMTString() + ", ");
-				}
-				ps.println("}");
-			}
 		}
 		if (!renameMapList.isEmpty()) {
 			ps.println("variable renaming map list:");
@@ -217,9 +198,6 @@ public class WrappedHeap implements Serializable {
 	
 	// symbolic heap
 	private SymbolicHeap heap;
-	
-	// sample models
-	private List<Map<Variable, Constant>> sampleModels = new ArrayList<>();
 	
 	// status while building heap transformation graph
 	private HeapStatus status;
@@ -501,54 +479,30 @@ public class WrappedHeap implements Serializable {
 		return this.renameMapList;
 	}
 	
-	transient private Random rng = new Random(this.__heapID);
-	
-	void addSampleModel(Map<Variable, Constant> solverModel) {
-		Map<Variable, Constant> vModel = new HashMap<>(); 
-		for (Variable v : this.heap.getVariables()) {
-			if (solverModel.containsKey(v)) {
-				vModel.put(v, solverModel.get(v));
-			} else {
-				switch (v.getSMTSort()) {
-				case INT:
-					vModel.put(v, new IntConst(rng.nextInt())); break;
-				case BOOL:
-					vModel.put(v, new BoolConst(rng.nextBoolean())); break;
-				}
-			}
-		}
-		for (Map<Variable, Constant> sampleModel : this.sampleModels) {
-			boolean diff = false;
-			for (Variable v : this.heap.getVariables()) {
-				if (!sampleModel.get(v).toSMTString().equals(vModel.get(v).toSMTString())) {
-					diff = true;
-					break;
-				}
-			}
-			if (!diff) return;
-		}
-		this.sampleModels.add(vModel);
-	}
-	
-	boolean likelyEntails(WrappedHeap other, Bijection<ObjectH, ObjectH> mapping, SMTSolver solver) {
+	boolean surelyEntails(WrappedHeap other, Bijection<ObjectH, ObjectH> mapping, SMTSolver solver) {
+		ExistExpr oldP = this.heap.getConstraint();
+		this.recomputeConstraint();
 		Map<Variable, Variable> renameMap = deriveVariableMapping(mapping.getMapV2U()); 
 		List<Variable> Xs = this.heap.getVariables();
 		assert(Xs.containsAll(renameMap.values()));
 		Set<Variable> As = this.heap.getConstraint().getBoundVariables();
 		Set<Variable> Bs = other.heap.getConstraint().getBoundVariables();
 		assert(Sets.intersection(As, Bs).isEmpty());
-//		SMTExpression p = this.heap.getConstraint().getBody();
+		SMTExpression p = this.heap.getConstraint().getBody();
 		SMTExpression q = other.heap.getConstraint().getBody().getSubstitution(renameMap);
-		// forall Xs, forall As, exists Bs, p(Xs, As) -> q(Xs, Bs)
-		// -->
-		// (exists Bs, q(X1, Bs)) /\ ... /\ (exists Bs, q(Xm, Bs)),
-		// where X1, X2, ..., Xm are samples satisfying "exists As, p(Xi, As)"
-		for (Map<Variable, Constant> sampleModel : this.sampleModels) {
-			if (!solver.checkSat(q.getSubstitution(sampleModel), null))
-				return false;
+		// forall Xs, (exists As, p(Xs, As)) -> (exists Bs, q(Xs, Bs))
+		// <-->
+		// forall Xs, forall As, p(Xs, As) -> exists Bs, q(Xs, Bs)
+		// <-->
+		// ~ (exists Xs, exists As, p(Xs, As) /\ (~ exists Bs, q(Xs, Bs)))
+		boolean entails = !solver.checkSat$pAndNotq(p, new ExistExpr(Bs, q));
+		if (entails) {
+			System.err.println(this.__debugGetName() + " ---> " + other.__debugGetName());
+		} else {
+			System.err.println(this.__debugGetName() + " -\\-> " + other.__debugGetName());
 		}
-		System.err.println(this.__debugGetName() + " --> " + other.__debugGetName());
-		return true;
+		this.heap.setConstraint(oldP);
+		return entails;
 	}
 	
 	/*===== auxiliary information for graph building algorithm =====*/

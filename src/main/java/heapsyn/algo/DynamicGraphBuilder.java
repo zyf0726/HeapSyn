@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -23,24 +22,18 @@ import heapsyn.heap.ActionIfFound;
 import heapsyn.heap.ClassH;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
-import heapsyn.smtlib.ApplyExpr;
 import heapsyn.smtlib.BoolVar;
-import heapsyn.smtlib.Constant;
+import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.IntVar;
-import heapsyn.smtlib.SMTExpression;
-import heapsyn.smtlib.SMTOperator;
-import heapsyn.smtlib.Variable;
 import heapsyn.util.Bijection;
 import heapsyn.util.UniqueQueue;
-import heapsyn.wrapper.smt.SMTSolver;
+import heapsyn.wrapper.smt.IncrSMTSolver;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 
-import static heapsyn.algo.WrappedHeap.deriveVariableMapping;
-
 public class DynamicGraphBuilder {
 	
-	private SMTSolver solver;
+	private IncrSMTSolver solver;
 	private SymbolicExecutor executor;
 	private List<Method> methods;
 	private Map<ClassH, Integer> heapScope;
@@ -90,7 +83,7 @@ public class DynamicGraphBuilder {
 				FindOneMapping action = new FindOneMapping();
 				if (!newSymHeap.findIsomorphicMappingTo(activeSymHeap, action))
 					continue;
-				if (newHeap.likelyEntails(activeHeap, action.mapping, this.solver)) {
+				if (newHeap.surelyEntails(activeHeap, action.mapping, this.solver)) {
 					newHeap.setRedundant();
 					return;
 				} else {
@@ -112,7 +105,17 @@ public class DynamicGraphBuilder {
 			if (curLength >= maxLength) break;
 			System.err.println(curHeap.__debugGetName() + " " + curLength);
 			this.heapsToExpand.remove();
+			
+//			ExistExpr oldP = curHeap.getHeap().getConstraint();
 			curHeap.recomputeConstraint();
+			ExistExpr newP = curHeap.getHeap().getConstraint();
+			this.solver.initIncrSolver();
+			this.solver.pushAssert(newP.getBody());
+/*			if (curLength != 0) {
+				this.solver.pushAssertNot(oldP);
+			} */
+			this.solver.endPushAssert();
+			
 			List<WrappedHeap> finHeaps = new ArrayList<>();
 			if (curHeap.isEverExpanded) {
 				curHeap.getForwardRecords().forEach(fr -> finHeaps.add(fr.finHeap));
@@ -127,25 +130,9 @@ public class DynamicGraphBuilder {
 			for (WrappedHeap finHeap : finHeaps) {
 				BackwardRecord br = finHeap.getBackwardRecords().stream()
 						.filter(r -> r.oriHeap == curHeap).findAny().get();
-				List<SMTExpression> clauses = new ArrayList<>();
-				clauses.add(curHeap.getHeap().getConstraint().getBody());
-				if (br.pathCond != null) {
-					clauses.add(br.pathCond);
-				}
-				for (Variable var : finHeap.getHeap().getVariables()) {
-					if (br.varExprMap.containsKey(var)) {
-						SMTExpression clause = new ApplyExpr(SMTOperator.BIN_EQ,
-								var, br.varExprMap.get(var));
-						clauses.add(clause);
-					}
-				}
-				SMTExpression cond = new ApplyExpr(SMTOperator.AND, clauses);
-				Map<Variable, Constant> solverModel = new HashMap<>();
-				if (!this.solver.checkSat(cond, solverModel)) {
-					assert(finHeap.isUnsat());
+				if (br.pathCond != null && finHeap.isUnsat() && !this.solver.checkSatIncr(br.pathCond)) {
 					continue;
 				}
-				finHeap.addSampleModel(solverModel);
 				if (finHeap.isUnsat() || finHeap.isRedundant()) {
 					finHeap.setActive();
 					this.addNewHeap(finHeap);
@@ -156,13 +143,6 @@ public class DynamicGraphBuilder {
 					finHeap.recomputeConstraint();
 					ForwardRecord fr = finHeap.getForwardRecords().get(0);
 					succHeap = fr.finHeap;
-					Map<Variable, Variable> varMapping = deriveVariableMapping(fr.mapping);
-					for (Entry<Variable, Variable> entry : varMapping.entrySet()) {
-						if (solverModel.containsKey(entry.getKey())) {
-							solverModel.put(entry.getValue(), solverModel.get(entry.getKey()));
-						}
-					}
-					succHeap.addSampleModel(solverModel);
 				} else {
 					assert(finHeap.isActive());
 					succHeap = finHeap;
