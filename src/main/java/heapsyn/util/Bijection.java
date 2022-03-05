@@ -1,5 +1,6 @@
 package heapsyn.util;
 
+import java.io.Serializable;
 import java.util.Map;
 
 import com.google.common.base.Preconditions;
@@ -9,7 +10,10 @@ import com.google.common.collect.ImmutableMap;
 
 // TODO replace this class by BiMap
 
-public class Bijection<U, V> {
+public class Bijection<U, V> implements Serializable {
+	
+	private static final long serialVersionUID = -8116641884674969898L;
+	
 	
 	private BiMap<U, V> bimap;
 	
