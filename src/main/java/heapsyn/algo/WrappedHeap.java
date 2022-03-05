@@ -243,14 +243,14 @@ public class WrappedHeap implements Serializable {
 	static class ForwardRecord implements Serializable {
 		private static final long serialVersionUID = 5004804424170987685L;
 		WrappedHeap finHeap;
-		Map<ObjectH, ObjectH> mapping;
+		Bijection<ObjectH, ObjectH> mapping;
 		MethodInvoke mInvoke;
 		SMTExpression pathCond;
 	}
 	
 	private ArrayList<ForwardRecord> rcdForwards;
 	
-	private void addForwardRecord(WrappedHeap finHeap, Map<ObjectH, ObjectH> mapping, 
+	private void addForwardRecord(WrappedHeap finHeap, Bijection<ObjectH, ObjectH> mapping, 
 			MethodInvoke mInvoke, SMTExpression pathCond) {
 		ForwardRecord fr = new ForwardRecord();
 		fr.finHeap = finHeap;
@@ -292,7 +292,7 @@ public class WrappedHeap implements Serializable {
 				varExprMap.put(o.getVariable(), isoMap.getU(o).getVariable());
 		}
 		this.addBackwardRecord(otherHeap, null, null, null, isoMap.getMapV2U(), varExprMap);
-		otherHeap.addForwardRecord(this, isoMap.getMapU2V(), null, null);
+		otherHeap.addForwardRecord(this, isoMap, null, null);
 		otherHeap.status = HeapStatus.SUBSUMED;
 	}
 
@@ -443,20 +443,12 @@ public class WrappedHeap implements Serializable {
 		this.status = HeapStatus.ACTIVE;
 	}
 	
-	public void setRedundant() {
-		this.status = HeapStatus.REDUNDANT;
-	}
-	
 	public boolean isUnsat() {
 		return this.status.equals(HeapStatus.UNSAT);
 	}
 	
 	public boolean isActive() {
 		return this.status.equals(HeapStatus.ACTIVE);
-	}
-	
-	public boolean isRedundant() {
-		return this.status.equals(HeapStatus.REDUNDANT);
 	}
 	
 	public boolean isSubsumed() {

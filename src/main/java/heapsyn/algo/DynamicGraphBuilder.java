@@ -83,13 +83,9 @@ public class DynamicGraphBuilder {
 				FindOneMapping action = new FindOneMapping();
 				if (!newSymHeap.findIsomorphicMappingTo(activeSymHeap, action))
 					continue;
-				if (newHeap.surelyEntails(activeHeap, action.mapping, this.solver)) {
-					newHeap.setRedundant();
-					return;
-				} else {
-					subsumed = true;
-					activeHeap.subsumeHeap(newHeap, action.mapping);
-				}
+				subsumed = true;
+				activeHeap.subsumeHeap(newHeap, action.mapping);
+				break;
 			}
 			if (!subsumed) activeHeaps.add(newHeap);
 		}
@@ -130,24 +126,25 @@ public class DynamicGraphBuilder {
 			for (WrappedHeap finHeap : finHeaps) {
 				BackwardRecord br = finHeap.getBackwardRecords().stream()
 						.filter(r -> r.oriHeap == curHeap).findAny().get();
-				if (br.pathCond != null && finHeap.isUnsat() && !this.solver.checkSatIncr(br.pathCond)) {
-					continue;
-				}
-				if (finHeap.isUnsat() || finHeap.isRedundant()) {
+				if (finHeap.isUnsat()) {
+					if (br.pathCond != null && !this.solver.checkSatIncr(br.pathCond))
+						continue;
 					finHeap.setActive();
 					this.addNewHeap(finHeap);
 				}
-				if (finHeap.isRedundant()) continue;
 				WrappedHeap succHeap = null;
 				if (finHeap.isSubsumed()) {
 					finHeap.recomputeConstraint();
 					ForwardRecord fr = finHeap.getForwardRecords().get(0);
-					succHeap = fr.finHeap;
+					if (finHeap.surelyEntails(fr.finHeap, fr.mapping, this.solver)) {
+						finHeap.getHeap().setConstraint(ExistExpr.ALWAYS_FALSE);
+					} else {
+						succHeap = fr.finHeap;
+					}
 				} else {
-					assert(finHeap.isActive());
 					succHeap = finHeap;
 				}
-				if (!heapsToExpand.contains(succHeap)) {
+				if (succHeap != null && !heapsToExpand.contains(succHeap)) {
 					this.heapsToExpand.add(succHeap);
 					succHeap.curLength = curLength + 1;
 				}
