@@ -178,6 +178,10 @@ public class Statement {
 	}
 	
 	public static void printStatements(List<Statement> stmts, PrintStream ps) {
+		printStatements(stmts, "@Test", ps);
+	}
+	
+	public static void printStatements(List<Statement> stmts, String methodUnderTest, PrintStream ps) {
 		Map<Integer, String> createdObjs = new HashMap<>();
 		Map<ObjectH, String> objNames = new HashMap<>();
 		createdObjs.put(0, "#NULL");
@@ -207,7 +211,7 @@ public class Statement {
 			if (stmt.javaMethod != null) {
 				sb.append(stmt.javaMethod.getName() + "(");
 			} else {
-				sb.append("@Test(");
+				sb.append(methodUnderTest + "(");
 			}
 			for (ObjectH arg : stmt.objArgs) {
 				if (arg.isHeapObject()) {
