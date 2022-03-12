@@ -99,7 +99,13 @@ public class Z3JavaAPI implements IncrSMTSolver {
 		BoolExpr[] es = ctx.parseSMTLIB2String(sb.toString(), null, null,
 				declNames.toArray(new Symbol[0]), decls.toArray(new FuncDecl[0]));
 		z3Solver.add(es);
-		if (z3Solver.check() != Status.SATISFIABLE) {
+		Status result = z3Solver.check();
+		if (result == Status.UNSATISFIABLE) {
+			ctx.close();
+			return false;
+		}
+		if (result == Status.UNKNOWN) {
+			System.err.println("WARN: unknown solver result in checkSat");
 			ctx.close();
 			return false;
 		}
@@ -172,7 +178,12 @@ public class Z3JavaAPI implements IncrSMTSolver {
 		BoolExpr[] es = ctx.parseSMTLIB2String(sb.toString(), null, null,
 				declNames.toArray(new Symbol[0]), decls.toArray(new FuncDecl[0]));
 		z3Solver.add(es);
-		if (z3Solver.check() != Status.SATISFIABLE) {
+		Status result = z3Solver.check();
+		if (result == Status.UNSATISFIABLE) {
+			ctx.close();
+			return false;
+		} else if (result == Status.UNKNOWN) {
+			System.err.println("WARN: unknown solver result in checkSat$pAndNotq");
 			ctx.close();
 			return false;
 		} else {
@@ -256,7 +267,16 @@ public class Z3JavaAPI implements IncrSMTSolver {
 		BoolExpr[] es = incr_ctx.parseSMTLIB2String(sb.toString(), null, null,
 				declNames.toArray(new Symbol[0]), decls.toArray(new FuncDecl[0]));
 		incr_solver.add(es);
-		boolean isSat = (incr_solver.check() == Status.SATISFIABLE);
+		Status result = incr_solver.check();
+		final boolean isSat;
+		if (result == Status.SATISFIABLE) {
+			isSat = true;
+		} else if (result == Status.UNSATISFIABLE) {
+			isSat = false;
+		} else {
+			System.err.println("WARN: unknown solver result in checkSatIncr");
+			isSat = false;
+		}
 		incr_solver.pop();
 		incr_solver.push();
 		long elapsed = System.currentTimeMillis() - start;
