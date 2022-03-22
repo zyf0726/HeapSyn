@@ -44,10 +44,14 @@ import heapsyn.wrapper.smt.SMTSolver;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.Specification;
 
-public class WrappedHeap implements Serializable {
+public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 	
 	private static final long serialVersionUID = 3749580422241371835L;
 	
+	@Override
+	public int compareTo(WrappedHeap o) {
+		return Integer.compare(this.__heapID, o.__heapID);
+	}
 	
 	/*============== debugging information ******************/
 	private static int __countHeapGenerated = 0;
