@@ -10,13 +10,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import heapsyn.algo.WrappedHeap.BackwardRecord;
-import heapsyn.algo.WrappedHeap.ForwardRecord;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
 import heapsyn.common.settings.Options;
 import heapsyn.heap.ActionIfFound;
@@ -24,16 +22,14 @@ import heapsyn.heap.ClassH;
 import heapsyn.heap.ObjectH;
 import heapsyn.heap.SymbolicHeap;
 import heapsyn.smtlib.BoolVar;
-import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.IntVar;
 import heapsyn.util.Bijection;
-import heapsyn.util.UniqueQueue;
 import heapsyn.wrapper.smt.IncrSMTSolver;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 
-public class DynamicGraphBuilder {
-	
+public class GraphBuilderWithoutMerging {
+
 	private final boolean checkSubsumption;
 	
 	private IncrSMTSolver solver;
@@ -44,13 +40,11 @@ public class DynamicGraphBuilder {
 	private ArrayList<WrappedHeap> allHeaps;
 	private Map<Long, List<WrappedHeap>> activeHeapsByCode;
 	
-	private UniqueQueue<WrappedHeap> heapsToExpand;
-	
-	public DynamicGraphBuilder(SymbolicExecutor executor, Collection<Method> methods) {
+	public GraphBuilderWithoutMerging(SymbolicExecutor executor, Collection<Method> methods) {
 		this(executor, methods, true);
 	}
 	
-	public DynamicGraphBuilder(SymbolicExecutor executor, Collection<Method> methods,
+	public GraphBuilderWithoutMerging(SymbolicExecutor executor, Collection<Method> methods,
 			boolean checkSubsumption) {
 		this.checkSubsumption = checkSubsumption;
 		this.solver = Options.I().getSMTSolver();
@@ -59,7 +53,6 @@ public class DynamicGraphBuilder {
 		this.heapScope = new HashMap<>();
 		this.allHeaps = new ArrayList<>();
 		this.activeHeapsByCode = new HashMap<>();
-		this.heapsToExpand = new UniqueQueue<>();
 	}
 	
 	public void setHeapScope(Class<?> javaClass, int scope) {
@@ -75,16 +68,16 @@ public class DynamicGraphBuilder {
 		}
 	}
 	
-	private void addNewHeap(WrappedHeap newHeap) {
+	private boolean addNewHeap(WrappedHeap newHeap) {
 		assert(!this.isOutOfScope(newHeap.getHeap()));
 		assert(newHeap.isActive());
+		newHeap.recomputeConstraint();
 		SymbolicHeap newSymHeap = newHeap.getHeap();
 		long code = newSymHeap.getFeatureCode();
 		List<WrappedHeap> activeHeaps = this.activeHeapsByCode.get(code);
 		if (activeHeaps == null) {
 			this.activeHeapsByCode.put(code, Lists.newArrayList(newHeap));
 		} else {
-			boolean subsumed = false;
 			for (WrappedHeap activeHeap : activeHeaps) {
 				SymbolicHeap activeSymHeap = activeHeap.getHeap();
 				if (!newSymHeap.maybeIsomorphicWith(activeSymHeap))
@@ -92,164 +85,62 @@ public class DynamicGraphBuilder {
 				FindOneMapping action = new FindOneMapping();
 				if (!newSymHeap.findIsomorphicMappingTo(activeSymHeap, action))
 					continue;
-				subsumed = true;
-				activeHeap.subsumeHeap(newHeap, action.mapping);
-				break;
+				if (this.checkSubsumption && newHeap.surelyEntails(activeHeap, action.mapping, this.solver)) {
+					newHeap.setUnsat();
+					return false;
+				}
 			}
-			if (!subsumed) activeHeaps.add(newHeap);
+			activeHeaps.add(newHeap);
 		}
 		this.allHeaps.add(newHeap);
+		return true;
 	}
 	
-	private TreeSet<WrappedHeap> expandGraph(TreeSet<WrappedHeap> updHeaps, int curLength) {
-		TreeSet<WrappedHeap> restHeaps = new TreeSet<>(updHeaps);
-		updHeaps = new TreeSet<>();
-		while (!restHeaps.isEmpty()) {
-			WrappedHeap curHeap = restHeaps.pollFirst();
+	private List<WrappedHeap> expandGraph(List<WrappedHeap> oldHeaps, int curLength) {
+		List<WrappedHeap> newHeaps = new ArrayList<>();
+		for (WrappedHeap curHeap : oldHeaps) {
 			assert(curHeap.isActive());
 			System.err.println(curHeap.__debugGetName() + " " + curLength);
 			
-//			ExistExpr oldP = curHeap.getHeap().getConstraint();
-			curHeap.recomputeConstraint();
-			ExistExpr newP = curHeap.getHeap().getConstraint();
 			this.solver.initIncrSolver();
-			this.solver.pushAssert(newP.getBody());
-//			if (curLength != 0) {
-//				this.solver.pushAssertNot(oldP);
-//			} 
+			this.solver.pushAssert(curHeap.getHeap().getConstraint().getBody());
 			this.solver.endPushAssert();
 			
 			List<WrappedHeap> finHeaps = new ArrayList<>();
-			if (curHeap.isEverExpanded) {
-				curHeap.getForwardRecords().forEach(fr -> finHeaps.add(fr.finHeap));
-			} else {
-				for (Method method : this.methods) {
-					for (WrappedHeap newHeap : this.tryInvokeMethod(curHeap, method)) {
-						newHeap.setUnsat();
-						finHeaps.add(newHeap);
-					}
+			for (Method method : this.methods) {
+				for (WrappedHeap finHeap : this.tryInvokeMethod(curHeap, method)) {
+					finHeap.setUnsat();
+					finHeaps.add(finHeap);
 				}
 			}
 			
 			for (WrappedHeap finHeap : finHeaps) {
 				BackwardRecord br = finHeap.getBackwardRecords().stream()
 						.filter(r -> r.oriHeap == curHeap).findAny().get();
-				if (finHeap.isUnsat()) {
-					if (br.pathCond != null && !this.solver.checkSatIncr(br.pathCond))
-						continue;
-					finHeap.setActive();
-					this.addNewHeap(finHeap);
-				}
-				WrappedHeap succHeap = null;
-				if (finHeap.isSubsumed()) {
-					finHeap.recomputeConstraint();
-					ForwardRecord fr = finHeap.getForwardRecords().get(0);
-					if (this.checkSubsumption && finHeap.surelyEntails(fr.finHeap, fr.mapping, this.solver)) {
-						finHeap.getHeap().setConstraint(ExistExpr.ALWAYS_FALSE);
-					} else {
-						succHeap = fr.finHeap;
-					}
-				} else {
-					succHeap = finHeap;
-				}
-				if (succHeap != null && !restHeaps.contains(succHeap)) {
-					updHeaps.add(succHeap);
+				assert(finHeap.isUnsat());
+				if (br.pathCond != null && !this.solver.checkSatIncr(br.pathCond))
+					continue;
+				finHeap.setActive();
+				if (this.addNewHeap(finHeap)) {
+					newHeaps.add(finHeap);
 				}
 			}
-			curHeap.isEverExpanded = true;
 		}
-		return updHeaps;
-	}
-	
-	private void expandHeaps(int maxLength) {
-		System.err.println(">> maxLength = " + maxLength);
-		while (!this.heapsToExpand.isEmpty()) {
-			WrappedHeap curHeap = this.heapsToExpand.element();
-			assert(curHeap.isActive());
-			int curLength = curHeap.curLength;
-			if (curLength >= maxLength) break;
-			System.err.println(curHeap.__debugGetName() + " " + curLength);
-			this.heapsToExpand.remove();
-			
-//			ExistExpr oldP = curHeap.getHeap().getConstraint();
-			curHeap.recomputeConstraint();
-			ExistExpr newP = curHeap.getHeap().getConstraint();
-			this.solver.initIncrSolver();
-			this.solver.pushAssert(newP.getBody());
-/*			if (curLength != 0) {
-				this.solver.pushAssertNot(oldP);
-			} */
-			this.solver.endPushAssert();
-			
-			List<WrappedHeap> finHeaps = new ArrayList<>();
-			if (curHeap.isEverExpanded) {
-				curHeap.getForwardRecords().forEach(fr -> finHeaps.add(fr.finHeap));
-			} else {
-				for (Method method : this.methods) {
-					for (WrappedHeap newHeap : this.tryInvokeMethod(curHeap, method)) {
-						newHeap.setUnsat();
-						finHeaps.add(newHeap);
-					}
-				}
-			}
-			for (WrappedHeap finHeap : finHeaps) {
-				BackwardRecord br = finHeap.getBackwardRecords().stream()
-						.filter(r -> r.oriHeap == curHeap).findAny().get();
-				if (finHeap.isUnsat()) {
-					if (br.pathCond != null && !this.solver.checkSatIncr(br.pathCond))
-						continue;
-					finHeap.setActive();
-					this.addNewHeap(finHeap);
-				}
-				WrappedHeap succHeap = null;
-				if (finHeap.isSubsumed()) {
-					finHeap.recomputeConstraint();
-					ForwardRecord fr = finHeap.getForwardRecords().get(0);
-					if (finHeap.surelyEntails(fr.finHeap, fr.mapping, this.solver)) {
-						finHeap.getHeap().setConstraint(ExistExpr.ALWAYS_FALSE);
-					} else {
-						succHeap = fr.finHeap;
-					}
-				} else {
-					succHeap = finHeap;
-				}
-				if (succHeap != null && !heapsToExpand.contains(succHeap)) {
-					this.heapsToExpand.add(succHeap);
-					succHeap.curLength = curLength + 1;
-				}
-			}
-			curHeap.isEverExpanded = true;
-		}
-		System.err.println("-----------------");
-		for (WrappedHeap heap : this.heapsToExpand) {
-			System.err.println(heap.__debugGetName() + " " + heap.curLength);
-			if (heap.curLength == maxLength)
-				heap.recomputeConstraint();
-		}
-	}
-
-	public List<WrappedHeap> buildGraph_old(SymbolicHeap symHeap, int maxSeqLen) {
-		WrappedHeap initHeap = new WrappedHeap(symHeap);
-		this.heapsToExpand.add(initHeap);
-		this.addNewHeap(initHeap);
-		initHeap.curLength = 0;
-		this.expandHeaps(maxSeqLen);
-		return ImmutableList.copyOf(this.allHeaps);
+		return newHeaps;
 	}
 	
 	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap, int maxSeqLen) {
 		System.err.println(">> maxLength = " + maxSeqLen);
 		WrappedHeap initHeap = new WrappedHeap(symHeap);
 		this.addNewHeap(initHeap);
-		TreeSet<WrappedHeap> updHeaps = new TreeSet<>();
-		updHeaps.add(initHeap);
+		List<WrappedHeap> oldHeaps = new ArrayList<>();
+		oldHeaps.add(initHeap);
 		for (int L = 0; L < maxSeqLen; ++L) {
-			updHeaps = this.expandGraph(updHeaps, L);
+			oldHeaps = this.expandGraph(oldHeaps, L);
 		}
 		System.err.println("-----------------");
-		for (WrappedHeap heap : updHeaps) {
+		for (WrappedHeap heap : oldHeaps) {
 			System.err.println(heap.__debugGetName() + " " + maxSeqLen);
-			heap.recomputeConstraint();
 		}
 		return ImmutableList.copyOf(this.allHeaps);
 	}
@@ -348,5 +239,5 @@ public class DynamicGraphBuilder {
 		for (WrappedHeap heap : heaps)
 			heap.__debugPrintOut(ps);
 	}
-	
+
 }
