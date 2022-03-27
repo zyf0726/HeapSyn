@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import heapsyn.algo.WrappedHeap.BackwardRecord;
+import heapsyn.common.Logger;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
 import heapsyn.common.settings.Options;
 import heapsyn.heap.ActionIfFound;
@@ -100,7 +101,7 @@ public class GraphBuilderWithoutMerging {
 		List<WrappedHeap> newHeaps = new ArrayList<>();
 		for (WrappedHeap curHeap : oldHeaps) {
 			assert(curHeap.isActive());
-			System.err.println(curHeap.__debugGetName() + " " + curLength);
+			Logger.info("current heap is " + curHeap.__debugGetName() + " of length " + curLength);
 			
 			this.solver.initIncrSolver();
 			this.solver.pushAssert(curHeap.getHeap().getConstraint().getBody());
@@ -130,7 +131,7 @@ public class GraphBuilderWithoutMerging {
 	}
 	
 	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap, int maxSeqLen) {
-		System.err.println(">> maxLength = " + maxSeqLen);
+		Logger.info("[GraphBuilderWithoutMerging.buildGraph] maxLength = " + maxSeqLen);
 		WrappedHeap initHeap = new WrappedHeap(symHeap);
 		this.addNewHeap(initHeap);
 		List<WrappedHeap> oldHeaps = new ArrayList<>();
@@ -138,9 +139,8 @@ public class GraphBuilderWithoutMerging {
 		for (int L = 0; L < maxSeqLen; ++L) {
 			oldHeaps = this.expandGraph(oldHeaps, L);
 		}
-		System.err.println("-----------------");
 		for (WrappedHeap heap : oldHeaps) {
-			System.err.println(heap.__debugGetName() + " " + maxSeqLen);
+			Logger.info("in-queue heap " + heap.__debugGetName() + " of length " + maxSeqLen);
 		}
 		return ImmutableList.copyOf(this.allHeaps);
 	}

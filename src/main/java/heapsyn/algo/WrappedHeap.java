@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import heapsyn.common.Logger;
 import heapsyn.common.settings.Options;
 import heapsyn.heap.ActionIfFound;
 import heapsyn.heap.FieldH;
@@ -493,9 +494,9 @@ public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 		// ~ (exists Xs, exists As, p(Xs, As) /\ (~ exists Bs, q(Xs, Bs)))
 		boolean entails = !solver.checkSat$pAndNotq(p, new ExistExpr(Bs, q));
 		if (entails) {
-			System.err.println(this.__debugGetName() + " ---> " + other.__debugGetName());
+			Logger.info(this.__debugGetName() + " ---> " + other.__debugGetName());
 		} else {
-			System.err.println(this.__debugGetName() + " -\\-> " + other.__debugGetName());
+			Logger.info(this.__debugGetName() + " -\\-> " + other.__debugGetName());
 		}
 		this.heap.setConstraint(oldP);
 		return entails;

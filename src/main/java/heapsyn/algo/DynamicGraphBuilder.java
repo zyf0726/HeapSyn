@@ -17,6 +17,7 @@ import com.google.common.collect.Lists;
 
 import heapsyn.algo.WrappedHeap.BackwardRecord;
 import heapsyn.algo.WrappedHeap.ForwardRecord;
+import heapsyn.common.Logger;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
 import heapsyn.common.settings.Options;
 import heapsyn.heap.ActionIfFound;
@@ -107,7 +108,7 @@ public class DynamicGraphBuilder {
 		while (!restHeaps.isEmpty()) {
 			WrappedHeap curHeap = restHeaps.pollFirst();
 			assert(curHeap.isActive());
-			System.err.println(curHeap.__debugGetName() + " " + curLength);
+			Logger.info("current heap is " + curHeap.__debugGetName() + " of length " + curLength);
 			
 //			ExistExpr oldP = curHeap.getHeap().getConstraint();
 			curHeap.recomputeConstraint();
@@ -162,13 +163,13 @@ public class DynamicGraphBuilder {
 	}
 	
 	private void expandHeaps(int maxLength) {
-		System.err.println(">> maxLength = " + maxLength);
+		Logger.info("[DynamicGraphBuilder.expandHeaps] maxLength = " + maxLength);
 		while (!this.heapsToExpand.isEmpty()) {
 			WrappedHeap curHeap = this.heapsToExpand.element();
 			assert(curHeap.isActive());
 			int curLength = curHeap.curLength;
 			if (curLength >= maxLength) break;
-			System.err.println(curHeap.__debugGetName() + " " + curLength);
+			Logger.info("current heap is " + curHeap.__debugGetName() + " of length " + curLength);
 			this.heapsToExpand.remove();
 			
 //			ExistExpr oldP = curHeap.getHeap().getConstraint();
@@ -220,9 +221,9 @@ public class DynamicGraphBuilder {
 			}
 			curHeap.isEverExpanded = true;
 		}
-		System.err.println("-----------------");
 		for (WrappedHeap heap : this.heapsToExpand) {
-			System.err.println(heap.__debugGetName() + " " + heap.curLength);
+			Logger.info("compute heap constraint for " + heap.__debugGetName() +
+						" of length " + heap.curLength);
 			if (heap.curLength == maxLength)
 				heap.recomputeConstraint();
 		}
@@ -238,7 +239,7 @@ public class DynamicGraphBuilder {
 	}
 	
 	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap, int maxSeqLen) {
-		System.err.println(">> maxLength = " + maxSeqLen);
+		Logger.info("[DynamicGraphBuilder.buildGraph] maxLength = " + maxSeqLen);
 		WrappedHeap initHeap = new WrappedHeap(symHeap);
 		this.addNewHeap(initHeap);
 		TreeSet<WrappedHeap> updHeaps = new TreeSet<>();
@@ -246,9 +247,9 @@ public class DynamicGraphBuilder {
 		for (int L = 0; L < maxSeqLen; ++L) {
 			updHeaps = this.expandGraph(updHeaps, L);
 		}
-		System.err.println("-----------------");
 		for (WrappedHeap heap : updHeaps) {
-			System.err.println(heap.__debugGetName() + " " + maxSeqLen);
+			Logger.info("compute heap constraint for " + heap.__debugGetName() +
+					" of length " + maxSeqLen);
 			heap.recomputeConstraint();
 		}
 		return ImmutableList.copyOf(this.allHeaps);

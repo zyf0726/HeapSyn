@@ -19,6 +19,7 @@ import java.util.TreeSet;
 
 import com.google.common.base.Preconditions;
 
+import heapsyn.common.Logger;
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.Constant;
@@ -67,8 +68,8 @@ public class ExternalSolver implements IncrSMTSolver {
 		boolean isSat = this.__checkSat(constraint, model, tmpFile);
 		long endT = System.currentTimeMillis();
 		tmpFile.delete();
-		System.err.print("INFO: invoke external SMT solver to " + (toCheck ? "check" : "solve"));
-		System.err.println(", elapsed " + (endT - startT) + "ms");
+		Logger.debug("invoke external SMT solver to " + (toCheck ? "check" : "solve") +
+				", elapsed " + (endT - startT) + "ms");
 		return isSat;
 	}
 	

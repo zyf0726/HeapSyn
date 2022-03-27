@@ -18,6 +18,7 @@ import java.util.function.Predicate;
 import static heapsyn.wrapper.symbolic.JBSEHeapTransformer.BLANK_OBJ;
 
 import heapsyn.algo.MethodInvoke;
+import heapsyn.common.Logger;
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.common.exceptions.UnhandledJBSEPrimitive;
 import heapsyn.common.exceptions.UnsupportedPrimitiveType;
@@ -441,17 +442,23 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		
 		Method method=mInvoke.getJavaMethod();
 		if(!this.cachedStates.containsKey(method)) {
+			Logger.info("start to run JBSE on method [" + mInvoke.getJavaMethod() + "]");
+			long start = System.currentTimeMillis();
 			RunParameters p = getRunParameters(mInvoke);
-			// TODO remove magic numbers
-//			p.setDepthScope(500);
-//			p.setCountScope(6000);
 			Run r=new Run(p);
 			r.run();
+			long end = System.currentTimeMillis();
+			Logger.info("symbolic execution ended, elapsed " + (end - start) + "ms");
+			Logger.info("start to converge symbolic states");
+			
+			start = System.currentTimeMillis();
 			HashSet<State> executed = r.getPathsExecuted();
 			//this.cachedJBSE.put(method, executed);
 			StateConverger sc=new StateConverger(executed);
 			sc.converge();
 			this.cachedStates.put(method, sc);
+			end = System.currentTimeMillis();
+			Logger.info("symbolic states converged, elapsed " + (end - start) + "ms");
 		}
 		
 		//Set<State> states=this.cachedJBSE.get(method);

@@ -20,6 +20,7 @@ import com.microsoft.z3.Sort;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Symbol;
 
+import heapsyn.common.Logger;
 import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
@@ -65,8 +66,8 @@ public class Z3JavaAPI implements IncrSMTSolver {
 		long startT = System.currentTimeMillis();
 		boolean isSat = this.__checkSat(constraint, model);
 		long endT = System.currentTimeMillis();
-		System.err.print("INFO: invoke Z3 Java API to " + (toCheck ? "check" : "solve"));
-		System.err.println(", elapsed " + (endT - startT) + "ms");
+		Logger.debug("invoke Z3 Java API to " + (toCheck ? "check" : "solve") +
+				", elapsed " + (endT - startT) + "ms");
 		return isSat;
 	}
 	
@@ -105,7 +106,7 @@ public class Z3JavaAPI implements IncrSMTSolver {
 			return false;
 		}
 		if (result == Status.UNKNOWN) {
-			System.err.println("WARN: unknown solver result in checkSat");
+			Logger.warn("unknown solver result in checkSat");
 			ctx.close();
 			return false;
 		}
@@ -147,8 +148,7 @@ public class Z3JavaAPI implements IncrSMTSolver {
 		long startT = System.currentTimeMillis();
 		boolean isSat = this.__checkSat$pAndNotq(p, q);
 		long endT = System.currentTimeMillis();
-		System.err.print("INFO: invoke Z3 Java API to check implication");
-		System.err.println(", elapsed " + (endT - startT) + "ms");
+		Logger.debug("invoke Z3 Java API to check implication, elapsed " + (endT - startT) + "ms");
 		return isSat;
 	}
 	
@@ -183,7 +183,7 @@ public class Z3JavaAPI implements IncrSMTSolver {
 			ctx.close();
 			return false;
 		} else if (result == Status.UNKNOWN) {
-			System.err.println("WARN: unknown solver result in checkSat$pAndNotq");
+			Logger.warn("unknown solver result in checkSat$pAndNotq");
 			ctx.close();
 			return false;
 		} else {
@@ -274,13 +274,13 @@ public class Z3JavaAPI implements IncrSMTSolver {
 		} else if (result == Status.UNSATISFIABLE) {
 			isSat = false;
 		} else {
-			System.err.println("WARN: unknown solver result in checkSatIncr");
+			Logger.warn("unknown solver result in checkSatIncr");
 			isSat = false;
 		}
 		incr_solver.pop();
 		incr_solver.push();
 		long elapsed = System.currentTimeMillis() - start;
-		System.err.println("INFO: invoke Z3 Java API to incrementally check, elapsed " + elapsed + "ms");
+		Logger.debug("invoke Z3 Java API to incrementally check, elapsed " + elapsed + "ms");
 		return isSat;
 	}
 	
