@@ -9,7 +9,7 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 import heapsyn.algo.DynamicGraphBuilder;
-import heapsyn.algo.HeapTransGraphBuilder;
+import heapsyn.algo.StaticGraphBuilder;
 import heapsyn.algo.Statement;
 import heapsyn.algo.TestGenerator;
 import heapsyn.algo.WrappedHeap;
@@ -28,13 +28,13 @@ public class ObjNodeLauncher {
 			throws FileNotFoundException {
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
-		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
+		StaticGraphBuilder gb = new StaticGraphBuilder(executor, methods);
 		gb.setHeapScope(ObjNode.class, 3);
 		gb.setHeapScope(Object.class, 5);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap, false);
 		if (outfile != null) {
-			HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream(outfile));
+			StaticGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream(outfile));
 		}
 		TestGenerator testgen = new TestGenerator(heaps);
 		System.out.println("number of all heaps = " + heaps.size());
@@ -54,7 +54,7 @@ public class ObjNodeLauncher {
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap, 8);
 		if (outfile != null) {
-			HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream(outfile));
+			StaticGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream(outfile));
 		}
 		TestGenerator testgen = new TestGenerator(heaps);
 		System.out.println("number of all heaps = " + heaps.size());

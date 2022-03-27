@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import heapsyn.algo.HeapTransGraphBuilder;
+import heapsyn.algo.StaticGraphBuilder;
 import heapsyn.algo.Statement;
 import heapsyn.algo.TestGenerator;
 import heapsyn.algo.WrappedHeap;
@@ -26,7 +26,7 @@ public class ListNodeLauncher {
 	private static void buildGraph(Collection<Method> methods) {
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
-		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
+		StaticGraphBuilder gb = new StaticGraphBuilder(executor, methods);
 		gb.setHeapScope(ListNode.class, 5);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap, false);

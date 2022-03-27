@@ -32,7 +32,7 @@ import heapsyn.wrapper.smt.SMTSolver;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 
-public class HeapTransGraphBuilder {
+public class StaticGraphBuilder {
 	
 	private SymbolicExecutor executor;
 	private List<Method> methods;
@@ -43,7 +43,7 @@ public class HeapTransGraphBuilder {
 	
 	private GraphAnalyzer<WrappedHeap, Integer> GA;
 	
-	public HeapTransGraphBuilder(SymbolicExecutor executor, Collection<Method> methods) {
+	public StaticGraphBuilder(SymbolicExecutor executor, Collection<Method> methods) {
 		this.executor = executor;
 		this.methods = ImmutableList.copyOf(methods);
 		this.heapScope = new HashMap<>();

@@ -30,7 +30,7 @@ import heapsyn.util.Bijection;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.Specification;
 
-public class TestGeneratorTest1 {
+public class TestGeneratorTest {
 	
 	@SuppressWarnings("unused")
 	static class BinInteger {

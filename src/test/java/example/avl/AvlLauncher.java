@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import heapsyn.algo.HeapTransGraphBuilder;
+import heapsyn.algo.StaticGraphBuilder;
 import heapsyn.algo.Statement;
 import heapsyn.algo.TestGenerator;
 import heapsyn.algo.WrappedHeap;
@@ -29,12 +29,12 @@ public class AvlLauncher {
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE(
 				name -> !name.startsWith("_"));
-		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
+		StaticGraphBuilder gb = new StaticGraphBuilder(executor, methods);
 		gb.setHeapScope(AvlTree.class, 1);
 		gb.setHeapScope(AvlNode.class, 6);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap, true);
-		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/avl.txt"));
+		StaticGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/avl.txt"));
 		testGenerator = new TestGenerator(heaps);
 		long end = System.currentTimeMillis();
 		System.out.println(">> buildGraph: " + (end - start) + "ms\n");

@@ -9,7 +9,7 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-import heapsyn.algo.HeapTransGraphBuilder;
+import heapsyn.algo.StaticGraphBuilder;
 import heapsyn.algo.Statement;
 import heapsyn.algo.TestGenerator;
 import heapsyn.algo.WrappedHeap;
@@ -43,7 +43,7 @@ public class DllLauncher {
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE(
 				name -> !name.startsWith("_") || name.equals("_owner"));
-		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
+		StaticGraphBuilder gb = new StaticGraphBuilder(executor, methods);
 		gb.setHeapScope(LinkedList.class, 1);
 		gb.setHeapScope(LinkedList.Entry.class, 4);
 		gb.setHeapScope(LinkedList.ListItr.class, 1);
@@ -52,7 +52,7 @@ public class DllLauncher {
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap, true);
 		System.out.println("number of all heaps = " + heaps.size());
 		System.out.println("number of symbolic execution = " + executor.getExecutionCount());
-		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/jbse_dll.txt"));
+		StaticGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/jbse_dll.txt"));
 		testGenerator = new TestGenerator(heaps);
 		long end = System.currentTimeMillis();
 		System.out.println(">> buildGraph: " + (end - start) + "ms\n");

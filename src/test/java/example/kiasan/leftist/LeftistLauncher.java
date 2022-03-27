@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import heapsyn.algo.HeapTransGraphBuilder;
+import heapsyn.algo.StaticGraphBuilder;
 import heapsyn.algo.Statement;
 import heapsyn.algo.TestGenerator;
 import heapsyn.algo.WrappedHeap;
@@ -42,14 +42,14 @@ public class LeftistLauncher {
 
 		long start = System.currentTimeMillis();
 		SymbolicExecutor executor = new SymbolicExecutorWithCachedJBSE();
-		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(executor, methods);
+		StaticGraphBuilder gb = new StaticGraphBuilder(executor, methods);
 		gb.setHeapScope(LeftistHeap.class, 2);
 		gb.setHeapScope(LeftistHeap.LeftistNode.class, 6);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> heaps = gb.buildGraph(initHeap, true);
 		System.out.println("number of all heaps = " + heaps.size());
 		System.out.println("number of symbolic execution = " + executor.getExecutionCount());
-		HeapTransGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/leftist.txt"));
+		StaticGraphBuilder.__debugPrintOut(heaps, executor, new PrintStream("tmp/leftist.txt"));
 		testGenerator = new TestGenerator(heaps);
 		long end = System.currentTimeMillis();
 		System.out.println(">> buildGraph: " + (end - start) + "ms\n");

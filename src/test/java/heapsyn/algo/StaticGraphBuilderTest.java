@@ -21,11 +21,11 @@ import heapsyn.wrapper.symbolic.Specification;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
 import heapsyn.wrapper.symbolic.SymbolicExecutorWithCachedJBSE;
 
-public class TestGeneratorTest2 {
+public class StaticGraphBuilderTest {
 
 	private void buildGraphForListNode(SymbolicExecutor executor,
 			String logFileName, String objFileName) throws Exception {
-		HeapTransGraphBuilder gb = new HeapTransGraphBuilder(
+		StaticGraphBuilder gb = new StaticGraphBuilder(
 				executor,
 				Arrays.asList(
 						ListNode.mNew, ListNode.mGetNext,
@@ -36,7 +36,7 @@ public class TestGeneratorTest2 {
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap, false);
 		PrintStream ps = new PrintStream(logFileName);
-		HeapTransGraphBuilder.__debugPrintOut(genHeaps, executor, ps);
+		StaticGraphBuilder.__debugPrintOut(genHeaps, executor, ps);
 		ps.close();
 		WrappedHeap.exportHeapsTo(genHeaps, objFileName);
 	}
@@ -50,7 +50,7 @@ public class TestGeneratorTest2 {
 		List<WrappedHeap> genHeaps = WrappedHeap.importHeapsFrom(objFileName);
 		
 		PrintStream psPost = new PrintStream(logFileNamePost);
-		HeapTransGraphBuilder.__debugPrintOut(genHeaps, executor, psPost);
+		StaticGraphBuilder.__debugPrintOut(genHeaps, executor, psPost);
 		psPost.close();
 		
 		return genHeaps;
@@ -65,7 +65,7 @@ public class TestGeneratorTest2 {
 		List<WrappedHeap> genHeaps = WrappedHeap.importHeapsFrom(objFileName);
 		
 		PrintStream psPost = new PrintStream(logFileNamePost);
-		HeapTransGraphBuilder.__debugPrintOut(genHeaps, executor, psPost);
+		StaticGraphBuilder.__debugPrintOut(genHeaps, executor, psPost);
 		psPost.close();
 		
 		return genHeaps;

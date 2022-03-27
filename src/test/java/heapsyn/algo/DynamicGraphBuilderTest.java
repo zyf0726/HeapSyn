@@ -27,7 +27,7 @@ public class DynamicGraphBuilderTest {
 		);
 		SymbolicHeap initHeap = new SymbolicHeapAsDigraph(ExistExpr.ALWAYS_TRUE);
 		List<WrappedHeap> genHeaps = gb.buildGraph(initHeap, 6);
-		HeapTransGraphBuilder.__debugPrintOut(genHeaps, executor, ps);
+		DynamicGraphBuilder.__debugPrintOut(genHeaps, executor, ps);
 	}
 	
 	@Test
