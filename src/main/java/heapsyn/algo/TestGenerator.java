@@ -1,7 +1,6 @@
 package heapsyn.algo;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,22 +23,17 @@ import heapsyn.algo.WrappedHeap.MatchResult;
 import heapsyn.common.exceptions.UnexpectedInternalException;
 import heapsyn.common.settings.Options;
 import heapsyn.heap.ObjectH;
-import heapsyn.smtlib.ApplyExpr;
-import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.Constant;
-import heapsyn.smtlib.SMTExpression;
-import heapsyn.smtlib.SMTOperator;
 import heapsyn.smtlib.Variable;
-import heapsyn.wrapper.smt.SMTSolver;
 import heapsyn.wrapper.symbolic.Specification;
 
 public class TestGenerator {
 	
-	private SMTSolver smtSolver;
+//	private SMTSolver smtSolver;
 	private List<WrappedHeap> heaps;
 	
 	public TestGenerator(Collection<WrappedHeap> heaps) {
-		this.smtSolver = Options.I().getSMTSolver();
+//		this.smtSolver = Options.I().getSMTSolver();
 		this.heaps = ImmutableList.copyOf(heaps);
 	}
 	
@@ -167,7 +161,33 @@ public class TestGenerator {
 			for (Variable v : renameMap.values()) {
 				vModel.remove(v);
 			}
+			Variable indicator = finHeap.getIndicatorVariables().get(version);
+			assert(vModel.keySet().contains(indicator));
+			int index = Integer.valueOf(vModel.get(indicator).toSMTString());
+			BackwardRecord br = rcdBackwards.get(index);
+			if (br.retVal != null && br.retVal.isNonNullObject()) {
+				objRets.add(br.retVal);
+				objSrc.put(br.retVal, br.retVal);
+			}
+			for (Entry<ObjectH, ObjectH> entry : objSrc.entrySet()) {
+				ObjectH interSrc = entry.getValue();
+				if (!objRets.contains(interSrc)) {
+					assert(br.objSrcMap.containsKey(interSrc));
+					entry.setValue(br.objSrcMap.get(interSrc));
+				}
+			}
+			if (br.mInvoke != null) {
+				for (ObjectH arg : br.mInvoke.getInvokeArguments()) {
+					if (arg.isHeapObject())
+						objSrc.put(arg, arg);
+				}
+				Statement stmt = new Statement(br.mInvoke, br.retVal);
+				stmt.updateVars(vModel);
+				stmts.add(stmt);
+			}
+			finHeap = br.oriHeap;
 			
+			/*
 			List<BoolVar> guardVars = new ArrayList<>();
 			List<SMTExpression> andClauses = new ArrayList<>();
 			for (BackwardRecord br : rcdBackwards) {
@@ -210,6 +230,7 @@ public class TestGenerator {
 					break;
 				}
 			}
+			*/
 		}
 		
 		Collections.reverse(stmts);

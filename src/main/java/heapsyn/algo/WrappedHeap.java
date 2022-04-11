@@ -34,6 +34,7 @@ import heapsyn.smtlib.BoolConst;
 import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.Constant;
 import heapsyn.smtlib.ExistExpr;
+import heapsyn.smtlib.IntConst;
 import heapsyn.smtlib.IntVar;
 import heapsyn.smtlib.SMTExpression;
 import heapsyn.smtlib.SMTOperator;
@@ -125,6 +126,14 @@ public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 				}
 				ps.println("}");
 			}
+		}
+		if (!indicators.isEmpty()) {
+			ps.println("indicator variables:");
+			ps.print("   { ");
+			for (Variable var : indicators) {
+				ps.print(var.toSMTString() + ", ");
+			}
+			ps.println("}");
 		}
 		for (BackwardRecord br : rcdBackwards) {
 			ps.print("original heap " + br.oriHeap.__heapName);
@@ -221,6 +230,7 @@ public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 	
 	private ArrayList<BackwardRecord> rcdBackwards;
 	private ArrayList<Map<Variable, Variable>> renameMapList;
+	private ArrayList<Variable> indicators;
 	
 	private void addBackwardRecord(WrappedHeap oriHeap, MethodInvoke mInvoke,
 			SMTExpression pathCond, ObjectH retVal,
@@ -273,6 +283,7 @@ public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 		this.rcdBackwards = new ArrayList<>();
 		this.renameMapList = new ArrayList<>();
 		this.rcdForwards = new ArrayList<>();
+		this.indicators = new ArrayList<>();
 		__generateDebugInformation();
 	}
 	
@@ -309,7 +320,9 @@ public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 		if (this.rcdBackwards.isEmpty())
 			return;
 		
-		for (BackwardRecord br : this.rcdBackwards) {
+		Variable indicator = new IntVar();
+		for (int index = 0; index < this.rcdBackwards.size(); ++index) {
+			BackwardRecord br = this.rcdBackwards.get(index);
 			List<SMTExpression> andClauses = new ArrayList<>();
 			List<Variable> boundVars = new ArrayList<>();
 			boundVars.addAll(br.oriHeap.heap.getConstraint().getBoundVariables());
@@ -331,12 +344,18 @@ public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 					andClauses.add(clause);
 				}
 			}
+			andClauses.add(new ApplyExpr(SMTOperator.BIN_EQ,
+					indicator, new IntConst(index)));
 			ExistExpr guardCond = new ExistExpr(boundVars,
 					new ApplyExpr(SMTOperator.AND, andClauses));
 			assert(Sets.difference(
 					guardCond.getBody().getFreeVariables(),
-					guardCond.getBoundVariables())
-					.immutableCopy().equals(ImmutableSet.copyOf(this.heap.getVariables())));
+					guardCond.getBoundVariables()).immutableCopy().equals(
+							ImmutableSet.copyOf(Sets.union(
+									ImmutableSet.copyOf(this.heap.getVariables()),
+									ImmutableSet.of(indicator)									
+									))
+							));
 			if (checker == null || checker.checkSat(guardCond.getBody(), null)) {
 				br.guardCondList.add(guardCond);
 			} else {
@@ -353,11 +372,14 @@ public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 		
 		List<Variable> funcArgs = new ArrayList<>(this.heap.getVariables());
 		funcArgs.addAll(orExpr.getBoundVariables());
+		funcArgs.add(indicator);
 		UserFunc func = new UserFunc(funcArgs, SMTSort.BOOL, orExpr.getBody());
 		this.__funCreated.add(func);
-		ExistExpr constraint = new ExistExpr(orExpr.getBoundVariables(),
-				new ApplyExpr(func, funcArgs));
+		List<Variable> boundVars = new ArrayList<>(orExpr.getBoundVariables());
+		boundVars.add(indicator);
+		ExistExpr constraint = new ExistExpr(boundVars, new ApplyExpr(func, funcArgs));
 		this.heap.setConstraint(constraint);
+		this.indicators.add(indicator);
 	}
 	
 	class MatchResult implements ActionIfFound {
@@ -474,6 +496,10 @@ public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 	
 	ArrayList<Map<Variable, Variable>> getRenameMapList() {
 		return this.renameMapList;
+	}
+	
+	ArrayList<Variable> getIndicatorVariables() {
+		return this.indicators;
 	}
 	
 	boolean surelyEntails(WrappedHeap other, Bijection<ObjectH, ObjectH> mapping, SMTSolver solver) {
