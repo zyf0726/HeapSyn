@@ -98,4 +98,15 @@ public class Options {
 		return this.maxNumThreads;
 	}
 	
+	// maximum time in seconds for building the graph
+	private int budgetBuildGraph = 7200;
+	
+	public void setTimeBudget(int budgetBuildGraph) {
+		this.budgetBuildGraph = budgetBuildGraph;
+	}
+	
+	public int getTimeBudget() {
+		return this.budgetBuildGraph;
+	}
+	
 }

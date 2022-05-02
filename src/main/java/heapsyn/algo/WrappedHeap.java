@@ -530,8 +530,6 @@ public class WrappedHeap implements Serializable, Comparable<WrappedHeap> {
 	
 	/*===== auxiliary information for graph building algorithm =====*/
 	transient boolean isEverExpanded = false;
-	transient int curLength = -1;
-	
 	
 	public static Map<Variable, Variable>
 	deriveVariableMapping(Map<ObjectH, ObjectH> mapping) {

@@ -28,7 +28,6 @@ import heapsyn.smtlib.BoolVar;
 import heapsyn.smtlib.ExistExpr;
 import heapsyn.smtlib.IntVar;
 import heapsyn.util.Bijection;
-import heapsyn.util.UniqueQueue;
 import heapsyn.wrapper.smt.IncrSMTSolver;
 import heapsyn.wrapper.symbolic.PathDescriptor;
 import heapsyn.wrapper.symbolic.SymbolicExecutor;
@@ -45,8 +44,6 @@ public class DynamicGraphBuilder {
 	private ArrayList<WrappedHeap> allHeaps;
 	private Map<Long, List<WrappedHeap>> activeHeapsByCode;
 	
-	private UniqueQueue<WrappedHeap> heapsToExpand;
-	
 	public DynamicGraphBuilder(SymbolicExecutor executor, Collection<Method> methods) {
 		this(executor, methods, true);
 	}
@@ -60,7 +57,6 @@ public class DynamicGraphBuilder {
 		this.heapScope = new HashMap<>();
 		this.allHeaps = new ArrayList<>();
 		this.activeHeapsByCode = new HashMap<>();
-		this.heapsToExpand = new UniqueQueue<>();
 	}
 	
 	public void setHeapScope(Class<?> javaClass, int scope) {
@@ -102,7 +98,7 @@ public class DynamicGraphBuilder {
 		this.allHeaps.add(newHeap);
 	}
 	
-	private TreeSet<WrappedHeap> expandGraph(TreeSet<WrappedHeap> updHeaps, int curLength) {
+	private TreeSet<WrappedHeap> expandGraph(TreeSet<WrappedHeap> updHeaps, int curLength, long startTime) {
 		TreeSet<WrappedHeap> restHeaps = new TreeSet<>(updHeaps);
 		updHeaps = new TreeSet<>();
 		while (!restHeaps.isEmpty()) {
@@ -133,6 +129,9 @@ public class DynamicGraphBuilder {
 			}
 			
 			for (WrappedHeap finHeap : finHeaps) {
+				if (System.currentTimeMillis() - startTime > 1000 * Options.I().getTimeBudget()) {
+					continue; // timeout
+				}
 				BackwardRecord br = finHeap.getBackwardRecords().stream()
 						.filter(r -> r.oriHeap == curHeap).findAny().get();
 				if (finHeap.isUnsat()) {
@@ -162,95 +161,23 @@ public class DynamicGraphBuilder {
 		return updHeaps;
 	}
 	
-	private void expandHeaps(int maxLength) {
-		Logger.info("[DynamicGraphBuilder.expandHeaps] maxLength = " + maxLength);
-		while (!this.heapsToExpand.isEmpty()) {
-			WrappedHeap curHeap = this.heapsToExpand.element();
-			assert(curHeap.isActive());
-			int curLength = curHeap.curLength;
-			if (curLength >= maxLength) break;
-			Logger.info("current heap is " + curHeap.__debugGetName() + " of length " + curLength);
-			this.heapsToExpand.remove();
-			
-//			ExistExpr oldP = curHeap.getHeap().getConstraint();
-			curHeap.recomputeConstraint();
-			ExistExpr newP = curHeap.getHeap().getConstraint();
-			this.solver.initIncrSolver();
-			this.solver.pushAssert(newP.getBody());
-/*			if (curLength != 0) {
-				this.solver.pushAssertNot(oldP);
-			} */
-			this.solver.endPushAssert();
-			
-			List<WrappedHeap> finHeaps = new ArrayList<>();
-			if (curHeap.isEverExpanded) {
-				curHeap.getForwardRecords().forEach(fr -> finHeaps.add(fr.finHeap));
-			} else {
-				for (Method method : this.methods) {
-					for (WrappedHeap newHeap : this.tryInvokeMethod(curHeap, method)) {
-						newHeap.setUnsat();
-						finHeaps.add(newHeap);
-					}
-				}
-			}
-			for (WrappedHeap finHeap : finHeaps) {
-				BackwardRecord br = finHeap.getBackwardRecords().stream()
-						.filter(r -> r.oriHeap == curHeap).findAny().get();
-				if (finHeap.isUnsat()) {
-					if (br.pathCond != null && !this.solver.checkSatIncr(br.pathCond))
-						continue;
-					finHeap.setActive();
-					this.addNewHeap(finHeap);
-				}
-				WrappedHeap succHeap = null;
-				if (finHeap.isSubsumed()) {
-					finHeap.recomputeConstraint();
-					ForwardRecord fr = finHeap.getForwardRecords().get(0);
-					if (finHeap.surelyEntails(fr.finHeap, fr.mapping, this.solver)) {
-						finHeap.getHeap().setConstraint(ExistExpr.ALWAYS_FALSE);
-					} else {
-						succHeap = fr.finHeap;
-					}
-				} else {
-					succHeap = finHeap;
-				}
-				if (succHeap != null && !heapsToExpand.contains(succHeap)) {
-					this.heapsToExpand.add(succHeap);
-					succHeap.curLength = curLength + 1;
-				}
-			}
-			curHeap.isEverExpanded = true;
-		}
-		for (WrappedHeap heap : this.heapsToExpand) {
-			Logger.info("compute heap constraint for " + heap.__debugGetName() +
-						" of length " + heap.curLength);
-			if (heap.curLength == maxLength)
-				heap.recomputeConstraint();
-		}
-	}
-
-	public List<WrappedHeap> buildGraph_old(SymbolicHeap symHeap, int maxSeqLen) {
-		WrappedHeap initHeap = new WrappedHeap(symHeap);
-		this.heapsToExpand.add(initHeap);
-		this.addNewHeap(initHeap);
-		initHeap.curLength = 0;
-		this.expandHeaps(maxSeqLen);
-		return ImmutableList.copyOf(this.allHeaps);
-	}
-	
 	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap, int maxSeqLen) {
+		long startTime = System.currentTimeMillis();
 		Logger.info("[DynamicGraphBuilder.buildGraph] maxLength = " + maxSeqLen);
 		WrappedHeap initHeap = new WrappedHeap(symHeap);
 		this.addNewHeap(initHeap);
 		TreeSet<WrappedHeap> updHeaps = new TreeSet<>();
 		updHeaps.add(initHeap);
 		for (int L = 0; L < maxSeqLen; ++L) {
-			updHeaps = this.expandGraph(updHeaps, L);
+			updHeaps = this.expandGraph(updHeaps, L, startTime);
 		}
 		for (WrappedHeap heap : updHeaps) {
 			Logger.info("compute heap constraint for " + heap.__debugGetName() +
 					" of length " + maxSeqLen);
 			heap.recomputeConstraint();
+		}
+		if (System.currentTimeMillis() - startTime > 1000 * Options.I().getTimeBudget()) {
+			Logger.info("time budget " + Options.I().getTimeBudget() + " seconds exhausted");
 		}
 		return ImmutableList.copyOf(this.allHeaps);
 	}

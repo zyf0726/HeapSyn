@@ -97,7 +97,7 @@ public class GraphBuilderWithoutMerging {
 		return true;
 	}
 	
-	private List<WrappedHeap> expandGraph(List<WrappedHeap> oldHeaps, int curLength) {
+	private List<WrappedHeap> expandGraph(List<WrappedHeap> oldHeaps, int curLength, long startTime) {
 		List<WrappedHeap> newHeaps = new ArrayList<>();
 		for (WrappedHeap curHeap : oldHeaps) {
 			assert(curHeap.isActive());
@@ -116,6 +116,9 @@ public class GraphBuilderWithoutMerging {
 			}
 			
 			for (WrappedHeap finHeap : finHeaps) {
+				if (System.currentTimeMillis() - startTime > 1000 * Options.I().getTimeBudget()) {
+					continue; // timeout
+				}
 				BackwardRecord br = finHeap.getBackwardRecords().stream()
 						.filter(r -> r.oriHeap == curHeap).findAny().get();
 				assert(finHeap.isUnsat());
@@ -131,16 +134,20 @@ public class GraphBuilderWithoutMerging {
 	}
 	
 	public List<WrappedHeap> buildGraph(SymbolicHeap symHeap, int maxSeqLen) {
+		long startTime = System.currentTimeMillis();
 		Logger.info("[GraphBuilderWithoutMerging.buildGraph] maxLength = " + maxSeqLen);
 		WrappedHeap initHeap = new WrappedHeap(symHeap);
 		this.addNewHeap(initHeap);
 		List<WrappedHeap> oldHeaps = new ArrayList<>();
 		oldHeaps.add(initHeap);
 		for (int L = 0; L < maxSeqLen; ++L) {
-			oldHeaps = this.expandGraph(oldHeaps, L);
+			oldHeaps = this.expandGraph(oldHeaps, L, startTime);
 		}
 		for (WrappedHeap heap : oldHeaps) {
 			Logger.info("in-queue heap " + heap.__debugGetName() + " of length " + maxSeqLen);
+		}
+		if (System.currentTimeMillis() - startTime > 1000 * Options.I().getTimeBudget()) {
+			Logger.info("time budget " + Options.I().getTimeBudget() + " seconds exhausted");
 		}
 		return ImmutableList.copyOf(this.allHeaps);
 	}
