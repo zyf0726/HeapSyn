@@ -46,6 +46,8 @@ import jbse.val.WideningConversion;
 
 public class StateConverger {
 	
+	private boolean doConverge;
+	
 	static class StateInfos {
 		Map<Long,HeapObjekt> objects;
 		Map<Long,HeapObjekt> nobjects;
@@ -135,13 +137,14 @@ public class StateConverger {
 		return this.st2infos;
 	}
 	
-	public StateConverger(Set<State> states) {
-		this(states, null);
+	public StateConverger(Set<State> states, boolean doConverge) {
+		this(states, null, doConverge);
 	}
 	
-	private StateConverger(Set<State> states,Predicate<String> fieldFilter) {
+	private StateConverger(Set<State> states,Predicate<String> fieldFilter, boolean doConverge) {
 		if(fieldFilter==null) this.fieldFilter=name -> true;
 		else this.fieldFilter=fieldFilter;
+		this.doConverge = doConverge;
 		this.states=new HashSet<>();
 		this.st2infos=new HashMap<>();
 		this.clusters=new HashMap<>();
@@ -329,14 +332,16 @@ public class StateConverger {
 			}
 			else {
 				boolean findSame=false;
-				for(State repState:this.clusters.keySet()) {
-					if(checkRefCls(this.st2infos.get(state).refcls,this.st2infos.get(repState).refcls)==false)
-						continue;
-					if(checkState(this.st2infos.get(state).nobjects,this.st2infos.get(repState).nobjects)==false)
-						continue;
-					this.clusters.get(repState).add(state);
-					findSame=true;
-					break;
+				if (this.doConverge) {
+					for(State repState:this.clusters.keySet()) {
+						if(checkRefCls(this.st2infos.get(state).refcls,this.st2infos.get(repState).refcls)==false)
+							continue;
+						if(checkState(this.st2infos.get(state).nobjects,this.st2infos.get(repState).nobjects)==false)
+							continue;
+						this.clusters.get(repState).add(state);
+						findSame=true;
+						break;
+					}
 				}
 				if(findSame==false) {
 					Set<State> sameStates=new HashSet<>();

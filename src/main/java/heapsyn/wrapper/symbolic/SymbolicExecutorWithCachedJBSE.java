@@ -85,6 +85,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 	private int __countExecution=0;
 	
 	private Predicate<String> fieldFilter;
+	private boolean doCoverge = true;
 	
 	@Override
 	public int getExecutionCount() {
@@ -114,6 +115,14 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 		this.cachedStates=new HashMap<>();
 		this.cachedTrans=new HashMap<>();
 		this.fieldFilter=fieldFilter;
+	}
+	
+	public SymbolicExecutorWithCachedJBSE(Predicate<String> fieldFilter, boolean doConverge) {
+		//this.cachedJBSE=new HashMap<>();
+		this.cachedStates=new HashMap<>();
+		this.cachedTrans=new HashMap<>();
+		this.fieldFilter=fieldFilter;
+		this.doCoverge = doConverge;
 	}
 	
 	private Map<ReferenceSymbolic,ObjectH> ref2ObjMap(ArrayList<ReferenceSymbolic> resolved,Map<Value,ObjectH> val2Obj) {
@@ -454,7 +463,7 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 			start = System.currentTimeMillis();
 			HashSet<State> executed = r.getPathsExecuted();
 			//this.cachedJBSE.put(method, executed);
-			StateConverger sc=new StateConverger(executed);
+			StateConverger sc=new StateConverger(executed, this.doCoverge);
 			sc.converge();
 			this.cachedStates.put(method, sc);
 			end = System.currentTimeMillis();
@@ -797,38 +806,40 @@ public class SymbolicExecutorWithCachedJBSE implements SymbolicExecutor{
 					rvsvarExprMap.put((heapsyn.smtlib.Variable) entry.getValue(), entry.getKey());
 			}
 			
-			if(this.isIsomorphic(symHeap, initHeap, objSrcMap,varExprMap)&&
-					this.isIsomorphic(initHeap, symHeap, rvsobjSrcMap,rvsvarExprMap)) {
-				for(ObjectH obj:symHeap.getAllObjects()) {
-					if(obj.isVariable()||obj.isNullObject()) continue;
-					ObjectH finobj=obj;
-					ObjectH initobj=objSrcMap.get(obj);
-					if(initobj==null) {
-						issame=false;
-						break;
-					}
-					for(FieldH field:finobj.getFields()) {
-						ObjectH val=finobj.getFieldValue(field);
-						if(val.isVariable()) {
-							SMTExpression expr=varExprMap.get(val.getVariable());
-							if(!(expr instanceof heapsyn.smtlib.Variable)) {
-								issame=false;
-								break;
-							}
-							heapsyn.smtlib.Variable var=(heapsyn.smtlib.Variable)expr;
-							heapsyn.smtlib.Variable initvar=initobj.getFieldValue(field).getVariable();
-							if(var!=initvar) {
-								issame=false;
-								break;
+			if (this.doCoverge) {
+				if(this.isIsomorphic(symHeap, initHeap, objSrcMap,varExprMap)&&
+						this.isIsomorphic(initHeap, symHeap, rvsobjSrcMap,rvsvarExprMap)) {
+					for(ObjectH obj:symHeap.getAllObjects()) {
+						if(obj.isVariable()||obj.isNullObject()) continue;
+						ObjectH finobj=obj;
+						ObjectH initobj=objSrcMap.get(obj);
+						if(initobj==null) {
+							issame=false;
+							break;
+						}
+						for(FieldH field:finobj.getFields()) {
+							ObjectH val=finobj.getFieldValue(field);
+							if(val.isVariable()) {
+								SMTExpression expr=varExprMap.get(val.getVariable());
+								if(!(expr instanceof heapsyn.smtlib.Variable)) {
+									issame=false;
+									break;
+								}
+								heapsyn.smtlib.Variable var=(heapsyn.smtlib.Variable)expr;
+								heapsyn.smtlib.Variable initvar=initobj.getFieldValue(field).getVariable();
+								if(var!=initvar) {
+									issame=false;
+									break;
+								}
 							}
 						}
+						if(issame==false) break;
 					}
-					if(issame==false) break;
-				}
-				if(issame==true) {
-					if(pd.retVal==null||(pd.retVal.isVariable()&&!isObj(pd.retVal)))
-							sit.remove();
-					continue; 
+					if(issame==true) {
+						if(pd.retVal==null||(pd.retVal.isVariable()&&!isObj(pd.retVal)))
+								sit.remove();
+						continue; 
+					}
 				}
 			}
 			pd.finHeap = symHeap;
