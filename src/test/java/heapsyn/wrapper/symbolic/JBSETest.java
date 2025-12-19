@@ -24,9 +24,9 @@ public class JBSETest {
     private static final String JBSE_HOME         = "jbse/";
 
     //Leave them alone
-    private static final String JBSE_CLASSPATH    = JBSE_HOME + "build/classes/java/main";
+    private static final String JBSE_CLASSPATH    = JBSE_HOME + "build/classes/java/main/";
     private static final String JBSE_SOURCEPATH   = JBSE_HOME + "src/main/java/";
-    private static final String TARGET_CLASSPATH  = "bin/test/";
+    private static final String TARGET_CLASSPATH  = "build/classes/java/test/";
     private static final String TARGET_SOURCEPATH = "src/test/java/";
     private static final String JRE_SOURCEPATH    = System.getProperty("java.home", "") + "src.zip";
 
@@ -96,7 +96,7 @@ public class JBSETest {
     	final String METHOD_DESCRIPTOR	= "(I)V"; 
     	final String METHOD_NAME		= "remove";
     	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-AATree.out";
-    	final String SETTINGS_FILE		= "HEXsettings/kiasan.jbse";
+    	final String SETTINGS_FILE		= "hex-settings/kiasan.jbse";
     	
 		makeTest(METHOD_CLASS, METHOD_DESCRIPTOR, METHOD_NAME,
 				OUTPUT_FILE_PATH, SETTINGS_FILE,
@@ -109,7 +109,7 @@ public class JBSETest {
     	final String METHOD_DESCRIPTOR	= "(I)V"; 
     	final String METHOD_NAME		= "remove";
     	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-BST.out";
-    	final String SETTINGS_FILE		= "HEXsettings/kiasan.jbse";
+    	final String SETTINGS_FILE		= "hex-settings/kiasan.jbse";
     	
     	makeTest(METHOD_CLASS, METHOD_DESCRIPTOR, METHOD_NAME,
     			OUTPUT_FILE_PATH, SETTINGS_FILE,
@@ -122,7 +122,7 @@ public class JBSETest {
     	final String METHOD_DESCRIPTOR	= "(Lexample/kiasan/leftist/LeftistHeap;)V"; 
     	final String METHOD_NAME		= "merge";
     	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-Leftist.out";
-    	final String SETTINGS_FILE		= "HEXsettings/kiasan.jbse";
+    	final String SETTINGS_FILE		= "hex-settings/kiasan.jbse";
     	
 		makeTest(METHOD_CLASS, METHOD_DESCRIPTOR, METHOD_NAME,
 				OUTPUT_FILE_PATH, SETTINGS_FILE,
@@ -135,7 +135,7 @@ public class JBSETest {
     	final String METHOD_DESCRIPTOR	= "()Ljava/lang/Object;"; 
     	final String METHOD_NAME		= "topAndPop";
     	final String OUTPUT_FILE_PATH	= "tmp/JBSETest-StackLi.out";
-    	final String SETTINGS_FILE		= "HEXsettings/kiasan.jbse";
+    	final String SETTINGS_FILE		= "hex-settings/kiasan.jbse";
     	
 		makeTest(METHOD_CLASS, METHOD_DESCRIPTOR, METHOD_NAME,
 				OUTPUT_FILE_PATH, SETTINGS_FILE, null);

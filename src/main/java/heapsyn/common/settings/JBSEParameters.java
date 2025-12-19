@@ -68,7 +68,7 @@ public class JBSEParameters {
 	
 	public String getTargetClassPath() {
 		if (this.targetClassPath == null) {
-			this.targetClassPath = Options.I().getHomeDirectory().resolve("bin/test");
+			this.targetClassPath = Options.I().getHomeDirectory().resolve("build/classes/java/test");
 		}
 		return this.targetClassPath.toAbsolutePath().toString();
 	}
