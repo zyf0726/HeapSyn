@@ -28,7 +28,7 @@ public class TreeMapLauncher {
 	private static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
-		parms.setSettingsPath("HexSettings/treemap.jbse");
+		parms.setSettingsPath("hex-settings/treemap.jbse");
 		parms.setHeapScope(TreeMap.class, 1);
 		parms.setHeapScope(TreeMap.Entry.class, 5);
 		parms.setDepthScope(500);

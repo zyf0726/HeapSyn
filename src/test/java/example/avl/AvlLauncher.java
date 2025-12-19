@@ -43,8 +43,8 @@ public class AvlLauncher {
 	public static void main(String[] args) throws FileNotFoundException, NoSuchMethodException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
-		parms.setSettingsPath("HEXsettings/avltree-partial.jbse");
-		// parms.setSettingsPath("HEXsettings/avltree-accurate.jbse");
+		parms.setSettingsPath("hex-settings/avltree-partial.jbse");
+		// parms.setSettingsPath("hex-settings/avltree-accurate.jbse");
 		parms.setHeapScope(AvlTree.class, 1);
 		parms.setHeapScope(AvlNode.class, 6);
 		List<Method> methods = new ArrayList<>();

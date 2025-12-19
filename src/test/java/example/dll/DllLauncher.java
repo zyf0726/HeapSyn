@@ -31,7 +31,7 @@ public class DllLauncher {
 	private static void buildGraph() throws FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
-		parms.setSettingsPath("HexSettings/dll-accurate.jbse");
+		parms.setSettingsPath("hex-settings/dll-accurate.jbse");
 		parms.setHeapScope(LinkedList.class, 1);
 		parms.setHeapScope(LinkedList.Entry.class, 4);
 		parms.setHeapScope(LinkedList.ListItr.class, 1);

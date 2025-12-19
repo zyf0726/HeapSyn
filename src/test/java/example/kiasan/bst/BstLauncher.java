@@ -28,7 +28,7 @@ public class BstLauncher {
 	private static void buildGraph() throws NoSuchMethodException, FileNotFoundException {
 		JBSEParameters parms = JBSEParameters.I();
 		parms.setShowOnConsole(true);
-		parms.setSettingsPath("HexSettings/kiasan.jbse");
+		parms.setSettingsPath("hex-settings/kiasan.jbse");
 		parms.setHeapScope(BinarySearchTree.class, 1);
 		parms.setHeapScope(BinaryNode.class, 5);
 		List<Method> methods = new ArrayList<>();
