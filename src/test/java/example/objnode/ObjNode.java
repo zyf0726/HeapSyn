@@ -33,8 +33,7 @@ public class ObjNode {
 			mSetValueAliasNext = ObjNode.class.getMethod("setValueAliasNext");
 			mMakeValueFresh = ObjNode.class.getMethod("makeValueFresh", ObjNode.class, ObjNode.class);
 		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
+			throw new RuntimeException(e);
 		}
 	}
 	

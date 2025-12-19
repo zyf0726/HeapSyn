@@ -23,8 +23,7 @@ public class ListNode {
 			mAddAfter = ListNode.class.getMethod("addAfter", int.class);
 			mAddBefore = ListNode.class.getMethod("addBefore", int.class);
 		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
+			throw new RuntimeException(e);
 		}
 	}
 	

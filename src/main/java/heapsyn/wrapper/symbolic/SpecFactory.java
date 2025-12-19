@@ -241,8 +241,7 @@ public class SpecFactory {
 				fNext = FieldH.of(ListNode.class.getDeclaredField("next"));
 				fValue = FieldH.of(ListNode.class.getDeclaredField("value"));
 			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(-1);
+				throw new RuntimeException(e);
 			}
 		}
 		ListNode next;
@@ -274,8 +273,7 @@ public class SpecFactory {
 				fKey = FieldH.of(MapEntry.class.getDeclaredField("key"));
 				fVal = FieldH.of(MapEntry.class.getDeclaredField("value"));
 			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(-1);
+				throw new RuntimeException(e);
 			}
 		}
 		

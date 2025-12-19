@@ -143,7 +143,7 @@ public class JBSEHeapTransformer {
 				javaClass = Class.forName(clsName);
 			} catch (ClassNotFoundException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				throw new RuntimeException(e1);
 			}
 			List<Field> fieldList = new ArrayList<>() ;
 			Class<?> tempClass = javaClass;
