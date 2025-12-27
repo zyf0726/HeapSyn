@@ -7,8 +7,10 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
+import com.google.common.collect.ImmutableList;
 import heapsyn.common.exceptions.LoadSettingsException;
 import jbse.apps.run.RunParameters;
 import jbse.apps.run.RunParameters.DecisionProcedureType;
@@ -103,9 +105,9 @@ public class JBSEParameters {
 	private boolean doEqualityAnalysis		=	false;
 	private StateFormatMode stateFormatMode	=	StateFormatMode.PATH;
 	private StepShowMode stepShowMode		=	StepShowMode.LEAVES;
-	private boolean showOnConsole	=	false;
-	private String outFilePath		=	null;
-	private String settingsPath		=	null;
+	private boolean showOnConsole			=	false;
+	private String outFilePath				=	null;
+	private List<String> settingsPaths		=	null;
 	
 	public void setFormatMode(StateFormatMode stateFormatMode) {
 		this.stateFormatMode = stateFormatMode;
@@ -123,8 +125,8 @@ public class JBSEParameters {
 		this.outFilePath = outFilePath;
 	}
 	
-	public void setSettingsPath(String settingsPath) {
-		this.settingsPath = settingsPath;
+	public void setSettingsPath(String... settingsPaths) {
+		this.settingsPaths = ImmutableList.copyOf(settingsPaths);
 	}
 	
 	
@@ -190,16 +192,18 @@ public class JBSEParameters {
 		} else {
 			rp.setOutputFileNone();
 		}
-		if (this.settingsPath != null) {
-			try {
-				SettingsReader sr = new SettingsReader(this.settingsPath);
-				sr.fillRunParameters(rp);
-			} catch (NoSuchFileException e) {
-				throw new LoadSettingsException("settings file not found");
-			} catch (ParseException e) {
-				throw new LoadSettingsException("settings file syntactically ill-formed");
-			} catch (IOException e) {
-				throw new LoadSettingsException("error while closing settings file");
+		if (this.settingsPaths != null) {
+			for (String settingsPath : this.settingsPaths) {
+				try {
+					SettingsReader sr = new SettingsReader(settingsPath);
+					sr.fillRunParameters(rp);
+				} catch (NoSuchFileException e) {
+					throw new LoadSettingsException("settings file not found: " + settingsPath);
+				} catch (ParseException e) {
+					throw new LoadSettingsException("settings file syntactically ill-formed: " + settingsPath);
+				} catch (IOException e) {
+					throw new LoadSettingsException("error while closing settings file: " + settingsPath);
+				}
 			}
 		}
 		for (Entry<String, Integer> entry : this.heapScope.entrySet()) {
